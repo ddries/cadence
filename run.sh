@@ -1,0 +1,1 @@
+tsc && cp cadence.json dist/ && node dist/Cadence.js
