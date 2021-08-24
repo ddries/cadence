@@ -14,7 +14,7 @@ export default class Logger {
         if (this._prefix.length > 0)
             _logText += "[" + this._prefix + "] ";
 
-        _logText += "[" + this.getLogId(_logText).substr(0, 10) + "] ";
+        _logText += "[" + this.getLogId(_logText + text).substr(0, 10) + "] ";
 
         _logText += text;
 

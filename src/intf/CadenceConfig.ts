@@ -11,7 +11,7 @@ export default interface CadenceConfig {
     // Discord related config
     BotName: string,
     BotDefaultPrefix: string,
-    Token: string,
+    BotToken: string,
 
     AdminWebhook?: string,
     StatusWebhook?: string,

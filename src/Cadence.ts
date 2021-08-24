@@ -1,4 +1,5 @@
 import Config from './api/Cadence.Config';
+import CadenceDiscord from './api/Cadence.Discord';
 import Logger from './api/Cadence.Logger';
 
 export default class Cadence {
@@ -8,6 +9,7 @@ export default class Cadence {
 
     public static Debug: boolean = true;
     public static Version: string = "0.0.0";
+    public static BotName: string = "";
 
     public static BaseDir: string = __dirname;
     public static BaseScript: string = __filename;
@@ -17,13 +19,17 @@ export default class Cadence {
     }
 
     public async init(): Promise<void> {
-        this.logger.log('started cadence bot')
+        this.logger.log('started cadence preload')
         
         await Config.getInstance().init();
 
-        Cadence.Debug = Config.getInstance().getKeyOrDefault('debug', true);
-        Cadence.Version = Config.getInstance().getKeyOrDefault('version', '0.0.0');
+        Cadence.Debug = Config.getInstance().getKeyOrDefault('Debug', true);
+        Cadence.Version = Config.getInstance().getKeyOrDefault('Version', '0.0.0');
+        Cadence.BotName = Config.getInstance().getKeyOrDefault('BotName', 'Default Name');
 
+        this.logger.log('starting cadence ' + Cadence.Version + ", debug " + Cadence.Debug.toString());
+
+        await CadenceDiscord.getInstance().init();
 
     }
 
