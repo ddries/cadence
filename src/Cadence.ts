@@ -1,5 +1,7 @@
 import Config from './api/Cadence.Config';
+import Db from './api/Cadence.Db';
 import CadenceDiscord from './api/Cadence.Discord';
+import CadenceLavalink from './api/Cadence.Lavalink';
 import Logger from './api/Cadence.Logger';
 
 export default class Cadence {
@@ -9,7 +11,9 @@ export default class Cadence {
 
     public static Debug: boolean = true;
     public static Version: string = "0.0.0";
+
     public static BotName: string = "";
+    public static DefaultPrefix: string = "";
 
     public static BaseDir: string = __dirname;
     public static BaseScript: string = __filename;
@@ -25,11 +29,16 @@ export default class Cadence {
 
         Cadence.Debug = Config.getInstance().getKeyOrDefault('Debug', true);
         Cadence.Version = Config.getInstance().getKeyOrDefault('Version', '0.0.0');
-        Cadence.BotName = Config.getInstance().getKeyOrDefault('BotName', 'Default Name');
 
-        this.logger.log('starting cadence ' + Cadence.Version + ", debug " + Cadence.Debug.toString());
+        Cadence.BotName = Config.getInstance().getKeyOrDefault('BotName', '');
+        Cadence.DefaultPrefix = Config.getInstance().getKeyOrDefault('BotDefaultPrefix', '');
 
+        await Db.getInstance().init();
+
+        this.logger.log('starting discord module cadence ' + Cadence.Version + ", debug " + Cadence.Debug.toString());
         await CadenceDiscord.getInstance().init();
+
+        await CadenceLavalink.getInstance().init();
 
     }
 

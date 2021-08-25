@@ -1,7 +1,6 @@
 import fs from 'fs';
 import path from 'path';
 
-import CadenceConfig from '../intf/CadenceConfig';
 import Cadence from '../Cadence';
 import Logger from './Cadence.Logger';
 
@@ -11,7 +10,7 @@ export default class Config {
     private logger: Logger = null;
 
     private _configFilename: string = "cadence.json";
-    private _config: CadenceConfig = null;
+    private _config: { [key: string]: any } = null;
 
     public getKeyOrDefault<T>(key: string, def: T): T {
         if (this._config[key] == null) return def;
