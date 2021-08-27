@@ -9,13 +9,13 @@ class HelpCommand extends BaseCommand {
     constructor() {
         super();
 
-        this.name = "help";
+        this.name = "ping";
         this.aliases = [];
         this.requireAdmin = false;
     }
 
     public run(message: Message): void {
-        message.reply('Working!');
+        message.reply('Pong!');
     }
 }
 

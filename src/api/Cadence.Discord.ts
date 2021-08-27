@@ -61,7 +61,7 @@ export default class CadenceDiscord {
 
         const commandFiles = fs.readdirSync(this._commandsPath).filter(f => f.endsWith('.js'));
         for (const f of commandFiles) {
-            const commandModule = (await import(this._resolveCommandPath(f)))['default'];
+            const commandModule: BaseCommand = (await import(this._resolveCommandPath(f)))['default'];
             this._commands.set(commandModule.name, commandModule);
 
             if (commandModule.aliases && commandModule.aliases.length > 0) {

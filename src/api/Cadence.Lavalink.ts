@@ -38,7 +38,7 @@ export default class CadenceLavalink {
         });
 
         this.logger.log('trying to connect to all lavalink nodes (' + this._manager.nodes.size + ')');
-        const r = await this._manager.connect().catch(e => {
+        await this._manager.connect().catch(e => {
             this.logger.log('could not connect to all nodes: ' + e);
         });
     }
