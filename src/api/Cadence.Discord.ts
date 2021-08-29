@@ -13,12 +13,17 @@ export default class CadenceDiscord {
     private logger: Logger = null;
 
     public Client: discord.Client = null;
+    private _statusWebhook: discord.WebhookClient = null;
 
     private _commandsPath: string = "";
     private _commands: discord.Collection<string, BaseCommand> = null;
     private _aliases: { [k: string]: string } = null;
 
     private _prefixes: Map<string, string> = null;
+
+    public sendStatus(text: string): void {
+        this._statusWebhook.send(text);
+    }
 
     public resolveGuildNameAndId(guild: discord.Guild): string {
         return guild.name + ' (' + guild.id + ')';
@@ -141,6 +146,8 @@ export default class CadenceDiscord {
                 discord.Intents.FLAGS.GUILD_VOICE_STATES
             ]
         });
+
+        this._statusWebhook = new discord.WebhookClient({ url: Config.getInstance().getKeyOrDefault('StatusWebhook', '')});
 
         this._commandsPath = path.join(Cadence.BaseDir, 'cmds');
 

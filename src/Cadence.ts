@@ -46,6 +46,7 @@ export default class Cadence {
 
         await CadenceLavalink.getInstance().init();
 
+        CadenceDiscord.getInstance().sendStatus("[LOG] Cadence logged in.");
     }
 
     public static getInstance(): Cadence {
