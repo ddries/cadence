@@ -21,7 +21,7 @@ class HelpCommand extends BaseCommand {
     }
 
     public async run(m: Message, args: string[]): Promise<void> {
-        const musicCommands = ["play", "pause", "resume", "next", "queue", "shuffle"];
+        const musicCommands = ["play", "np", "pause", "resume", "next", "queue", "shuffle"];
         const utilityCommands = ["help", "leave", "prefix", "ping"];
 
         const rowOptions = new MessageActionRow()
