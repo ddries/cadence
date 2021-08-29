@@ -5,6 +5,7 @@ import Config from "./Cadence.Config";
 import Logger from "./Cadence.Logger";
 import fs from 'fs';
 import path from 'path';
+import Db from "./Cadence.Db";
 
 export default class CadenceDiscord {
 
@@ -16,6 +17,30 @@ export default class CadenceDiscord {
     private _commandsPath: string = "";
     private _commands: discord.Collection<string, BaseCommand> = null;
     private _aliases: { [k: string]: string } = null;
+
+    private _prefixes: Map<string, string> = null;
+
+    public resolveGuildNameAndId(guild: discord.Guild): string {
+        return guild.name + ' (' + guild.id + ')';
+    }
+
+    public getServerPrefix(guildId: string): string {
+        if (!this._prefixes.has(guildId)) return Cadence.DefaultPrefix;
+        else return this._prefixes.get(guildId);
+    }
+
+    public setServerPrefix(guildId: string, prefix: string, updateBd: boolean = true): void {
+        if (this._prefixes.has(guildId)) this._prefixes.delete(guildId);
+
+        this._prefixes.set(guildId, prefix);
+        
+        if (updateBd)
+            Db.getInstance().setServerPrefix(guildId, prefix);
+    }
+
+    public getAllCommands(): discord.Collection<string, BaseCommand> {
+        return this._commands;
+    }
 
     private async OnReady(): Promise<void> {
         this.logger.log('successfully connected to discord as ' + this.Client.user.tag);
@@ -31,13 +56,24 @@ export default class CadenceDiscord {
         }
 
         await this._loadAllCommands();
+        await this._loadAllPrefixes();
     }
 
     private async OnMessage(m: discord.Message): Promise<void> {
         if (m.author.bot) return;
         if (m.channel.type == 'DM') return;
 
-        const args = m.content.slice(Cadence.DefaultPrefix.length).trim().split(/ +/);
+        const prefix = this.getServerPrefix(m.guildId);
+
+        if (!m.content.startsWith(prefix) && !m.content.startsWith(Cadence.DefaultPrefix)) return;
+
+        let args = [];
+        if (!m.content.startsWith(prefix)) {
+            args = m.content.slice(Cadence.DefaultPrefix.length).trim().split(/ +/);
+        } else {
+            args = m.content.slice(prefix.length).trim().split(/ +/);
+        }
+
         let command = args.shift().toLocaleLowerCase();
 
         if (!this._commands.has(command) && this._aliases.hasOwnProperty(command)) {
@@ -49,6 +85,19 @@ export default class CadenceDiscord {
         } catch (e) {
             this.logger.log('could not execute command ' + command + ' in ' + this.resolveGuildNameAndId(m.guild) + ': ' + e)
         }
+    }
+
+    private async _loadAllPrefixes(): Promise<void> {
+        this._prefixes = new Map<string, string>();
+
+        const prefixes: any[] = await Db.getInstance().getAllPrefixes();
+        for (let i = 0; i < prefixes.length; ++i) {
+            if (Cadence.Debug)
+                this.logger.log('loaded custom prefix ' + prefixes[i].prefix + ' for guild ' + prefixes[i].guild_id);
+            this._prefixes.set(prefixes[i].guild_id, prefixes[i].prefix);
+        }
+
+        this.logger.log('loaded all custom prefixes');
     }
 
     private async _loadAllCommands(): Promise<void> {
@@ -80,10 +129,6 @@ export default class CadenceDiscord {
         return path.join(this._commandsPath, commandName);
     }
 
-    public resolveGuildNameAndId(guild: discord.Guild): string {
-        return guild.name + ' (' + guild.id + ')';
-    }
-
     private constructor() {
         this.logger = new Logger('cadence-discord');
     }
@@ -92,7 +137,8 @@ export default class CadenceDiscord {
         this.Client = new discord.Client({
             intents: [
                 discord.Intents.FLAGS.GUILDS,
-                discord.Intents.FLAGS.GUILD_MESSAGES
+                discord.Intents.FLAGS.GUILD_MESSAGES,
+                discord.Intents.FLAGS.GUILD_VOICE_STATES
             ]
         });
 

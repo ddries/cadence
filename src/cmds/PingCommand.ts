@@ -1,8 +1,10 @@
 import { Message } from "discord.js";
 import BaseCommand from "../api/Cadence.BaseCommand";
+import Cadence from "../Cadence";
 
-class HelpCommand extends BaseCommand {
+class PingCommand extends BaseCommand {
     public name: string;
+    public description: string;
     public aliases: string[];
     public requireAdmin: boolean;
 
@@ -10,6 +12,7 @@ class HelpCommand extends BaseCommand {
         super();
 
         this.name = "ping";
+        this.description = "Get some feedback from " + Cadence.BotName + "!";
         this.aliases = [];
         this.requireAdmin = false;
     }
@@ -19,4 +22,4 @@ class HelpCommand extends BaseCommand {
     }
 }
 
-export default new HelpCommand();
+export default new PingCommand();

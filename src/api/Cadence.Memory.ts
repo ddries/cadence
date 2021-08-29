@@ -26,6 +26,11 @@ export default class CadenceMemory {
         return this._connectedServers.has(guildId);
     }
 
+    public disconnectServer(guildId: string): void {
+        if (this._connectedServers.has(guildId))
+            this._connectedServers.delete(guildId);
+    }
+
     private constructor() {
         this.logger = new Logger('cadence-memory');
     }

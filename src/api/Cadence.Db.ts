@@ -9,6 +9,19 @@ export default class Db {
 
     private _mysql: MySql = null;
 
+    public async getAllPrefixes(): Promise<any> {
+        return this._mysql.queryGetResult('SELECT * FROM prefix;');
+    }
+
+    public async setServerPrefix(guildId: string, prefix: string): Promise<void> {
+        const r = await this._mysql.queryGetResult('SELECT * FROM prefix WHERE guild_id = ?;', [guildId]);
+        if (r.length > 0) {
+            this._mysql.query("UPDATE prefix SET prefix = ? WHERE guild_id = ?", [prefix, guildId]);
+        } else {
+            this._mysql.query("INSERT INTO prefix(guild_id, prefix) VALUES(?, ?);", [guildId, prefix]);
+        }
+    }
+
     private constructor() {
         this.logger = new Logger('cadence-database');
     }
@@ -54,6 +67,15 @@ class MySql {
 
         this.logger = logger;
     }
+
+    public query(query: string, params: any[] | void): Promise<any[]> {
+		return this._conn.execute(query, params);
+	}
+
+	public async queryGetResult(query: string, params: any[] | void): Promise<any[]> {
+		const [ rows ] = await this.query(query, params);
+		return rows;
+	}
 
     public async init(): Promise<MySql> {
         this._conn = mysql.createPool({
