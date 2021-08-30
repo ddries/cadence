@@ -42,8 +42,16 @@ class NextCommand extends BaseCommand {
 
         const nextTrack = server.jumpNextSong();
 
-        if (await CadenceLavalink.getInstance().playTrack(nextTrack.base64, message.guildId)) {
+        const player = CadenceLavalink.getInstance().getPlayerByGuildId(message.guildId);
+
+        await player.stop();
+
+        if (await player.play(nextTrack.base64)/*await CadenceLavalink.getInstance().playTrack(nextTrack.base64, message.guildId)*/) {
+            console.log("After next play player track: ");
+            console.log(player.track);
             message.reply({ embeds: [ EmbedHelper.songBasic(nextTrack.trackInfo, message.author.id, "Now Playing!") ]});
+            console.log("After reply server player: ");
+            console.log(player);
         }
     }
 }

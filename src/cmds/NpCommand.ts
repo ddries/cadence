@@ -31,11 +31,27 @@ class NpCommand extends BaseCommand {
             return;
         }
 
-        const song = server.player.track;
+        const player = CadenceLavalink.getInstance().getPlayerByGuildId(message.guildId);
+
+        if (!player) {
+            message.reply({ embeds: [ EmbedHelper.NOK("There's nothing playing!") ]});
+            return;
+        }
+        const song = player.track;
+        // const song = server.player.track;
+
+        console.log("Server player in np");
+        // console.log(server.player);
+        console.log(player);
+
+        console.log("Current song in np: ");
+        console.log(song);
+
         const trackData: LavalinkResultTrackInfo = await CadenceLavalink.getInstance().resolveTrackInfo(song);
-        
+        console.log("Track data in np")
+        console.log(trackData);
         if (trackData) {
-            message.reply({ embeds: [ EmbedHelper.np(trackData) ] });
+            // message.reply({ embeds: [ EmbedHelper.np(trackData, server.player.timestamp) ] });
             // message.reply({ embeds: [ EmbedHelper.songBasic(trackData, ) ] });
         }
     }

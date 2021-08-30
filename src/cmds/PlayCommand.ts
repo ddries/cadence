@@ -44,7 +44,8 @@ class HelpCommand extends BaseCommand {
 
         await CadenceLavalink.getInstance().joinChannel(
             message.member.voice.channelId,
-            message.guildId
+            message.guildId,
+            message.channel
         );
 
         let server = CadenceMemory.getInstance().getConnectedServer(message.guildId);

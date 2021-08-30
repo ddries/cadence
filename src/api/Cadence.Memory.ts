@@ -1,3 +1,4 @@
+import { TextBasedChannels } from "discord.js";
 import { Player } from "lavacord";
 import ConnectedServer from "../types/ConnectedServer.type";
 import Logger from "./Cadence.Logger";
@@ -9,11 +10,11 @@ export default class CadenceMemory {
 
     private _connectedServers: Map<string, ConnectedServer> = null;
 
-    public setConnectedServer(guildId: string, channelId: string, player: Player): void {
+    public setConnectedServer(guildId: string, channelId: string, channel: TextBasedChannels, player: Player): void {
         if (this._connectedServers.has(guildId))
             this._connectedServers.delete(guildId);
 
-        this._connectedServers.set(guildId, new ConnectedServer(player, channelId, guildId));
+        this._connectedServers.set(guildId, new ConnectedServer(player, channelId, channel, guildId));
     }
 
     public getConnectedServer(guildId: string): ConnectedServer {

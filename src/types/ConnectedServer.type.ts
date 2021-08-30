@@ -1,3 +1,4 @@
+import { TextBasedChannels } from "discord.js";
 import { Player } from "lavacord";
 import Cadence from "../Cadence";
 import CadenceTrack from "./CadenceTrack.type";
@@ -6,13 +7,16 @@ export default class ConnectedServer {
     public player: Player;
     public guildId: string;
     public voiceChannelId: string;
+    public textChannelId: string;
+    public textChannel: TextBasedChannels;
 
     private _queue: CadenceTrack[];
 
-    constructor(player: Player, voiceChannelId: string, guildId: string) {
+    constructor(player: Player, voiceChannelId: string, channel: TextBasedChannels, guildId: string) {
         this.player = player;
         this.voiceChannelId = voiceChannelId;
         this.guildId = guildId;
+        this.textChannel = channel;
 
         this._queue = [];
     }

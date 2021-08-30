@@ -25,6 +25,11 @@ class HelpCommand extends BaseCommand {
             return;
         }
 
+        if (server.isQueueEmpty()) {
+            message.reply({ embeds: [ EmbedHelper.NOK("There's nothing in the queue!") ]});
+            return;
+        }
+
         let page = 1;
 
         const requiredPages = Math.ceil(server.getQueue().length / 10);

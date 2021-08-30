@@ -18,30 +18,30 @@ export default class EmbedHelper {
             .setDescription(`[${trackInfo.title}](${trackInfo.uri}), requested by <@${authorId}>`);
     }
 
-    public static np(track: LavalinkResultTrackInfo): MessageEmbed {
+    public static np(track: LavalinkResultTrackInfo, startTime: number): MessageEmbed {
         const totalCharacters: number = 18;
         const totalDuration: number = track.length;
-        const currentPosition: number = track.position;
+        const currentPosition: number = Date.now() - startTime;//track.position;
 
         const currentProgress: number = Math.ceil((totalCharacters * currentPosition) / totalDuration);
 
-        return new MessageEmbed()
-            .setTitle("Now Playing!")
-            .setColor(EmbedColor.Info)
-            .setThumbnail("https://img.youtube.com/vi/" + track.identifier + "/0.jpg")
-            .setDescription(`[${track.title}](${track.uri})`);
-
-        // let description: string = "";
-        // for (let i = 0; i < currentProgress; ++i) description += '─';
-        // description += "⚪";
-        // for (let i = currentProgress; i < totalCharacters; ++i) description += "─";
-
         // return new MessageEmbed()
-        //     .setTitle(track.title)
+        //     .setTitle("Now Playing!")
         //     .setColor(EmbedColor.Info)
-        //     .setURL(track.uri)
         //     .setThumbnail("https://img.youtube.com/vi/" + track.identifier + "/0.jpg")
-        //     .setDescription(description);
+        //     .setDescription(`[${track.title}](${track.uri})`);
+
+        let description: string = "";
+        for (let i = 0; i < currentProgress; ++i) description += '─';
+        description += "⚪";
+        for (let i = currentProgress; i < totalCharacters; ++i) description += "─";
+
+        return new MessageEmbed()
+            .setTitle(track.title)
+            .setColor(EmbedColor.Info)
+            .setURL(track.uri)
+            .setThumbnail("https://img.youtube.com/vi/" + track.identifier + "/0.jpg")
+            .setDescription(description);
     }
 
     public static queue(tracks: CadenceTrack[], page: number = 1, maxPages: number = 1): MessageEmbed {

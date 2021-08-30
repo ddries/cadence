@@ -1,4 +1,4 @@
-import { Client } from 'discord.js';
+import { Client, TextBasedChannels, TextChannel } from 'discord.js';
 import * as lavacord from 'lavacord';
 import { LavalinkNode, Player, TrackData } from 'lavacord';
 import Config from './Cadence.Config';
@@ -9,6 +9,7 @@ import fetch from 'node-fetch';
 import { URL } from 'url';
 import * as TrackResult from '../types/TrackResult.type';
 import { LavalinkResultTrackInfo } from '../types/TrackResult.type';
+import EmbedHelper from './Cadence.Embed';
 
 export default class CadenceLavalink {
 
@@ -21,11 +22,31 @@ export default class CadenceLavalink {
     public async playTrack(trackId: string, guildId: string): Promise<boolean> {
         if (!CadenceMemory.getInstance().isServerConnected(guildId)) return false;
 
-        const player: Player = CadenceMemory.getInstance().getConnectedServer(guildId)?.player;
+        // const player: Player = CadenceMemory.getInstance().getConnectedServer(guildId)?.player;
+        const player = this.getPlayerByGuildId(guildId);
         if (!player) return false;
 
-        const result = player.play(trackId);
+        await player.stop();
+        const result = await player.play(trackId);
+
+        // player.once("end", async d => {
+        //     if (d.reason !== "FINISHED") return;
+
+        //     const server = CadenceMemory.getInstance().getConnectedServer(guildId);
+        //     const nextTrack = server.jumpNextSong();
+        //     if (!nextTrack) return;
+
+        //     if (await CadenceLavalink.getInstance().playTrack(nextTrack.base64, guildId)) {
+        //         server.textChannel.send({ embeds: [ EmbedHelper.songBasic(nextTrack.trackInfo, nextTrack.requestedById, "Now Playing!") ]});
+        //     }
+        // });
+
         return result;
+    }
+
+    public getPlayerByGuildId(guildId: string): Player {
+        if (!this._manager.players.has(guildId)) return null;
+        return this._manager.players.get(guildId);
     }
 
     public async resolveLinkIntoTracks(search: string): Promise<TrackResult.LavalinkResult> {
@@ -53,8 +74,9 @@ export default class CadenceLavalink {
         return (lavacord.Rest.decode(node, track) as unknown) as LavalinkResultTrackInfo;
     }
 
-    public async joinChannel(channelId: string, guildId: string, selfDeaf: boolean = true, selfMute: boolean = false): Promise<Player> {
+    public async joinChannel(channelId: string, guildId: string, channel: TextBasedChannels, selfDeaf: boolean = true, selfMute: boolean = false): Promise<Player> {
         if (!this._manager) return null;
+
         const p = await this._manager.join({
             channel: channelId,
             guild: guildId,
@@ -65,8 +87,30 @@ export default class CadenceLavalink {
         });
 
         if (p) {
-            if (!CadenceMemory.getInstance().isServerConnected(guildId))
-                CadenceMemory.getInstance().setConnectedServer(guildId, channelId, p);
+            if (!CadenceMemory.getInstance().isServerConnected(guildId)) {
+                CadenceMemory.getInstance().setConnectedServer(guildId, channelId, channel, p);
+            
+                p.on('start', d => {
+                    console.log("S: ");
+                    console.log(d);
+                });
+        
+                p.on('end', d => {
+                    console.log("E: ");
+                    console.log(d);
+                });
+    
+                p.on('event', d => {
+                    console.log("EV: ");
+                    console.log(d);
+                });
+    
+                p.on('error', d => {
+                    console.log("ERR: ");
+                    console.log(d);
+                });
+            }
+
             return p;
         }
 
@@ -146,6 +190,10 @@ export default class CadenceLavalink {
         this._manager.on('ready', node => {
             this.logger.log('connected successfully to node ' + node.id + ' (' + node.host + ':' + node.port + ')');
         });
+
+        // this._manager.on('raw', (d, n) => {
+        //     console.log(d);
+        // });
 
         if (this._client.guilds.cache && typeof (this._client.ws as any).send === "undefined") {
             this._client.ws

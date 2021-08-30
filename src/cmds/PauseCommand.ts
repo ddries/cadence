@@ -32,6 +32,7 @@ class PauseCommand extends BaseCommand {
             return;
         }
 
+        console.log(server.player.track);
         const s = await server.player.pause(true);
 
         if (s) {
