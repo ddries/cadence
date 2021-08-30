@@ -1,4 +1,4 @@
-import discord from "discord.js";
+import discord, { MessageEmbed } from "discord.js";
 import Cadence from "../Cadence";
 import BaseCommand from "./Cadence.BaseCommand";
 import Config from "./Cadence.Config";
@@ -6,6 +6,7 @@ import Logger from "./Cadence.Logger";
 import fs from 'fs';
 import path from 'path';
 import Db from "./Cadence.Db";
+import EmbedHelper, { EmbedColor } from "./Cadence.Embed";
 
 export default class CadenceDiscord {
 
@@ -14,6 +15,7 @@ export default class CadenceDiscord {
 
     public Client: discord.Client = null;
     private _statusWebhook: discord.WebhookClient = null;
+    private _statsWebhook: discord.WebhookClient = null;
 
     private _commandsPath: string = "";
     private _commands: discord.Collection<string, BaseCommand> = null;
@@ -22,7 +24,12 @@ export default class CadenceDiscord {
     private _prefixes: Map<string, string> = null;
 
     public sendStatus(text: string): void {
-        this._statusWebhook.send(text);
+        this._statusWebhook.send({ embeds: [ EmbedHelper.generic(text, EmbedColor.Debug) ]});
+    }
+s
+    public sendStats(embed: MessageEmbed): void {
+        this.logger.log('sent stats to discord log');
+        this._statsWebhook.send({ embeds: [ embed ]});
     }
 
     public resolveGuildNameAndId(guild: discord.Guild): string {
@@ -148,6 +155,7 @@ export default class CadenceDiscord {
         });
 
         this._statusWebhook = new discord.WebhookClient({ url: Config.getInstance().getKeyOrDefault('StatusWebhook', '')});
+        this._statsWebhook = new discord.WebhookClient({ url: Config.getInstance().getKeyOrDefault('StatsWebhook', '')});
 
         this._commandsPath = path.join(Cadence.BaseDir, 'cmds');
 

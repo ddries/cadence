@@ -21,7 +21,7 @@ class HelpCommand extends BaseCommand {
     }
 
     public async run(m: Message, args: string[]): Promise<void> {
-        const musicCommands = ["play", "np", "pause", "resume", "next", "queue", "shuffle"];
+        const musicCommands = ["play", "np", "pause", "resume", "next", "queue", "shuffle", "clear", "jump", "remove"];
         const utilityCommands = ["help", "leave", "prefix", "ping"];
 
         const rowOptions = new MessageActionRow()
@@ -50,7 +50,7 @@ class HelpCommand extends BaseCommand {
             .setURL('https://cadence.driescode.dev')
             .setColor(EmbedColor.Info)
             .setAuthor(Cadence.BotName, 'https://cdn.discordapp.com/attachments/692929962486792235/881589916901998652/adagio.jpg', 'https://cadence.driescode.dev')
-            .setDescription(Cadence.BotName + ' is an easy and completely free to use music bot. Add it to your server and start playing the best music with your friends!\n\nJump between help categories with the buttons below')
+            .setDescription(Cadence.BotName + ' is the easiest way to play music in Discord. Add it to your server and start playing the best music with your friends!\n\nJump between help categories with the buttons below.')
 
         const reply = await m.reply({ embeds: [ embed ], components: [ rowOptions ] });
 

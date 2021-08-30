@@ -7,11 +7,13 @@ import CadenceMemory from "../api/Cadence.Memory";
 import CadenceTrack from "../types/CadenceTrack.type";
 import { LavalinkResult } from "../types/TrackResult.type";
 
-class HelpCommand extends BaseCommand {
+class PlayCommand extends BaseCommand {
     public name: string;
     public description: string;
     public aliases: string[];
     public requireAdmin: boolean;
+
+    public first: boolean = false;
 
     constructor() {
         super();
@@ -49,15 +51,17 @@ class HelpCommand extends BaseCommand {
         );
 
         let server = CadenceMemory.getInstance().getConnectedServer(message.guildId);
-
+        
         let result: LavalinkResult = null;
         if (CadenceLavalink.getInstance().isValidUrl(linkOrKeyword)) {
             result = await CadenceLavalink.getInstance().resolveLinkIntoTracks(linkOrKeyword);
         } else {
-            for (let i = 0; i < args.length; ++i) linkOrKeyword += args[i] + " ";
-            result = await CadenceLavalink.getInstance().resolveYoutubeIntoTracks(linkOrKeyword.trim());
+            for (let i = 1; i < args.length; ++i) linkOrKeyword += args[i] + " ";
+            result = await CadenceLavalink.getInstance().resolveYoutubeIntoTracks(linkOrKeyword.trimEnd());
         }
-
+        
+        const player = CadenceLavalink.getInstance().getPlayerByGuildId(message.guildId);
+        
         switch (result.loadType) {
             case "LOAD_FAILED":
             case "NO_MATCHES":
@@ -66,7 +70,7 @@ class HelpCommand extends BaseCommand {
             case "SEARCH_RESULT":
             case "TRACK_LOADED":
                 const track = result.tracks[0];
-                if (!server.player.playing) {
+                if (!player.playing) {
                     if (await CadenceLavalink.getInstance().playTrack(track.track, message.guildId)) {
                         message.reply({ embeds: [ EmbedHelper.songBasic(track.info, message.author.id, "Now Playing!") ]});
                     }
@@ -90,4 +94,4 @@ class HelpCommand extends BaseCommand {
     }
 }
 
-export default new HelpCommand();
+export default new PlayCommand();

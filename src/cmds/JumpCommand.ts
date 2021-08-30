@@ -1,11 +1,13 @@
 import { Message } from "discord.js";
 import BaseCommand from "../api/Cadence.BaseCommand";
+import Config from "../api/Cadence.Config";
+import CadenceDiscord from "../api/Cadence.Discord";
 import EmbedHelper from "../api/Cadence.Embed";
 import CadenceLavalink from "../api/Cadence.Lavalink";
 import CadenceMemory from "../api/Cadence.Memory";
 import Cadence from "../Cadence";
 
-class PauseCommand extends BaseCommand {
+class JumpCommand extends BaseCommand {
     public name: string;
     public description: string;
     public aliases: string[];
@@ -14,9 +16,9 @@ class PauseCommand extends BaseCommand {
     constructor() {
         super();
 
-        this.name = "pause";
-        this.description = "Pause the current song";
-        this.aliases = [];
+        this.name = "jump";
+        this.description = "Jump to the selected song from queue";
+        this.aliases = ["j"];
         this.requireAdmin = false;
     }
 
@@ -34,18 +36,37 @@ class PauseCommand extends BaseCommand {
             message.reply({ embeds: [ EmbedHelper.NOK("There's nothing playing!") ]});
             return;
         }
-        
+
         if (!message.member.voice?.channelId || message.member.voice.channelId != server.voiceChannelId) {
             message.reply({ embeds: [ EmbedHelper.NOK("You must be connected to the same voice channel as " + Cadence.BotName + "!") ]});
             return;
         }
 
-        const s = await server.player.pause(true);
+        if (server.isQueueEmpty()) {
+            message.reply({ embeds: [ EmbedHelper.NOK("There's nothing in the queue!") ]});
+            return;
+        }
 
-        if (s) {
-            message.react('⏸');
+        if (args.length < 1) {
+            message.reply({ embeds: [ EmbedHelper.NOK("Please enter the song index! Usage: " + CadenceDiscord.getInstance().getServerPrefix(message.guildId) + "jump [index].") ]});
+            return;
+        }
+
+        const idx = parseInt(args[0], 10);
+
+        if (idx >= server.getQueue().length) {
+            message.reply({ embeds: [ EmbedHelper.NOK("Please enter a valid index!") ]});
+            return;
+        }
+
+        const nextTrack = server.jumpToSong(idx-1);
+
+        await player.stop();
+
+        if (await CadenceLavalink.getInstance().playTrack(nextTrack.base64, message.guildId)) {
+            message.reply({ embeds: [ EmbedHelper.songBasic(nextTrack.trackInfo, message.author.id, "Now Playing!") ]});
         }
     }
 }
 
-export default new PauseCommand();
+export default new JumpCommand();

@@ -1,11 +1,13 @@
 import { Message } from "discord.js";
 import BaseCommand from "../api/Cadence.BaseCommand";
+import Config from "../api/Cadence.Config";
+import CadenceDiscord from "../api/Cadence.Discord";
 import EmbedHelper from "../api/Cadence.Embed";
 import CadenceLavalink from "../api/Cadence.Lavalink";
 import CadenceMemory from "../api/Cadence.Memory";
 import Cadence from "../Cadence";
 
-class PauseCommand extends BaseCommand {
+class RemoveCommand extends BaseCommand {
     public name: string;
     public description: string;
     public aliases: string[];
@@ -14,8 +16,8 @@ class PauseCommand extends BaseCommand {
     constructor() {
         super();
 
-        this.name = "pause";
-        this.description = "Pause the current song";
+        this.name = "remove";
+        this.description = "Remove the selected song from queue";
         this.aliases = [];
         this.requireAdmin = false;
     }
@@ -28,24 +30,36 @@ class PauseCommand extends BaseCommand {
             return;
         }
 
-        const player = CadenceLavalink.getInstance().getPlayerByGuildId(message.guildId);
-
-        if (!player) {
+        if (!CadenceLavalink.getInstance().getPlayerByGuildId(message.guildId)) {
             message.reply({ embeds: [ EmbedHelper.NOK("There's nothing playing!") ]});
             return;
         }
-        
+
         if (!message.member.voice?.channelId || message.member.voice.channelId != server.voiceChannelId) {
             message.reply({ embeds: [ EmbedHelper.NOK("You must be connected to the same voice channel as " + Cadence.BotName + "!") ]});
             return;
         }
 
-        const s = await server.player.pause(true);
-
-        if (s) {
-            message.react('⏸');
+        if (server.isQueueEmpty()) {
+            message.reply({ embeds: [ EmbedHelper.NOK("There's nothing in the queue!") ]});
+            return;
         }
+
+        if (args.length < 1) {
+            message.reply({ embeds: [ EmbedHelper.NOK("Please enter the song index! Usage: " + CadenceDiscord.getInstance().getServerPrefix(message.guildId) + "remove [index].") ]});
+            return;
+        }
+
+        const idx = parseInt(args[0], 10);
+
+        if (idx >= server.getQueue().length) {
+            message.reply({ embeds: [ EmbedHelper.NOK("Please enter a valid index!") ]});
+            return;
+        }
+
+        server.removeFromQueueIdx(idx-1);
+        message.react('✅');
     }
 }
 
-export default new PauseCommand();
+export default new RemoveCommand();

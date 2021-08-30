@@ -1,5 +1,5 @@
 import { MessageEmbed } from "discord.js";
-import { TrackData } from "lavacord";
+import { Player } from "lavaclient";
 import Cadence from "../Cadence";
 import CadenceTrack from "../types/CadenceTrack.type";
 import { LavalinkResultTrackInfo } from "../types/TrackResult.type";
@@ -18,10 +18,10 @@ export default class EmbedHelper {
             .setDescription(`[${trackInfo.title}](${trackInfo.uri}), requested by <@${authorId}>`);
     }
 
-    public static np(track: LavalinkResultTrackInfo, startTime: number): MessageEmbed {
+    public static np(track: LavalinkResultTrackInfo, position: number): MessageEmbed {
         const totalCharacters: number = 18;
         const totalDuration: number = track.length;
-        const currentPosition: number = Date.now() - startTime;//track.position;
+        const currentPosition: number = position;
 
         const currentProgress: number = Math.ceil((totalCharacters * currentPosition) / totalDuration);
 
@@ -35,6 +35,9 @@ export default class EmbedHelper {
         for (let i = 0; i < currentProgress; ++i) description += '─';
         description += "⚪";
         for (let i = currentProgress; i < totalCharacters; ++i) description += "─";
+
+        const remaining = totalDuration - currentPosition;
+        description += " ⏳" + this._msToString(remaining);
 
         return new MessageEmbed()
             .setTitle(track.title)
@@ -51,10 +54,11 @@ export default class EmbedHelper {
             .setTimestamp(Date.now());
         
         let description = "";
-        let i = Cadence.SongsPerEmbed * (page - 1);
+        const offset = Cadence.SongsPerEmbed * (page - 1);
+        let i = offset;
         let j = tracks.length < (i + Cadence.SongsPerEmbed) ? tracks.length : (i + Cadence.SongsPerEmbed);
         for (; i  < j; ++i) {
-            description += `**(${i + 1})** ${tracks[i].trackInfo.title.substr(0, 15)} [<@${tracks[i].requestedById}>]\n`
+            description += `**(${i + 1})** ${tracks[i].trackInfo.title.substr(0, 40)} [<@${tracks[i].requestedById}>]\n`
         }
 
         if (maxPages > 1)
@@ -83,10 +87,38 @@ export default class EmbedHelper {
             .setColor(color);
     }
 
+    private static _msToString(ms: number): string {
+        ms /= 1000;
+        var h = Math.floor(ms / 3600);
+        var m = Math.floor(ms % 3600 / 60);
+        var s = Math.floor(ms % 3600 % 60);
+
+        let result = "";
+
+        if (h > 0) {
+            result += h + "h ";
+        }
+
+        if (m > 0) {
+            result += m + "m ";
+        }
+
+        if (s > 0) {
+            result += s + "s ";
+        }
+
+        if (h > 12) {
+            result = "♾️";
+        }
+
+        return result;
+    }
+
 }
 
 export enum EmbedColor {
     OK = "#32a852",
     NOK = "#eb4034",
-    Info = "#fcba03"
+    Info = "#fcba03",
+    Debug = "#4287f5"
 }

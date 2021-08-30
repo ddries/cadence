@@ -28,6 +28,11 @@ class ShuffleCommand extends BaseCommand {
             return;
         }
 
+        if (!CadenceLavalink.getInstance().getPlayerByGuildId(message.guildId)) {
+            message.reply({ embeds: [ EmbedHelper.NOK("There's nothing playing!") ]});
+            return;
+        }
+
         if (!message.member.voice?.channelId || message.member.voice.channelId != server.voiceChannelId) {
             message.reply({ embeds: [ EmbedHelper.NOK("You must be connected to the same voice channel as " + Cadence.BotName + "!") ]});
             return;
@@ -39,7 +44,7 @@ class ShuffleCommand extends BaseCommand {
         }
 
         server.shuffleQueue();
-        message.reply({ embeds: [ EmbedHelper.OK("Randomized queue!") ]});
+        message.react('🔀');
     }
 }
 

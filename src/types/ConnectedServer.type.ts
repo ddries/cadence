@@ -1,5 +1,5 @@
 import { TextBasedChannels } from "discord.js";
-import { Player } from "lavacord";
+import { Player } from "lavaclient";
 import Cadence from "../Cadence";
 import CadenceTrack from "./CadenceTrack.type";
 
@@ -31,11 +31,21 @@ export default class ConnectedServer {
 
     public removeFromQueue(track: CadenceTrack): void {
         const i = this._queue.indexOf(track);
-        if (i >= 0) this._queue.slice(i, 1);
+        if (i >= 0) this._queue.splice(i, 1);
+    }
+
+    public removeFromQueueIdx(idx: number): void {
+        this._queue.splice(idx, 1);
     }
 
     public jumpNextSong(): CadenceTrack {
         return this._queue.shift();
+    }
+
+    public jumpToSong(idx: number): CadenceTrack {
+        const s = this._queue.at(idx);
+        if (s) this._queue.splice(0, idx+1);
+        return s;
     }
 
     public getQueue(): CadenceTrack[] {
@@ -56,5 +66,9 @@ export default class ConnectedServer {
 
             [this._queue[currentIndex], this._queue[randomIndex]] = [this._queue[randomIndex], this._queue[currentIndex]];
         }
+    }
+
+    public clearQueue(): void {
+        this._queue.length = 0;
     }
 }

@@ -1,6 +1,7 @@
 import { Message, MessageActionRow, MessageButton } from "discord.js";
 import BaseCommand from "../api/Cadence.BaseCommand";
 import EmbedHelper from "../api/Cadence.Embed";
+import CadenceLavalink from "../api/Cadence.Lavalink";
 import CadenceMemory from "../api/Cadence.Memory";
 
 class HelpCommand extends BaseCommand {
@@ -21,7 +22,13 @@ class HelpCommand extends BaseCommand {
     public async run(message: Message, args: string[]): Promise<void> {
         const server = CadenceMemory.getInstance().getConnectedServer(message.guildId);
         if (!server) {
-            message.reply({ embeds: [ EmbedHelper.NOK("There's nothing in the queue!") ]});
+            message.reply({ embeds: [ EmbedHelper.NOK("There's nothing playing!") ]});
+            return;
+        }
+
+        const player = CadenceLavalink.getInstance().getPlayerByGuildId(message.guildId);
+        if (!player) {
+            message.reply({ embeds: [ EmbedHelper.NOK("There's nothing playing!") ]});
             return;
         }
 

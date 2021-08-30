@@ -1,5 +1,5 @@
 import { TextBasedChannels } from "discord.js";
-import { Player } from "lavacord";
+import { Player } from "lavaclient";
 import ConnectedServer from "../types/ConnectedServer.type";
 import Logger from "./Cadence.Logger";
 

@@ -1,6 +1,7 @@
 import { Message } from "discord.js";
 import BaseCommand from "../api/Cadence.BaseCommand";
 import EmbedHelper from "../api/Cadence.Embed";
+import CadenceLavalink from "../api/Cadence.Lavalink";
 import CadenceMemory from "../api/Cadence.Memory";
 import Cadence from "../Cadence";
 
@@ -23,6 +24,13 @@ class ResumeCommand extends BaseCommand {
         const server = CadenceMemory.getInstance().getConnectedServer(message.guildId);
 
         if (!server) {
+            message.reply({ embeds: [ EmbedHelper.NOK("There's nothing playing!") ]});
+            return;
+        }
+
+        const player = CadenceLavalink.getInstance().getPlayerByGuildId(message.guildId);
+
+        if (!player) {
             message.reply({ embeds: [ EmbedHelper.NOK("There's nothing playing!") ]});
             return;
         }
