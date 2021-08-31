@@ -34,7 +34,7 @@ export default class Cadence {
         Cadence.Version = Config.getInstance().getKeyOrDefault('Version', '0.0.0');
 
         Cadence.BotName = Config.getInstance().getKeyOrDefault('BotName', '');
-        Cadence.DefaultPrefix = Config.getInstance().getKeyOrDefault('BotDefaultPrefix', '');
+        Cadence.DefaultPrefix = Cadence.Debug ? Config.getInstance().getKeyOrDefault('BotDefaultPrefixDebug', '') : Config.getInstance().getKeyOrDefault('BotDefaultPrefix', '');
         
         Cadence.SongsPerEmbed = Config.getInstance().getKeyOrDefault('SongsPerEmbed', 10);
 
@@ -46,7 +46,8 @@ export default class Cadence {
 
         await CadenceLavalink.getInstance().init();
 
-        CadenceDiscord.getInstance().sendStatus("Cadence logged in.");
+        if (!Cadence.Debug)
+            CadenceDiscord.getInstance().sendStatus("Cadence logged in.");
     }
 
     public static getInstance(): Cadence {

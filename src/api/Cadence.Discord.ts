@@ -58,7 +58,7 @@ s
         this.logger.log('successfully connected to discord as ' + this.Client.user.tag);
         this.Client.user.setActivity({
             type: "LISTENING",
-            name: Config.getInstance().getKeyOrDefault('BotDefaultPrefix', '') + 'help'
+            name: Cadence.DefaultPrefix + 'help'
         });
         
         if (this.Client.user.username != Cadence.BotName && Cadence.BotName.length > 0) {
@@ -150,7 +150,8 @@ s
             intents: [
                 discord.Intents.FLAGS.GUILDS,
                 discord.Intents.FLAGS.GUILD_MESSAGES,
-                discord.Intents.FLAGS.GUILD_VOICE_STATES
+                discord.Intents.FLAGS.GUILD_VOICE_STATES,
+                discord.Intents.FLAGS.GUILD_MESSAGE_REACTIONS,
             ]
         });
 
@@ -171,7 +172,11 @@ s
         this.Client.on('messageCreate', this.OnMessage.bind(this));
 
         this.logger.log('logging to discord network');
-        await this.Client.login(Config.getInstance().getKeyOrDefault('BotToken', '')).catch(e => {
+        await this.Client.login(
+            Cadence.Debug ?
+                Config.getInstance().getKeyOrDefault('BotTokenDebug', '') :
+                Config.getInstance().getKeyOrDefault('BotToken', '')
+        ).catch(e => {
             this.logger.log('could not connect to discord network ' + e);
             process.exit(1);
         });

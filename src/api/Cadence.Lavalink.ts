@@ -118,7 +118,7 @@ export default class CadenceLavalink {
         this.logger.log('requested to join channel ' + channelId + ' in guild ' + guildId);
 
         const p = await this._cluster.createPlayer(guildId);
-        
+        console.log(p);
         if (!p?.connected) {
             CadenceMemory.getInstance().setConnectedServer(guildId, channelId, channel, p);
 
@@ -166,12 +166,17 @@ export default class CadenceLavalink {
         const player = this.getPlayerByGuildId(guildId);
         if (!player) return false;
 
-        if(player.disconnect() && await player.destroy()) {
-            CadenceMemory.getInstance().disconnectServer(guildId);
-            return true;
-        }
 
-        return false;
+        await player.disconnect().destroy();
+        await this._cluster.destroyPlayer(guildId);
+        return true;
+
+        // if (player.disconnect && await player.destroy() && await this._cluster.destroyPlayer(guildId)) {
+        //     CadenceMemory.getInstance().disconnectServer(guildId);
+        //     return true;
+        // }
+
+        return true;
     }
 
     public isValidUrl(url: string, restrictHttp: boolean = true): boolean {

@@ -1,6 +1,7 @@
 import mysql from 'mysql2/promise';
 import Config from './Cadence.Config';
 import Logger from './Cadence.Logger';
+import v8 from 'v8';
 
 export default class Db {
 
@@ -8,6 +9,31 @@ export default class Db {
     private logger: Logger = null;
 
     private _mysql: MySql = null;
+
+    public async savePlaylist(guildId: string, playlist: string[], name: string): Promise<string> {
+        const token = v8.serialize(playlist).toString('hex');
+        const id = token.substr(0, 16);
+        await this._mysql.query('INSERT INTO playlist(id, name, token, guild_id) VALUES(?, ?, ?, ?)', [
+            id, 
+            name,
+            token,
+            guildId
+        ]);
+        return id;
+    }
+
+    public async loadPlaylist(id: string): Promise<any[]> {
+        const result = await this._mysql.queryGetResult('SELECT token FROM playlist WHERE id LIKE ?', [id]);
+        let playlist: string[] = [];
+        if (result.length > 0) {
+            playlist = v8.deserialize(Buffer.from(result[0].token, "hex"));
+        }
+        return playlist;
+    }
+
+    public async getAllPlaylists(guildId: string): Promise<any[]> {
+        return await this._mysql.queryGetResult('SELECT id, name FROM playlist WHERE guild_id = ?', [guildId]);
+    }
 
     public async getAllPrefixes(): Promise<any> {
         return this._mysql.queryGetResult('SELECT * FROM prefix;');
