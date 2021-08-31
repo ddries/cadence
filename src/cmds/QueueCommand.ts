@@ -3,6 +3,7 @@ import BaseCommand from "../api/Cadence.BaseCommand";
 import EmbedHelper from "../api/Cadence.Embed";
 import CadenceLavalink from "../api/Cadence.Lavalink";
 import CadenceMemory from "../api/Cadence.Memory";
+import { LoopType } from "../types/ConnectedServer.type";
 
 class HelpCommand extends BaseCommand {
     public name: string;
@@ -26,6 +27,8 @@ class HelpCommand extends BaseCommand {
             return;
         }
 
+        // console.log(server.getQueue());
+
         const player = CadenceLavalink.getInstance().getPlayerByGuildId(message.guildId);
         if (!player) {
             message.reply({ embeds: [ EmbedHelper.NOK("There's nothing playing!") ]});
@@ -37,10 +40,10 @@ class HelpCommand extends BaseCommand {
             return;
         }
 
-        let page = 1;
+        let page = (server.getCurrentQueueIndex() / 10 | 0) + 1;
 
         const requiredPages = Math.ceil(server.getQueue().length / 10);
-        const embed = EmbedHelper.queue(server.getQueue(), page, requiredPages);
+        const embed = EmbedHelper.queue(server.getQueue(), page, requiredPages, server.loop == LoopType.QUEUE);
 
         if (requiredPages <= 1) {
             message.reply({ embeds: [ embed ] });
@@ -83,7 +86,7 @@ class HelpCommand extends BaseCommand {
                     }
     
                     await interaction.editReply({
-                        embeds: [ EmbedHelper.queue(server.getQueue(), page, requiredPages) ]
+                        embeds: [ EmbedHelper.queue(server.getQueue(), page, requiredPages, server.loop == LoopType.QUEUE) ]
                     });
                 }).catch(e => {
                     console.log(e);

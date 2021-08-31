@@ -43,13 +43,8 @@ class NpCommand extends BaseCommand {
             return;
         }
 
-        const song = player.track;
-
-        const trackData: LavalinkResultTrackInfo = await CadenceLavalink.getInstance().resolveTrackInfo(song);
-
-        if (trackData) {
-            message.reply({ embeds: [ EmbedHelper.np(trackData, player.position) ] });
-        }
+        const song = server.getCurrentTrack();
+        message.reply({ embeds: [ EmbedHelper.np(song, player.position) ] });
     }
 }
 

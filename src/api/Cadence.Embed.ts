@@ -18,18 +18,12 @@ export default class EmbedHelper {
             .setDescription(`[${trackInfo.title}](${trackInfo.uri}), requested by <@${authorId}>`);
     }
 
-    public static np(track: LavalinkResultTrackInfo, position: number): MessageEmbed {
+    public static np(track: CadenceTrack, position: number): MessageEmbed {
         const totalCharacters: number = 18;
-        const totalDuration: number = track.length;
+        const totalDuration: number = track.trackInfo.length;
         const currentPosition: number = position;
 
         const currentProgress: number = Math.ceil((totalCharacters * currentPosition) / totalDuration);
-
-        // return new MessageEmbed()
-        //     .setTitle("Now Playing!")
-        //     .setColor(EmbedColor.Info)
-        //     .setThumbnail("https://img.youtube.com/vi/" + track.identifier + "/0.jpg")
-        //     .setDescription(`[${track.title}](${track.uri})`);
 
         let description: string = "";
         for (let i = 0; i < currentProgress; ++i) description += '─';
@@ -39,18 +33,21 @@ export default class EmbedHelper {
         const remaining = totalDuration - currentPosition;
         description += " ⏳" + this._msToString(remaining);
 
+        if (track.looped)
+            description += "🔂";
+
         return new MessageEmbed()
-            .setTitle(track.title)
+            .setTitle(track.trackInfo.title)
             .setColor(EmbedColor.Info)
-            .setURL(track.uri)
-            .setThumbnail("https://img.youtube.com/vi/" + track.identifier + "/0.jpg")
+            .setURL(track.trackInfo.uri)
+            .setThumbnail("https://img.youtube.com/vi/" + track.trackInfo.identifier + "/0.jpg")
             .setDescription(description);
     }
 
-    public static queue(tracks: CadenceTrack[], page: number = 1, maxPages: number = 1): MessageEmbed {
+    public static queue(tracks: CadenceTrack[], page: number = 1, maxPages: number = 1, queueLoop: boolean = false): MessageEmbed {
         let embed = new MessageEmbed()
             .setColor(EmbedColor.Info)
-            .setTitle("Queue (" + tracks.length + ")")
+            .setTitle((queueLoop ? '🔁 ' : '') + "Queue (" + tracks.length + ")")
             .setTimestamp(Date.now());
         
         let description = "";
@@ -58,7 +55,7 @@ export default class EmbedHelper {
         let i = offset;
         let j = tracks.length < (i + Cadence.SongsPerEmbed) ? tracks.length : (i + Cadence.SongsPerEmbed);
         for (; i  < j; ++i) {
-            description += `**(${i + 1})** ${tracks[i].trackInfo.title.substr(0, 40)} [<@${tracks[i].requestedById}>]\n`
+            description += `**(${i + 1})** ${tracks[i].looped ? '🔂 ' : ' '}${tracks[i].beingPlayed ? '➡️ ' : ' '}${tracks[i].trackInfo.title.substr(0, 40)} [<@${tracks[i].requestedById}>]\n`
         }
 
         if (maxPages > 1)

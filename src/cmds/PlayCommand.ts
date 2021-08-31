@@ -70,23 +70,22 @@ class PlayCommand extends BaseCommand {
             case "SEARCH_RESULT":
             case "TRACK_LOADED":
                 const track = result.tracks[0];
+                const ct = new CadenceTrack(track.track, track.info, message.author.id);
+                server.addToQueue(ct);
+
                 if (!player.playing) {
-                    if (await CadenceLavalink.getInstance().playTrack(track.track, message.guildId)) {
-                        message.reply({ embeds: [ EmbedHelper.songBasic(track.info, message.author.id, "Now Playing!") ]});
-                    }
+                    await CadenceLavalink.getInstance().playNextSongInQueue(player);
                 } else {
-                    const ct = new CadenceTrack(track.track, track.info, message.author.id);
-                    server.addToQueue(ct);
                     message.reply({ embeds: [ EmbedHelper.songBasic(track.info, message.author.id, "Added to Queue!") ]});
                 }
                 break;
             case "PLAYLIST_LOADED":
-                for (let i = server.player.playing ? 0 : 1; i < result.tracks.length; ++i) {
+                for (let i = 0; i < result.tracks.length; ++i) {
                     server.addToQueue(new CadenceTrack(result.tracks[i].track, result.tracks[i].info, message.author.id));
                 }
 
-                if (!server.player.playing) {
-                    await CadenceLavalink.getInstance().playTrack(result.tracks[0].track, message.guildId);
+                if (!player.playing) {
+                    await CadenceLavalink.getInstance().playNextSongInQueue(player);
                 }
 
                 message.reply({ embeds: [ EmbedHelper.OK(`Added **${result.tracks.length}** songs to the queue!`) ]});

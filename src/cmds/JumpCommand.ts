@@ -6,6 +6,7 @@ import EmbedHelper from "../api/Cadence.Embed";
 import CadenceLavalink from "../api/Cadence.Lavalink";
 import CadenceMemory from "../api/Cadence.Memory";
 import Cadence from "../Cadence";
+import { LoopType } from "../types/ConnectedServer.type";
 
 class JumpCommand extends BaseCommand {
     public name: string;
@@ -54,18 +55,24 @@ class JumpCommand extends BaseCommand {
 
         const idx = parseInt(args[0], 10);
 
-        if (idx >= server.getQueue().length) {
+        if (idx > server.getQueue().length) {
             message.reply({ embeds: [ EmbedHelper.NOK("Please enter a valid index!") ]});
             return;
         }
 
-        const nextTrack = server.jumpToSong(idx-1);
+        // given index is real index + 1 (thus, real is given -1)
+        // if no loop is active we are removing 1 song in handleTrackEnded (currently played)
+        // thus, given index is now index, real index is last given index - 1 (thus, real is first given -2)
+        // then we jump to the given song
+        // so we remove until the real index is now index 0
 
-        await player.stop();
+        // if queue loop is active then real index is just given - 1 as we dont remove songs then
 
-        if (await CadenceLavalink.getInstance().playTrack(nextTrack.base64, message.guildId)) {
-            message.reply({ embeds: [ EmbedHelper.songBasic(nextTrack.trackInfo, message.author.id, "Now Playing!") ]});
-        }
+        server.handleTrackEnded();
+        const song = server.jumpToSong(idx - 1);
+
+        await CadenceLavalink.getInstance().playTrack(song, player.guildId);
+        message.reply({ embeds: [ EmbedHelper.songBasic(song.trackInfo, song.requestedById, "Now Playing!") ]});
     }
 }
 

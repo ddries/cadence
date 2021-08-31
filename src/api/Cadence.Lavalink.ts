@@ -9,6 +9,8 @@ import { URL } from 'url';
 import * as TrackResult from '../types/TrackResult.type';
 import { LavalinkResultTrackInfo } from '../types/TrackResult.type';
 import EmbedHelper, { EmbedColor } from './Cadence.Embed';
+import { LoopType } from '../types/ConnectedServer.type';
+import CadenceTrack from '../types/CadenceTrack.type';
 
 export default class CadenceLavalink {
 
@@ -18,7 +20,27 @@ export default class CadenceLavalink {
     private _cluster: Cluster = null;
     private _client: Client = null;
 
-    public async playTrack(trackId: string, guildId: string): Promise<boolean> {
+    // Plays the given track in the given guild (must already be conn to voice)
+    public async playTrack(track: CadenceTrack, guildId: string): Promise<boolean> {
+        if (!CadenceMemory.getInstance().isServerConnected(guildId)) return false;
+
+        const player = this.getPlayerByGuildId(guildId);
+        if (!player) return false;
+
+        this.logger.log('requested to play track ' + track.base64 + ' in ' + guildId);
+
+        if (player.playing) await player.stop();
+        const result = await player.play(track.base64);
+
+        if (result) {
+            track.beingPlayed = true;
+            return true;
+        }
+        
+        return false;
+    }
+
+    public async playTrack2(trackId: string, guildId: string): Promise<boolean> {
         if (!CadenceMemory.getInstance().isServerConnected(guildId)) return false;
 
         this.logger.log('requested to play track ' + trackId + ' in ' + guildId);
@@ -74,13 +96,29 @@ export default class CadenceLavalink {
         return trackInfo;
     }
 
+    public async playNextSongInQueue(player: Player, notify: boolean = true): Promise<boolean> {
+        const s = CadenceMemory.getInstance().getConnectedServer(player.guildId);
+        if (!s) return false;
+
+        const t = s.getNextSong();
+        if (!t) return false;
+
+        if (await this.playTrack(t, player.guildId)) {
+            if (notify)
+                s.textChannel.send({ embeds: [ EmbedHelper.songBasic(t.trackInfo, t.requestedById, "Now Playing!") ]});
+            return true;
+        }
+
+        return false;
+    }
+
     public async joinChannel(channelId: string, guildId: string, channel: TextBasedChannels, selfDeaf: boolean = true, selfMute: boolean = false): Promise<Player> {
         if (!this._cluster) return null;
 
         this.logger.log('requested to join channel ' + channelId + ' in guild ' + guildId);
 
         const p = await this._cluster.createPlayer(guildId);
-
+        
         if (!p?.connected) {
             CadenceMemory.getInstance().setConnectedServer(guildId, channelId, channel, p);
 
@@ -93,28 +131,26 @@ export default class CadenceLavalink {
                 if (reason != "STOPPED" && reason != "REPLACED") {
                     this.logger.log('track ended in ' + guildId + ' playing next song in queue');
 
-                    const server = CadenceMemory.getInstance().getConnectedServer(guildId);
-                    const nextTrack = server.jumpNextSong();
+                    const s = CadenceMemory.getInstance().getConnectedServer(guildId);
+                    if (!s) return;
 
-                    if (!nextTrack) return;
-
-                    if (await CadenceLavalink.getInstance().playTrack(nextTrack.base64, guildId)) {
-                        server.textChannel.send({ embeds: [ EmbedHelper.songBasic(nextTrack.trackInfo, nextTrack.requestedById, "Now Playing!") ]});
-                    }
+                    s.handleTrackEnded();
+                    await CadenceLavalink.getInstance().playNextSongInQueue(p, s.loop == LoopType.NONE);
                 }
             });
 
             p.on('trackException', async (track, error) => {
                 this.logger.log('trackException on track ' + track + ': ' + error);
                 
-                const server = CadenceMemory.getInstance().getConnectedServer(guildId);
-                const nextTrack = server.jumpNextSong();
+                // this.playNextSongInQueue(p);
+                // const server = CadenceMemory.getInstance().getConnectedServer(guildId);
+                // const nextTrack = server.jumpNextSong();
 
-                if (!nextTrack) return;
+                // if (!nextTrack) return;
 
-                if (await CadenceLavalink.getInstance().playTrack(nextTrack.base64, guildId)) {
-                    server.textChannel.send({ embeds: [ EmbedHelper.songBasic(nextTrack.trackInfo, nextTrack.requestedById, "Now Playing!") ]});
-                }
+                // if (await CadenceLavalink.getInstance().playTrack(nextTrack.base64, guildId)) {
+                //     server.textChannel.send({ embeds: [ EmbedHelper.songBasic(nextTrack.trackInfo, nextTrack.requestedById, "Now Playing!") ]});
+                // }
             });
         }
 
@@ -130,7 +166,7 @@ export default class CadenceLavalink {
         const player = this.getPlayerByGuildId(guildId);
         if (!player) return false;
 
-        if(player.stop() && player.disconnect()) {
+        if(player.disconnect() && await player.destroy()) {
             CadenceMemory.getInstance().disconnectServer(guildId);
             return true;
         }

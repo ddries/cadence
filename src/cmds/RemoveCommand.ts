@@ -52,7 +52,7 @@ class RemoveCommand extends BaseCommand {
 
         const idx = parseInt(args[0], 10);
 
-        if (idx >= server.getQueue().length) {
+        if (idx > server.getQueue().length) {
             message.reply({ embeds: [ EmbedHelper.NOK("Please enter a valid index!") ]});
             return;
         }

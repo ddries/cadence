@@ -8,7 +8,7 @@ import CadenceMemory from "../api/Cadence.Memory";
 import Cadence from "../Cadence";
 import { LoopType } from "../types/ConnectedServer.type";
 
-class NextCommand extends BaseCommand {
+class LoopCommand extends BaseCommand {
     public name: string;
     public description: string;
     public aliases: string[];
@@ -17,9 +17,9 @@ class NextCommand extends BaseCommand {
     constructor() {
         super();
 
-        this.name = "next";
-        this.description = "Skip to the next song in the queue";
-        this.aliases = ["n", "skip"];
+        this.name = "loop";
+        this.description = "Loop your whole queue or just a single song 24/7!";
+        this.aliases = [];
         this.requireAdmin = false;
     }
 
@@ -33,7 +33,7 @@ class NextCommand extends BaseCommand {
 
         const player = CadenceLavalink.getInstance().getPlayerByGuildId(message.guildId);
 
-        if (!player) {
+        if (!player || !player.playing) {
             message.reply({ embeds: [ EmbedHelper.NOK("There's nothing playing!") ]});
             return;
         }
@@ -43,19 +43,28 @@ class NextCommand extends BaseCommand {
             return;
         }
 
-        if (server.isQueueEmpty()) {
-            message.reply({ embeds: [ EmbedHelper.NOK("There's nothing in the queue!") ]});
-            return;
-        }
+        if (args.length <= 0) {
+            if (server.loop != LoopType.NONE) {
+                server.loop = LoopType.NONE;
+                server.getCurrentTrack().looped = false;
+                server.loopQueue(false);
+                message.reply({ embeds: [ EmbedHelper.Info("Disabled loop!") ]});
+                return;
+            }
 
-        if (server.loop == LoopType.TRACK) {
-            message.reply({ embeds: [ EmbedHelper.NOK("This command is disabled while track loop is enabled!") ]});
-            return;
+            server.loop = LoopType.TRACK;
+            server.getCurrentTrack().looped = true;
+            message.reply({ embeds: [ EmbedHelper.Info("Looping the current track! If you wish to loop the whole queue, use `" + CadenceDiscord.getInstance().getServerPrefix(message.guildId) + "loop queue`.") ]});
+        } else if (args[0] == 'queue') {
+            if (server.loop == LoopType.TRACK) {
+                server.loop = LoopType.NONE;
+                server.getCurrentTrack().looped = false;
+            }
+            
+            server.loopQueue(true);
+            message.reply({ embeds: [ EmbedHelper.Info("Looping the whole queue!") ]});
         }
-        
-        server.handleTrackEnded();
-        await CadenceLavalink.getInstance().playNextSongInQueue(player);
     }
 }
 
-export default new NextCommand();
+export default new LoopCommand();
