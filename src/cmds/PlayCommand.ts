@@ -56,8 +56,8 @@ class PlayCommand extends BaseCommand {
         if (CadenceLavalink.getInstance().isValidUrl(linkOrKeyword)) {
             result = await CadenceLavalink.getInstance().resolveLinkIntoTracks(linkOrKeyword);
         } else {
-            for (let i = 1; i < args.length; ++i) linkOrKeyword += args[i] + " ";
-            result = await CadenceLavalink.getInstance().resolveYoutubeIntoTracks(linkOrKeyword.trimEnd());
+            for (let i = 1; i < args.length; ++i) linkOrKeyword += " " + args[i];
+            result = await CadenceLavalink.getInstance().resolveYoutubeIntoTracks(linkOrKeyword.trim());
         }
         
         const player = CadenceLavalink.getInstance().getPlayerByGuildId(message.guildId);

@@ -101,7 +101,12 @@ export default class CadenceLavalink {
         if (!s) return false;
 
         const t = s.getNextSong();
-        if (!t) return false;
+        if (!t) {
+            if (s.getQueue().length <= 0) {
+                await player.stop();
+            }
+            return false;
+        }
 
         if (await this.playTrack(t, player.guildId)) {
             if (notify)
@@ -169,6 +174,7 @@ export default class CadenceLavalink {
 
         await player.disconnect().destroy();
         await this._cluster.destroyPlayer(guildId);
+        CadenceMemory.getInstance().disconnectServer(guildId);
         return true;
 
         // if (player.disconnect && await player.destroy() && await this._cluster.destroyPlayer(guildId)) {

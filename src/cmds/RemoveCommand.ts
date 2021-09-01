@@ -57,6 +57,10 @@ class RemoveCommand extends BaseCommand {
             return;
         }
 
+        if (idx - 1 == server.getCurrentQueueIndex()) {
+            await CadenceLavalink.getInstance().getPlayerByGuildId(message.guildId).stop();
+        }
+
         server.removeFromQueueIdx(idx-1);
         message.react('✅');
     }

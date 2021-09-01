@@ -44,6 +44,7 @@ class ClearCommand extends BaseCommand {
         }
 
         server.clearQueue();
+        await CadenceLavalink.getInstance().getPlayerByGuildId(message.guildId).stop();
         message.react('✅');
     }
 }

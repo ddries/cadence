@@ -43,7 +43,7 @@ class HelpCommand extends BaseCommand {
         let page = (server.getCurrentQueueIndex() / 10 | 0) + 1;
 
         const requiredPages = Math.ceil(server.getQueue().length / 10);
-        const embed = EmbedHelper.queue(server.getQueue(), page, requiredPages, server.loop == LoopType.QUEUE);
+        const embed = EmbedHelper.queue(server.getQueue(), page, requiredPages, server.loop == LoopType.QUEUE, server.shuffle);
 
         if (requiredPages <= 1) {
             message.reply({ embeds: [ embed ] });

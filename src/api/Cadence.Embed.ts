@@ -44,10 +44,10 @@ export default class EmbedHelper {
             .setDescription(description);
     }
 
-    public static queue(tracks: CadenceTrack[], page: number = 1, maxPages: number = 1, queueLoop: boolean = false): MessageEmbed {
+    public static queue(tracks: CadenceTrack[], page: number = 1, maxPages: number = 1, queueLoop: boolean = false, shuffle: boolean = false): MessageEmbed {
         let embed = new MessageEmbed()
             .setColor(EmbedColor.Info)
-            .setTitle((queueLoop ? '🔁 ' : '') + "Queue (" + tracks.length + ")")
+            .setTitle((queueLoop ? '🔁 ' : '') + (shuffle ? '🔀 ' : '') + "Queue (" + tracks.length + ")")
             .setTimestamp(Date.now());
         
         let description = "";

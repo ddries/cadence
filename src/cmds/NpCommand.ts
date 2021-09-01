@@ -44,6 +44,11 @@ class NpCommand extends BaseCommand {
         }
 
         const song = server.getCurrentTrack();
+        if (!song) {
+            message.reply({ embeds: [ EmbedHelper.NOK("There's nothing playing!") ]});
+            return;
+        }
+
         message.reply({ embeds: [ EmbedHelper.np(song, player.position) ] });
     }
 }

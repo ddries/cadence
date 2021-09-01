@@ -37,6 +37,26 @@ export default class Cadence {
         Cadence.DefaultPrefix = Cadence.Debug ? Config.getInstance().getKeyOrDefault('BotDefaultPrefixDebug', '') : Config.getInstance().getKeyOrDefault('BotDefaultPrefix', '');
         
         Cadence.SongsPerEmbed = Config.getInstance().getKeyOrDefault('SongsPerEmbed', 10);
+        
+        console.log();
+        console.log();
+        const _sing = `\u001b[33m
+                 _                         
+  ___  __ _   __| |  ___  _ __    ___  ___ 
+ / __|/ _\` | / _\` | / _ \\| '_ \\  / __|/ _ \\
+| (__| (_| || (_| ||  __/| | | || (__|  __/
+ \\___|\\__,_| \\__,_| \\___||_| |_| \\___|\\___|
+                                           
+ \u001b[0m`;
+
+        console.log(_sing);
+        console.log(".......... \u001b[32mVersion:\u001b[0m " + Cadence.Version);
+        console.log(".......... \u001b[32mEnvironment:\u001b[0m " + (Cadence.Debug ? "Development" : "Production"));
+        console.log(".......... \u001b[32mBoot date UTC:\u001b[0m " + (new Date().toUTCString()));
+        console.log(".......... \u001b[32mBot name:\u001b[0m " + Cadence.BotName);
+        console.log(".......... \u001b[32mRunning on:\u001b[0m nodejs " + process.version);
+        console.log(".......... \u001b[32mHost Architecture:\u001b[0m " + process.arch);
+        console.log();console.log();
 
         await Db.getInstance().init();
         await CadenceMemory.getInstance().init();
