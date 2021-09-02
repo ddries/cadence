@@ -3,7 +3,6 @@ import { Player } from "lavaclient";
 import CadenceDiscord from "../api/Cadence.Discord";
 import EmbedHelper from "../api/Cadence.Embed";
 import CadenceLavalink from "../api/Cadence.Lavalink";
-import Cadence from "../Cadence";
 import CadenceTrack from "./CadenceTrack.type";
 
 export enum LoopType {
@@ -27,13 +26,33 @@ export default class ConnectedServer {
     private _queueIdx: number = -1;
     private _queueCount: number = 0;
 
-    private _dcTimer: number = null;
+    private _dcTimer: NodeJS.Timeout = null;
 
     constructor(player: Player, voiceChannelId: string, channel: TextBasedChannels, guildId: string) {
         this.player = player;
         this.voiceChannelId = voiceChannelId;
         this.guildId = guildId;
         this.textChannel = channel;
+    }
+
+    public stopDisconnectTimer(): void {
+        if (!this._dcTimer) return;
+        clearTimeout(this._dcTimer);
+        this._dcTimer = null;
+    }
+
+    public resetDisconnectTimer(): void {
+        if (this._dcTimer) this.stopDisconnectTimer();
+        this._dcTimer = setTimeout(this._onDisconnectTimer.bind(this), 10*60*1000);
+    }
+
+    private _onDisconnectTimer(): void {
+        const t = this.textChannel;
+        CadenceLavalink.getInstance().leaveChannel(this.guildId).then(b => {
+            if (b) {
+                t.send({ embeds: [ EmbedHelper.Info("I left due to inactivity. Enable loop (`" + CadenceDiscord.getInstance().getServerPrefix(this.guildId) + "loop queue`) for 24/7 features.") ]});
+            }
+        });
     }
 
     public getCurrentTrack(): CadenceTrack {
@@ -49,9 +68,6 @@ export default class ConnectedServer {
         const t = this.getCurrentTrack();
         if (!t) return;
 
-        // if (this.loop == LoopType.NONE)
-        //     this.removeFromQueue(t);
-
         t.beingPlayed = false;
 
         if (this.loop == LoopType.NONE)
@@ -60,25 +76,21 @@ export default class ConnectedServer {
         if (this.loop == LoopType.QUEUE)
             this._queueCount = this._queue.length;
 
-        console.log("C: " + this._queueCount);
-
         if (this.loop == LoopType.NONE && this._queueCount <= 0) {
             if (this._queue.length > 1)
                 this.textChannel.send({ embeds: [ EmbedHelper.Info('The queue has ended!\nTo enable auto-restart and 24/7, use `' + CadenceDiscord.getInstance().getServerPrefix(this.guildId) + 'loop queue`.') ]});
 
             this.clearQueue();
-        }
 
-        // if (this.loop == LoopType.NONE && this._queueIdx == this._queue.length - 1) {
-        //     this.clearQueue();
-        //     if (this._queue.length > 1)
-        //         this.textChannel.send({ embeds: [ EmbedHelper.Info('The queue has ended!\nTo enable auto-restart and 24/7, use `' + CadenceDiscord.getInstance().getServerPrefix(this.guildId) + 'loop queue`.') ]});
-        // }
+            if (this.loop == LoopType.NONE)
+                this.resetDisconnectTimer();
+        }
     }
 
     public loopQueue(status: boolean): void {
         if (status) {
             this.loop = LoopType.QUEUE;
+            this.stopDisconnectTimer();
             // this._queueIdx = 0;
         } else {
             this.loop = LoopType.NONE;
@@ -147,20 +159,11 @@ export default class ConnectedServer {
 
     public shuffleQueue(): void {
         this.shuffle = !this.shuffle;
-        // var currentIndex = this._queue.length,  randomIndex;
-      
-        // while (currentIndex != 0) {
-        //     randomIndex = Math.floor(Math.random() * currentIndex);
-        //     currentIndex--;
-        
-
-        //     [this._queue[currentIndex], this._queue[randomIndex]] = [this._queue[randomIndex], this._queue[currentIndex]];
-        // }
     }
 
     public clearQueue(): void {
         this._queueIdx = -1;
         this._queue.length = 0;
-        this._queueCount = 0;
+        this._queueCount = this._queue.length;
     }
 }

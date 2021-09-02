@@ -27,8 +27,6 @@ class HelpCommand extends BaseCommand {
             return;
         }
 
-        // console.log(server.getQueue());
-
         const player = CadenceLavalink.getInstance().getPlayerByGuildId(message.guildId);
         if (!player) {
             message.reply({ embeds: [ EmbedHelper.NOK("There's nothing playing!") ]});

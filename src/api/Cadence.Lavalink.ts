@@ -56,7 +56,7 @@ export default class CadenceLavalink {
     }
 
     public getPlayerByGuildId(guildId: string): Player {
-        if (!this._cluster.getNode(guildId).players.has(guildId)) return null;
+        if (!this._cluster.getNode(guildId)?.players.has(guildId)) return null;
         return this._cluster.getNode(guildId).players.get(guildId);
     }
 
@@ -123,7 +123,7 @@ export default class CadenceLavalink {
         this.logger.log('requested to join channel ' + channelId + ' in guild ' + guildId);
 
         const p = await this._cluster.createPlayer(guildId);
-        console.log(p);
+        
         if (!p?.connected) {
             CadenceMemory.getInstance().setConnectedServer(guildId, channelId, channel, p);
 
