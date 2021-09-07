@@ -52,14 +52,25 @@ export default class EmbedHelper {
         
         let description = "";
         const offset = Cadence.SongsPerEmbed * (page - 1);
+        let totalTime = 0;
         let i = offset;
         let j = tracks.length < (i + Cadence.SongsPerEmbed) ? tracks.length : (i + Cadence.SongsPerEmbed);
         for (; i  < j; ++i) {
+            if (!tracks[i].trackInfo.isStream && totalTime >= 0)
+                totalTime += tracks[i].trackInfo.length;
+            else totalTime = -1;
+
             description += `**(${i + 1})** ${tracks[i].looped ? '🔂 ' : ' '}${tracks[i].beingPlayed ? '➡️ ' : ' '}${tracks[i].trackInfo.title.substr(0, 40)} [<@${tracks[i].requestedById}>]\n`
         }
 
+        let footer = "";
+
         if (maxPages > 1)
-            embed.setFooter("Page " + page + "/" + maxPages);
+            footer = "Page " + page + "/" + maxPages + " | ";
+        
+        footer += "Queue duration: " + (totalTime < 0 ? '♾️' : (Math.ceil(totalTime / 1000 / 60) + " minutes."));
+
+        embed.setFooter(footer);
 
         embed.setDescription(description);
         return embed;

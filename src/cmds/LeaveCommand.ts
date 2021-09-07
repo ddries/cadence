@@ -11,7 +11,7 @@ class LeaveCommand extends BaseCommand {
     constructor() {
         super();
         this.name = "leave";
-        this.aliases = ["stop"];
+        this.aliases = ["stop", "dc"];
         this.description = "Leave the current voice session";
     }
 

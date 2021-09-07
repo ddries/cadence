@@ -87,6 +87,10 @@ export default class ConnectedServer {
         }
     }
 
+    public async handleTrackStart(): Promise<void> {
+        this.stopDisconnectTimer();
+    }
+
     public loopQueue(status: boolean): void {
         if (status) {
             this.loop = LoopType.QUEUE;

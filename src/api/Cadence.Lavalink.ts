@@ -132,6 +132,13 @@ export default class CadenceLavalink {
                 muted: selfMute
             });
     
+            p.on('trackStart', async (track: string) => {
+                const s = CadenceMemory.getInstance().getConnectedServer(guildId);
+                if (!s) return;
+
+                s.handleTrackStart();
+            });
+
             p.on('trackEnd', async (track, reason) => {
                 if (reason != "STOPPED" && reason != "REPLACED") {
                     this.logger.log('track ended in ' + guildId + ' playing next song in queue');
@@ -141,6 +148,26 @@ export default class CadenceLavalink {
 
                     s.handleTrackEnded();
                     await CadenceLavalink.getInstance().playNextSongInQueue(p, s.loop == LoopType.NONE);
+                }
+            });
+
+            p.on('channelLeave', async (left: string) => {
+                const s = CadenceMemory.getInstance().getConnectedServer(guildId);
+                if (!s) return;
+
+                this.leaveChannel(s.guildId);
+            });
+
+            p.on('channelMove', async (from: string, to: string) => {
+                if (p.channelId) {
+                    await p.pause();
+                    await this._wait(1000);
+                    await p.resume();
+
+                    const s = CadenceMemory.getInstance().getConnectedServer(guildId);
+                    if (!s) return;
+                    
+                    s.textChannelId = to;
                 }
             });
 
@@ -211,6 +238,12 @@ export default class CadenceLavalink {
                 }
             }
         )).json();
+    }
+
+    private _wait(ms: number): Promise<void> {
+        return new Promise<void>(resolve => {
+            setTimeout(resolve, ms);
+        });
     }
 
     private constructor() {
