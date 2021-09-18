@@ -7,6 +7,7 @@ import fs from 'fs';
 import path from 'path';
 import Db from "./Cadence.Db";
 import EmbedHelper, { EmbedColor } from "./Cadence.Embed";
+import CadenceLavalink from "./Cadence.Lavalink";
 
 export default class CadenceDiscord {
 
@@ -99,6 +100,31 @@ s
         }
     }
 
+    private async OnVoiceUpdate(oldState: discord.VoiceState, newState: discord.VoiceState): Promise<void> {
+        if (
+
+            ( newState.channel &&
+            newState.channelId &&
+            !newState.mute &&
+            !newState.serverMute &&
+            newState.sessionId ) &&
+
+            ( oldState.channel &&
+            oldState.channelId &&
+            ( oldState.mute || oldState.serverMute ) &&
+            oldState.sessionId )
+
+        ) {
+            const player = CadenceLavalink.getInstance().getPlayerByGuildId(newState.guild.id);
+            console.log(player);
+            if (!player) return;
+
+            await player.pause();
+            await this._wait(1000);
+            await player.resume();
+        }
+    }
+
     private async _loadAllPrefixes(): Promise<void> {
         this._prefixes = new Map<string, string>();
 
@@ -141,6 +167,12 @@ s
         return path.join(this._commandsPath, commandName);
     }
 
+    private _wait(ms: number): Promise<void> {
+        return new Promise<void>(resolve => {
+            setTimeout(resolve, ms);
+        });
+    }
+
     private constructor() {
         this.logger = new Logger('cadence-discord');
     }
@@ -170,6 +202,7 @@ s
 
         this.Client.once('ready', this.OnReady.bind(this));
         this.Client.on('messageCreate', this.OnMessage.bind(this));
+        this.Client.on('voiceStateUpdate', this.OnVoiceUpdate.bind(this));
 
         this.logger.log('logging to discord network');
         await this.Client.login(

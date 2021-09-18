@@ -19,8 +19,6 @@ export default class CadenceLavalink {
 
     private _cluster: Cluster = null;
     private _client: Client = null;
-
-    // Plays the given track in the given guild (must already be conn to voice)
     public async playTrack(track: CadenceTrack, guildId: string): Promise<boolean> {
         if (!CadenceMemory.getInstance().isServerConnected(guildId)) return false;
 
@@ -37,21 +35,6 @@ export default class CadenceLavalink {
             return true;
         }
         
-        return false;
-    }
-
-    public async playTrack2(trackId: string, guildId: string): Promise<boolean> {
-        if (!CadenceMemory.getInstance().isServerConnected(guildId)) return false;
-
-        this.logger.log('requested to play track ' + trackId + ' in ' + guildId);
-
-        const player = this.getPlayerByGuildId(guildId);
-        if (!player) return false;
-
-        await player.stop();
-        const result = await player.play(trackId);
-
-        if (result) return true;
         return false;
     }
 
@@ -174,15 +157,21 @@ export default class CadenceLavalink {
             p.on('trackException', async (track, error) => {
                 this.logger.log('trackException on track ' + track + ': ' + error);
                 
-                // this.playNextSongInQueue(p);
-                // const server = CadenceMemory.getInstance().getConnectedServer(guildId);
-                // const nextTrack = server.jumpNextSong();
+                const s = CadenceMemory.getInstance().getConnectedServer(guildId);
+                if (!s) return;
 
-                // if (!nextTrack) return;
+                s.handleTrackEnded();
+                await CadenceLavalink.getInstance().playNextSongInQueue(p, s.loop == LoopType.NONE);
+            });
 
-                // if (await CadenceLavalink.getInstance().playTrack(nextTrack.base64, guildId)) {
-                //     server.textChannel.send({ embeds: [ EmbedHelper.songBasic(nextTrack.trackInfo, nextTrack.requestedById, "Now Playing!") ]});
-                // }
+            p.on('trackStuck', async (track: string, ms: number) => {
+                this.logger.log('trackStuck on track ' + track);
+
+                const s = CadenceMemory.getInstance().getConnectedServer(guildId);
+                if (!s) return;
+
+                s.handleTrackEnded();
+                await CadenceLavalink.getInstance().playNextSongInQueue(p, s.loop == LoopType.NONE);
             });
         }
 
