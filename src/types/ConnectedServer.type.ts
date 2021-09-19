@@ -95,10 +95,8 @@ export default class ConnectedServer {
         if (status) {
             this.loop = LoopType.QUEUE;
             this.stopDisconnectTimer();
-            // this._queueIdx = 0;
         } else {
             this.loop = LoopType.NONE;
-            // this._queueIdx = -1;
         }
     }
 
@@ -137,9 +135,6 @@ export default class ConnectedServer {
 
     public jumpToSong(idx: number): CadenceTrack {
         switch (this.loop) {
-            // case LoopType.QUEUE:
-            //     this._queueIdx = idx;
-            //     return this._queue[this._queueIdx];
             case LoopType.TRACK:
                 this.loop = LoopType.NONE;
                 this.getCurrentTrack().looped = false;
@@ -147,9 +142,6 @@ export default class ConnectedServer {
             default:
                 this._queueIdx = idx;
                 return this._queue[this._queueIdx];
-                // const s = this._queue.at(idx);
-                // if (s) this._queue.splice(0, idx);
-                // return s;
         }
     }
 

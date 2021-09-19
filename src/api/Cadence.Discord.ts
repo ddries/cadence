@@ -101,7 +101,13 @@ s
     }
 
     private async OnVoiceUpdate(oldState: discord.VoiceState, newState: discord.VoiceState): Promise<void> {
+        if (oldState.member.id != this.Client.user.id) return;
+
         if (
+
+            // If the bot has been unmuted
+            // Or the bot has been deafen/undeafen
+            // We have to reload the player (thanks to lavalink lib)
 
             ( newState.channel &&
             newState.channelId &&
@@ -114,9 +120,9 @@ s
             ( oldState.mute || oldState.serverMute ) &&
             oldState.sessionId )
 
+            || newState.serverDeaf != oldState.serverDeaf
         ) {
             const player = CadenceLavalink.getInstance().getPlayerByGuildId(newState.guild.id);
-            console.log(player);
             if (!player) return;
 
             await player.pause();

@@ -2,7 +2,6 @@ import { Client, Message, MessageActionRow, MessageButton, MessageEmbed } from "
 import BaseCommand from "../api/Cadence.BaseCommand";
 import CadenceDiscord from "../api/Cadence.Discord";
 import { EmbedColor } from "../api/Cadence.Embed";
-import CadenceLavalink from "../api/Cadence.Lavalink";
 import Cadence from "../Cadence";
 
 class HelpCommand extends BaseCommand {
@@ -39,10 +38,6 @@ class HelpCommand extends BaseCommand {
                         .setStyle('LINK')
                         .setLabel('Invite')
                         .setURL('https://theradiobot.com/join'),
-                    // new MessageButton()
-                    //     .setStyle('LINK')
-                    //     .setLabel('Vote')
-                    //     .setURL('https://top.gg/bot/778044858760953866/vote')
                 ]
             );
 
