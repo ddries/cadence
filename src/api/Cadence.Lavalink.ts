@@ -150,7 +150,7 @@ export default class CadenceLavalink {
                     const s = CadenceMemory.getInstance().getConnectedServer(guildId);
                     if (!s) return;
                     
-                    s.textChannelId = to;
+                    s.voiceChannelId = to;
                 }
             });
 

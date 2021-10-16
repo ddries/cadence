@@ -1,6 +1,8 @@
 import { Message } from "discord.js";
 import BaseCommand from "../api/Cadence.BaseCommand";
+import EmbedHelper from "../api/Cadence.Embed";
 import CadenceLavalink from "../api/Cadence.Lavalink";
+import CadenceMemory from "../api/Cadence.Memory";
 
 class LeaveCommand extends BaseCommand {
     public name: string;
@@ -16,6 +18,13 @@ class LeaveCommand extends BaseCommand {
     }
 
     public async run(m: Message, args: string[]): Promise<void> {
+        const server = CadenceMemory.getInstance().getConnectedServer(m.guildId);
+
+        if (server && server.voiceChannelId != m.member.voice.channelId) {
+            m.reply({ embeds: [ EmbedHelper.NOK("I'm already being used in another voice channel!") ]});
+            return;
+        }
+
         const b = await CadenceLavalink.getInstance().leaveChannel(m.guildId);
         if (b) {
             m.react('👋')

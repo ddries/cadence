@@ -69,14 +69,16 @@ s
         }
 
         await this._loadAllCommands();
-        await this._loadAllPrefixes();
+        
+        if (Cadence.IsMainInstance)
+            await this._loadAllPrefixes();
     }
 
     private async OnMessage(m: discord.Message): Promise<void> {
         if (m.author.bot) return;
         if (m.channel.type == 'DM') return;
 
-        const prefix = this.getServerPrefix(m.guildId);
+        const prefix = Cadence.IsMainInstance ? this.getServerPrefix(m.guildId) : Cadence.DefaultPrefix;
 
         if (!m.content.startsWith(prefix) && !m.content.startsWith(Cadence.DefaultPrefix)) return;
 

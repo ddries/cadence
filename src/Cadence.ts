@@ -12,6 +12,7 @@ export default class Cadence {
 
     public static Debug: boolean = true;
     public static Version: string = "0.0.0";
+    public static IsMainInstance: boolean = true;
 
     public static BotName: string = "";
     public static DefaultPrefix: string = "";
@@ -32,6 +33,7 @@ export default class Cadence {
 
         Cadence.Debug = Config.getInstance().getKeyOrDefault('Debug', true);
         Cadence.Version = Config.getInstance().getKeyOrDefault('Version', '0.0.0');
+        Cadence.IsMainInstance = Config.getInstance().getKeyOrDefault('IsMainInstance', true);
 
         Cadence.BotName = Config.getInstance().getKeyOrDefault('BotName', '');
         Cadence.DefaultPrefix = Cadence.Debug ? Config.getInstance().getKeyOrDefault('BotDefaultPrefixDebug', '') : Config.getInstance().getKeyOrDefault('BotDefaultPrefix', '');
