@@ -43,10 +43,10 @@ class ForwardCommand extends BaseCommand {
             return;
         }
 
-        const sec = parseInt(args[0], 10);
+        const sec = parseInt(args[0], 10) * 1_000;
         const song = server.getCurrentTrack();
         const remaining = song.trackInfo.length - player.position;
-
+        
         if (sec >= remaining) {
             message.reply({ embeds: [ EmbedHelper.NOK("You can't forward more than the remaining time! Maximum " + remaining + " seconds.") ]});
             return;

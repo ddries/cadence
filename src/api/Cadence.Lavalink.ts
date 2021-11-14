@@ -1,4 +1,4 @@
-import { Client, MessageEmbed, TextBasedChannels, TextChannel } from 'discord.js';
+import { Client, MessageEmbed, TextBasedChannels, TextChannel, Message } from 'discord.js';
 import { Cluster, Node, Player, REST } from "lavaclient";
 import Config from './Cadence.Config';
 import CadenceDiscord from './Cadence.Discord';
@@ -92,8 +92,19 @@ export default class CadenceLavalink {
         }
 
         if (await this.playTrack(t, player.guildId)) {
-            if (notify)
-                s.textChannel.send({ embeds: [ EmbedHelper.songBasic(t.trackInfo, t.requestedById, "Now Playing!") ]});
+            if (notify) {
+                const lastMessage = s.textChannel.lastMessage;
+                let m: Message = null;
+
+                if (lastMessage.id != s.nowPlayingMessage?.id) {
+                    m = await s.textChannel.send({ embeds: [ EmbedHelper.songBasic(t.trackInfo, t.requestedById, "Now Playing!") ]});
+                } else {
+                    m = await lastMessage.edit({ embeds: [ EmbedHelper.songBasic(t.trackInfo, t.requestedById, "Now Playing!") ]});
+                }
+
+                s.nowPlayingMessage = m;
+            }
+
             return true;
         }
 

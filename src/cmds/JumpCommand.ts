@@ -72,7 +72,17 @@ class JumpCommand extends BaseCommand {
         const song = server.jumpToSong(idx - 1);
 
         await CadenceLavalink.getInstance().playTrack(song, player.guildId);
-        message.reply({ embeds: [ EmbedHelper.songBasic(song.trackInfo, song.requestedById, "Now Playing!") ]});
+
+        const lastMessage = server.textChannel.lastMessage;
+        let m: Message = null;
+
+        if (lastMessage.id != server.nowPlayingMessage?.id) {
+            m = await server.textChannel.send({ embeds: [ EmbedHelper.songBasic(song.trackInfo, song.requestedById, "Now Playing!") ]});
+        } else {
+            m = await lastMessage.edit({ embeds: [ EmbedHelper.songBasic(song.trackInfo, song.requestedById, "Now Playing!") ]});
+        }
+
+        server.nowPlayingMessage = m;
     }
 }
 

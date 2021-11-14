@@ -1,4 +1,4 @@
-import { TextBasedChannels } from "discord.js";
+import { Message, TextBasedChannels } from "discord.js";
 import { Player } from "lavaclient";
 import CadenceDiscord from "../api/Cadence.Discord";
 import EmbedHelper from "../api/Cadence.Embed";
@@ -17,6 +17,7 @@ export default class ConnectedServer {
     public voiceChannelId: string;
     public textChannelId: string;
     public textChannel: TextBasedChannels;
+    public nowPlayingMessage: Message;
 
     public loop: LoopType = LoopType.NONE;
     public loopedTrack: CadenceTrack = null;
@@ -33,6 +34,7 @@ export default class ConnectedServer {
         this.voiceChannelId = voiceChannelId;
         this.guildId = guildId;
         this.textChannel = channel;
+        this.nowPlayingMessage = null;
     }
 
     public stopDisconnectTimer(): void {

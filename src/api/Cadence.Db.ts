@@ -10,11 +10,9 @@ export default class Db {
 
     private _mysql: MySql = null;
 
-    public async savePlaylist(guildId: string, playlist: string[], name: string): Promise<string> {
+    public async savePlaylist(guildId: string, playlist: string[], name: string): Promise<number> {
         const token = v8.serialize(playlist).toString('hex');
-        const id = token.substr(0, 16);
-        await this._mysql.query('INSERT INTO playlist(id, name, token, guild_id) VALUES(?, ?, ?, ?)', [
-            id, 
+        const id = await this._mysql.queryGetInsertId('INSERT INTO playlist(name, token, guild_id) VALUES(?, ?, ?)', [
             name,
             token,
             guildId
@@ -96,6 +94,11 @@ class MySql {
 
     public query(query: string, params: any[] | void): Promise<any[]> {
 		return this._conn.execute(query, params);
+	}
+
+    public async queryGetInsertId(query: string, params: any[] | void): Promise<number> {
+		const [ insertId ] = await this.query(query, params);
+		return insertId["insertId"];
 	}
 
 	public async queryGetResult(query: string, params: any[] | void): Promise<any[]> {
