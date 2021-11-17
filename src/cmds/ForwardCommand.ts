@@ -48,7 +48,7 @@ class ForwardCommand extends BaseCommand {
         const remaining = song.trackInfo.length - player.position;
         
         if (sec >= remaining) {
-            message.reply({ embeds: [ EmbedHelper.NOK("You can't forward more than the remaining time! Maximum " + remaining + " seconds.") ]});
+            message.reply({ embeds: [ EmbedHelper.NOK("You can't forward more than the remaining time! Maximum " + Math.round(remaining) + " seconds.") ]});
             return;
         }
 

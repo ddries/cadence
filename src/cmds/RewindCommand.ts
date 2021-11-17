@@ -6,8 +6,9 @@ import EmbedHelper from "../api/Cadence.Embed";
 import CadenceLavalink from "../api/Cadence.Lavalink";
 import CadenceMemory from "../api/Cadence.Memory";
 import Cadence from "../Cadence";
+import { LoopType } from "../types/ConnectedServer.type";
 
-class RemoveCommand extends BaseCommand {
+class RewindCommand extends BaseCommand {
     public name: string;
     public description: string;
     public aliases: string[];
@@ -16,9 +17,9 @@ class RemoveCommand extends BaseCommand {
     constructor() {
         super();
 
-        this.name = "remove";
-        this.description = "Remove the selected song from queue";
-        this.aliases = ["rm"];
+        this.name = "rewind";
+        this.description = "Rewind the song the given amount of seconds.";
+        this.aliases = ["r"];
         this.requireAdmin = false;
     }
 
@@ -30,7 +31,9 @@ class RemoveCommand extends BaseCommand {
             return;
         }
 
-        if (!CadenceLavalink.getInstance().getPlayerByGuildId(message.guildId)) {
+        const player = CadenceLavalink.getInstance().getPlayerByGuildId(message.guildId);
+
+        if (!player) {
             message.reply({ embeds: [ EmbedHelper.NOK("There's nothing playing!") ]});
             return;
         }
@@ -40,30 +43,17 @@ class RemoveCommand extends BaseCommand {
             return;
         }
 
-        if (server.isQueueEmpty()) {
-            message.reply({ embeds: [ EmbedHelper.NOK("There's nothing in the queue!") ]});
+        const sec = parseInt(args[0], 10) * 1_000;
+        const song = server.getCurrentTrack();
+        
+        if (sec >= player.position) {
+            message.reply({ embeds: [ EmbedHelper.NOK("You can't rewind more than the song duration! Maximum " + Math.round(player.position / 1000) + " seconds.") ]});
             return;
         }
 
-        if (args.length < 1) {
-            message.reply({ embeds: [ EmbedHelper.NOK("Please enter the song index! Usage: " + CadenceDiscord.getInstance().getServerPrefix(message.guildId) + "remove [index].") ]});
-            return;
-        }
-
-        const idx = parseInt(args[0], 10);
-
-        if (idx > server.getQueue().length) {
-            message.reply({ embeds: [ EmbedHelper.NOK("Please enter a valid index!") ]});
-            return;
-        }
-
-        if (idx - 1 == server.getCurrentQueueIndex()) {
-            await CadenceLavalink.getInstance().getPlayerByGuildId(message.guildId).stop();
-        }
-
-        server.removeFromQueueIdx(idx-1);
-        message.react('✅');
+        await player.seek(player.position - sec);
+        message.react('⏪');
     }
 }
 
-export default new RemoveCommand();
+export default new RewindCommand();
