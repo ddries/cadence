@@ -38,11 +38,13 @@ s
     }
 
     public getServerPrefix(guildId: string): string {
+        if (!this._prefixes) return Cadence.DefaultPrefix;
         if (!this._prefixes.has(guildId)) return Cadence.DefaultPrefix;
         else return this._prefixes.get(guildId);
     }
 
     public setServerPrefix(guildId: string, prefix: string, updateBd: boolean = true): void {
+        if (!this._prefixes) return;
         if (this._prefixes.has(guildId)) this._prefixes.delete(guildId);
 
         this._prefixes.set(guildId, prefix);
