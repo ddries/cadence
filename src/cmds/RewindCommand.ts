@@ -19,7 +19,7 @@ class RewindCommand extends BaseCommand {
 
         this.name = "rewind";
         this.description = "Rewind the song the given amount of seconds.";
-        this.aliases = ["r"];
+        this.aliases = ["r", "rw"];
         this.requireAdmin = false;
     }
 

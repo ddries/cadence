@@ -19,7 +19,7 @@ class ForwardCommand extends BaseCommand {
 
         this.name = "forward";
         this.description = "Forward the song the given amount of seconds.";
-        this.aliases = ["f"];
+        this.aliases = ["f", "ff"];
         this.requireAdmin = false;
     }
 
