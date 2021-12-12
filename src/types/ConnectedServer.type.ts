@@ -1,4 +1,4 @@
-import { Message, TextBasedChannels } from "discord.js";
+import { GuildChannel, Message, TextBasedChannels } from "discord.js";
 import { Player } from "lavaclient";
 import CadenceDiscord from "../api/Cadence.Discord";
 import EmbedHelper from "../api/Cadence.Embed";
@@ -28,6 +28,7 @@ export default class ConnectedServer {
     private _queueCount: number = 0;
 
     private _dcTimer: NodeJS.Timeout = null;
+    private _aloneInterval: NodeJS.Timer = null;
 
     constructor(player: Player, voiceChannelId: string, channel: TextBasedChannels, guildId: string) {
         this.player = player;
@@ -35,6 +36,31 @@ export default class ConnectedServer {
         this.guildId = guildId;
         this.textChannel = channel;
         this.nowPlayingMessage = null;
+
+        this._aloneInterval = setInterval(() => {
+            const guild = CadenceDiscord.getInstance().Client.guilds.cache.get(this.guildId);
+
+            if (!guild) {
+                return;
+            }
+
+            const voiceChannel = guild.channels.cache.get(this.voiceChannelId) as GuildChannel;
+
+            if (!voiceChannel) {
+                return;
+            }
+
+            const memberCount: number = [...voiceChannel.members.keys()].length;
+            
+            if (memberCount <= 0 || (memberCount == 1 && voiceChannel.members.first()?.id == CadenceDiscord.getInstance().Client.user.id)) {
+                CadenceLavalink.getInstance().leaveChannel(this.guildId);
+
+                this.textChannel.send({ embeds: [ EmbedHelper.Info("I left the voice channel, I was playing music alone :(") ]});
+
+                clearInterval(this._aloneInterval);
+                this._aloneInterval = null;
+            }
+        }, 5 * 60);
     }
 
     public stopDisconnectTimer(): void {
