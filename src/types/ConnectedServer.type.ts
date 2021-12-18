@@ -27,7 +27,7 @@ export default class ConnectedServer {
     private _queueIdx: number = -1;
     private _queueCount: number = 0;
 
-    private _dcTimer: NodeJS.Timeout = null;
+    // private _dcTimer: NodeJS.Timeout = null;
     private _aloneInterval: NodeJS.Timer = null;
 
     constructor(player: Player, voiceChannelId: string, channel: TextBasedChannels, guildId: string) {
@@ -63,25 +63,25 @@ export default class ConnectedServer {
         }, 5 * 60);
     }
 
-    public stopDisconnectTimer(): void {
-        if (!this._dcTimer) return;
-        clearTimeout(this._dcTimer);
-        this._dcTimer = null;
-    }
+    // public stopDisconnectTimer(): void {
+    //     if (!this._dcTimer) return;
+    //     clearTimeout(this._dcTimer);
+    //     this._dcTimer = null;
+    // }
 
-    public resetDisconnectTimer(): void {
-        if (this._dcTimer) this.stopDisconnectTimer();
-        this._dcTimer = setTimeout(this._onDisconnectTimer.bind(this), 10*60*1000);
-    }
+    // public resetDisconnectTimer(): void {
+    //     if (this._dcTimer) this.stopDisconnectTimer();
+    //     this._dcTimer = setTimeout(this._onDisconnectTimer.bind(this), 10*60*1000);
+    // }
 
-    private _onDisconnectTimer(): void {
-        const t = this.textChannel;
-        CadenceLavalink.getInstance().leaveChannel(this.guildId).then(b => {
-            if (b) {
-                t.send({ embeds: [ EmbedHelper.Info("I left due to inactivity. Enable loop (`" + CadenceDiscord.getInstance().getServerPrefix(this.guildId) + "loop queue`) for 24/7 features.") ]});
-            }
-        });
-    }
+    // private _onDisconnectTimer(): void {
+    //     const t = this.textChannel;
+    //     CadenceLavalink.getInstance().leaveChannel(this.guildId).then(b => {
+    //         if (b) {
+    //             t.send({ embeds: [ EmbedHelper.Info("I left due to inactivity. Enable loop (`" + CadenceDiscord.getInstance().getServerPrefix(this.guildId) + "loop queue`) for 24/7 features.") ]});
+    //         }
+    //     });
+    // }
 
     public getCurrentTrack(): CadenceTrack {
         if (this._queue.length <= 0) return null;
@@ -110,19 +110,25 @@ export default class ConnectedServer {
 
             this.clearQueue();
 
-            if (this.loop == LoopType.NONE)
-                this.resetDisconnectTimer();
+            setTimeout(() => {
+                if (this._queueCount <= 0) {
+                    CadenceLavalink.getInstance().leaveChannel(this.guildId);
+                }
+            }, 5e3);
+
+            // if (this.loop == LoopType.NONE)
+            //     this.resetDisconnectTimer();
         }
     }
 
     public async handleTrackStart(): Promise<void> {
-        this.stopDisconnectTimer();
+        // this.stopDisconnectTimer();
     }
 
     public loopQueue(status: boolean): void {
         if (status) {
             this.loop = LoopType.QUEUE;
-            this.stopDisconnectTimer();
+            // this.stopDisconnectTimer();
         } else {
             this.loop = LoopType.NONE;
         }
