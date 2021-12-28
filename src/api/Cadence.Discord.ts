@@ -5,7 +5,6 @@ import Config from "./Cadence.Config";
 import Logger from "./Cadence.Logger";
 import fs from 'fs';
 import path from 'path';
-import Db from "./Cadence.Db";
 import EmbedHelper, { EmbedColor } from "./Cadence.Embed";
 import CadenceLavalink from "./Cadence.Lavalink";
 
@@ -27,7 +26,7 @@ export default class CadenceDiscord {
     public sendStatus(text: string): void {
         this._statusWebhook.send({ embeds: [ EmbedHelper.generic(text, EmbedColor.Debug) ]});
     }
-s
+
     public sendStats(embed: MessageEmbed): void {
         this.logger.log('sent stats to discord log');
         this._statsWebhook.send({ embeds: [ embed ]});
@@ -35,22 +34,6 @@ s
 
     public resolveGuildNameAndId(guild: discord.Guild): string {
         return guild.name + ' (' + guild.id + ')';
-    }
-
-    public getServerPrefix(guildId: string): string {
-        if (!this._prefixes) return Cadence.DefaultPrefix;
-        if (!this._prefixes.has(guildId)) return Cadence.DefaultPrefix;
-        else return this._prefixes.get(guildId);
-    }
-
-    public setServerPrefix(guildId: string, prefix: string, updateBd: boolean = true): void {
-        if (!this._prefixes) return;
-        if (this._prefixes.has(guildId)) this._prefixes.delete(guildId);
-
-        this._prefixes.set(guildId, prefix);
-        
-        if (updateBd)
-            Db.getInstance().setServerPrefix(guildId, prefix);
     }
 
     public getAllCommands(): discord.Collection<string, BaseCommand> {
@@ -71,16 +54,13 @@ s
         }
 
         await this._loadAllCommands();
-        
-        if (Cadence.IsMainInstance)
-            await this._loadAllPrefixes();
     }
 
     private async OnMessage(m: discord.Message): Promise<void> {
         if (m.author.bot) return;
         if (m.channel.type == 'DM') return;
 
-        const prefix = Cadence.IsMainInstance ? this.getServerPrefix(m.guildId) : Cadence.DefaultPrefix;
+        const prefix = Cadence.DefaultPrefix;
 
         if (!m.content.startsWith(prefix) && !m.content.startsWith(Cadence.DefaultPrefix)) return;
 
@@ -135,19 +115,6 @@ s
         }
     }
 
-    private async _loadAllPrefixes(): Promise<void> {
-        this._prefixes = new Map<string, string>();
-
-        const prefixes: any[] = await Db.getInstance().getAllPrefixes();
-        for (let i = 0; i < prefixes.length; ++i) {
-            if (Cadence.Debug)
-                this.logger.log('loaded custom prefix ' + prefixes[i].prefix + ' for guild ' + prefixes[i].guild_id);
-            this._prefixes.set(prefixes[i].guild_id, prefixes[i].prefix);
-        }
-
-        this.logger.log('loaded all custom prefixes');
-    }
-
     private async _loadAllCommands(): Promise<void> {
         this.logger.log('loading all comands');
 
@@ -166,9 +133,6 @@ s
                     this._aliases[a] = commandModule.name;
                 }
             }
-
-            if (Cadence.Debug)
-                this.logger.log('loaded command ' + commandModule.name);
         }
 
     }

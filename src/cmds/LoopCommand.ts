@@ -54,7 +54,7 @@ class LoopCommand extends BaseCommand {
 
             server.loop = LoopType.TRACK;
             server.getCurrentTrack().looped = true;
-            message.reply({ embeds: [ EmbedHelper.Info("Looping the current track! If you wish to loop the whole queue, use `" + CadenceDiscord.getInstance().getServerPrefix(message.guildId) + "loop queue`.") ]});
+            message.reply({ embeds: [ EmbedHelper.Info("Looping the current track! If you wish to loop the whole queue, use `" + Cadence.DefaultPrefix + "loop queue`.") ]});
         } else if (args[0] == 'queue') {
             if (server.loop == LoopType.TRACK) {
                 server.loop = LoopType.NONE;

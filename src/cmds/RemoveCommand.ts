@@ -46,7 +46,7 @@ class RemoveCommand extends BaseCommand {
         }
 
         if (args.length < 1) {
-            message.reply({ embeds: [ EmbedHelper.NOK("Please enter the song index! Usage: " + CadenceDiscord.getInstance().getServerPrefix(message.guildId) + "remove [index].") ]});
+            message.reply({ embeds: [ EmbedHelper.NOK("Please enter the song index! Usage: " + Cadence.DefaultPrefix + "remove [index].") ]});
             return;
         }
 

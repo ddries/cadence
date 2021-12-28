@@ -4,6 +4,7 @@ import CadenceDiscord from "../api/Cadence.Discord";
 import EmbedHelper from "../api/Cadence.Embed";
 import CadenceLavalink from "../api/Cadence.Lavalink";
 import CadenceMemory from "../api/Cadence.Memory";
+import Cadence from "../Cadence";
 import CadenceTrack from "../types/CadenceTrack.type";
 import { LavalinkResult } from "../types/TrackResult.type";
 
@@ -26,7 +27,7 @@ class PlayCommand extends BaseCommand {
 
     public async run(message: Message, args: string[]): Promise<void> {
         if (args.length <= 0) {
-            message.reply({ embeds: [ EmbedHelper.NOK("Please enter a valid link or keywords! Usage: " + CadenceDiscord.getInstance().getServerPrefix(message.guildId) + "play [link or keywords]") ]});
+            message.reply({ embeds: [ EmbedHelper.NOK("Please enter a valid link or keywords! Usage: " + Cadence.DefaultPrefix + "play [link or keywords]") ]});
             return;
         }
 

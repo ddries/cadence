@@ -1,5 +1,4 @@
 import Config from './api/Cadence.Config';
-import Db from './api/Cadence.Db';
 import CadenceDiscord from './api/Cadence.Discord';
 import CadenceLavalink from './api/Cadence.Lavalink';
 import Logger from './api/Cadence.Logger';
@@ -60,7 +59,6 @@ export default class Cadence {
         console.log(".......... \u001b[32mHost Architecture:\u001b[0m " + process.arch);
         console.log();console.log();
 
-        await Db.getInstance().init();
         await CadenceMemory.getInstance().init();
 
         this.logger.log('starting discord module cadence ' + Cadence.Version + ", debug " + Cadence.Debug.toString());

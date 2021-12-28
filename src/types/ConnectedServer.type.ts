@@ -3,6 +3,7 @@ import { Player } from "lavaclient";
 import CadenceDiscord from "../api/Cadence.Discord";
 import EmbedHelper from "../api/Cadence.Embed";
 import CadenceLavalink from "../api/Cadence.Lavalink";
+import Cadence from "../Cadence";
 import CadenceTrack from "./CadenceTrack.type";
 
 export enum LoopType {
@@ -27,7 +28,7 @@ export default class ConnectedServer {
     private _queueIdx: number = -1;
     private _queueCount: number = 0;
 
-    // private _dcTimer: NodeJS.Timeout = null;
+    private _dcTimer: NodeJS.Timeout = null;
     private _aloneInterval: NodeJS.Timer = null;
 
     constructor(player: Player, voiceChannelId: string, channel: TextBasedChannels, guildId: string) {
@@ -36,32 +37,32 @@ export default class ConnectedServer {
         this.guildId = guildId;
         this.textChannel = channel;
         this.nowPlayingMessage = null;
-
-        this._aloneInterval = setInterval(() => {
-            const guild = CadenceDiscord.getInstance().Client.guilds.cache.get(this.guildId);
-
-            if (!guild) {
-                return;
-            }
-
-            const voiceChannel = guild.channels.cache.get(this.voiceChannelId) as GuildChannel;
-
-            if (!voiceChannel) {
-                return;
-            }
-
-            const memberCount: number = [...voiceChannel.members.keys()].length;
-            
-            if (memberCount <= 0 || (memberCount == 1 && voiceChannel.members.first()?.id == CadenceDiscord.getInstance().Client.user.id)) {
-                CadenceLavalink.getInstance().leaveChannel(this.guildId);
-
-                this.textChannel.send({ embeds: [ EmbedHelper.Info("I left the voice channel, I was playing music alone :(") ]});
-
-                clearInterval(this._aloneInterval);
-                this._aloneInterval = null;
-            }
-        }, 5 * 60);
     }
+
+    // private _onAloneTimer(): void {
+    //     const guild = CadenceDiscord.getInstance().Client.guilds.cache.get(this.guildId);
+
+    //     if (!guild) {
+    //         return;
+    //     }
+
+    //     const voiceChannel = guild.channels.cache.get(this.voiceChannelId) as GuildChannel;
+
+    //     if (!voiceChannel) {
+    //         return;
+    //     }
+
+    //     const memberCount: number = [...voiceChannel.members.keys()].length;
+        
+    //     if (memberCount <= 0 || (memberCount == 1 && voiceChannel.members.first()?.id == CadenceDiscord.getInstance().Client.user.id)) {
+    //         CadenceLavalink.getInstance().leaveChannel(this.guildId);
+
+    //         this.textChannel.send({ embeds: [ EmbedHelper.Info("I left the voice channel, I was playing music alone :(") ]});
+
+    //         clearInterval(this._aloneInterval);
+    //         this._aloneInterval = null;
+    //     }
+    // }
 
     // public stopDisconnectTimer(): void {
     //     if (!this._dcTimer) return;
@@ -106,15 +107,15 @@ export default class ConnectedServer {
 
         if (this.loop == LoopType.NONE && this._queueCount <= 0) {
             if (this._queue.length > 1)
-                this.textChannel.send({ embeds: [ EmbedHelper.Info('The queue has ended!\nTo enable auto-restart and 24/7, use `' + CadenceDiscord.getInstance().getServerPrefix(this.guildId) + 'loop queue`.') ]});
+                this.textChannel.send({ embeds: [ EmbedHelper.Info('The queue has ended!\nTo enable auto-restart and 24/7, use `' + Cadence.DefaultPrefix + 'loop queue`.') ]});
 
             this.clearQueue();
+            CadenceLavalink.getInstance().leaveChannel(this.guildId);
 
-            setTimeout(() => {
-                if (this._queueCount <= 0) {
-                    CadenceLavalink.getInstance().leaveChannel(this.guildId);
-                }
-            }, 5e3);
+            // setTimeout(() => {
+            //     if (this._queueCount <= 0)
+            //         this._aloneInterval = setInterval(this._onAloneTimer, 5e3);
+            // }, 5e3);
 
             // if (this.loop == LoopType.NONE)
             //     this.resetDisconnectTimer();
@@ -123,6 +124,22 @@ export default class ConnectedServer {
 
     public async handleTrackStart(): Promise<void> {
         // this.stopDisconnectTimer();
+        // if (this._aloneInterval) {
+        //     clearInterval(this._aloneInterval);
+        //     this._aloneInterval = null;
+        // }
+    }
+
+    public async handleDisconnect(): Promise<void> {
+        // if (this._aloneInterval) {
+        //     clearInterval(this._aloneInterval);
+        //     this._aloneInterval = null;
+        // }
+
+        // if (this._dcTimer) {
+        //     clearTimeout(this._dcTimer);
+        //     this._dcTimer = null;
+        // }
     }
 
     public loopQueue(status: boolean): void {

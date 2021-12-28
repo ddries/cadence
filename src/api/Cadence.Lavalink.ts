@@ -198,6 +198,8 @@ export default class CadenceLavalink {
         const player = this.getPlayerByGuildId(guildId);
         if (!player) return false;
 
+        const s = CadenceMemory.getInstance().getConnectedServer(guildId);
+        if (s) s.handleDisconnect();
 
         await player.disconnect().destroy();
         await this._cluster.destroyPlayer(guildId);
