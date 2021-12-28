@@ -71,7 +71,7 @@ class JumpCommand extends BaseCommand {
         server.handleTrackEnded();
         const song = server.jumpToSong(idx - 1);
 
-        await CadenceLavalink.getInstance().playTrack(song, player.guildId);
+        await CadenceLavalink.getInstance().playTrack(song, player.connection.guildId);
 
         const lastMessage = server.textChannel.lastMessage;
         let m: Message = null;

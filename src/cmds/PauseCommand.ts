@@ -40,7 +40,7 @@ class PauseCommand extends BaseCommand {
             return;
         }
 
-        const s = await server.player.pause(true);
+        const s = await server.player.setPaused(true);
 
         if (s) {
             message.react('⏸');

@@ -1,5 +1,4 @@
 import { Client, MessageEmbed, TextBasedChannels, TextChannel, Message } from 'discord.js';
-import { Cluster, Node, Player, REST } from "lavaclient";
 import Config from './Cadence.Config';
 import CadenceDiscord from './Cadence.Discord';
 import Logger from './Cadence.Logger';
@@ -11,24 +10,31 @@ import { LavalinkResultTrackInfo } from '../types/TrackResult.type';
 import EmbedHelper, { EmbedColor } from './Cadence.Embed';
 import { LoopType } from '../types/ConnectedServer.type';
 import CadenceTrack from '../types/CadenceTrack.type';
+import { Libraries, Shoukaku, ShoukakuPlayer, ShoukakuSocket } from 'shoukaku';
 
 export default class CadenceLavalink {
 
     private static _instance: CadenceLavalink = null;
     private logger: Logger = null;
 
-    private _cluster: Cluster = null;
-    private _client: Client = null;
+    private _cluster: Shoukaku = null;
+    private _nodeAuthorizations: { [key: string]: string } = {};
+
+    private _playersByGuildId: Map<string, ShoukakuPlayer> = new Map<string, ShoukakuPlayer>();
+
     public async playTrack(track: CadenceTrack, guildId: string): Promise<boolean> {
         if (!CadenceMemory.getInstance().isServerConnected(guildId)) return false;
 
         const player = this.getPlayerByGuildId(guildId);
         if (!player) return false;
 
-        this.logger.log('requested to play track ' + track.base64 + ' in ' + guildId);
+        if (!!player.track) {
+            player.stopTrack();
+        }
 
-        if (player.playing) await player.stop();
-        const result = await player.play(track.base64);
+        this.logger.log('requested to play track ' + track.base64 + ' in ' + guildId);
+        
+        const result = await player.playTrack(track.base64);
 
         if (result) {
             track.beingPlayed = true;
@@ -38,9 +44,12 @@ export default class CadenceLavalink {
         return false;
     }
 
-    public getPlayerByGuildId(guildId: string): Player {
-        if (!this._cluster.getNode(guildId)?.players.has(guildId)) return null;
-        return this._cluster.getNode(guildId).players.get(guildId);
+    public getPlayerByGuildId(guildId: string): ShoukakuPlayer {
+        if (this._playersByGuildId.has(guildId)) {
+            return this._playersByGuildId.get(guildId);
+        } else {
+            return null;
+        }
     }
 
     public async resolveLinkIntoTracks(search: string): Promise<TrackResult.LavalinkResult> {
@@ -79,19 +88,19 @@ export default class CadenceLavalink {
         return trackInfo;
     }
 
-    public async playNextSongInQueue(player: Player, notify: boolean = true): Promise<boolean> {
-        const s = CadenceMemory.getInstance().getConnectedServer(player.guildId);
+    public async playNextSongInQueue(player: ShoukakuPlayer, notify: boolean = true): Promise<boolean> {
+        const s = CadenceMemory.getInstance().getConnectedServer(player.connection.guildId);
         if (!s) return false;
 
         const t = s.getNextSong();
         if (!t) {
             if (s.getQueue().length <= 0) {
-                await player.stop();
+                await player.stopTrack();
             }
             return false;
         }
 
-        if (await this.playTrack(t, player.guildId)) {
+        if (await this.playTrack(t, player.connection.guildId)) {
             if (notify) {
                 const lastMessage = s.textChannel.lastMessage;
                 let m: Message = null;
@@ -111,78 +120,65 @@ export default class CadenceLavalink {
         return false;
     }
 
-    public async joinChannel(channelId: string, guildId: string, channel: TextBasedChannels, selfDeaf: boolean = true, selfMute: boolean = false): Promise<Player> {
+    public async joinChannel(channelId: string, guildId: string, channel: TextBasedChannels, shardId: number, selfDeaf: boolean = true, selfMute: boolean = false): Promise<ShoukakuPlayer> {
         if (!this._cluster) return null;
 
         this.logger.log('requested to join channel ' + channelId + ' in guild ' + guildId);
 
-        const p = await this._cluster.createPlayer(guildId);
-        
-        if (!p?.connected) {
-            CadenceMemory.getInstance().setConnectedServer(guildId, channelId, channel, p);
+        let p = this.getPlayerByGuildId(guildId);
 
-            p.connect(channelId, {
-                deafened: selfDeaf,
-                muted: selfMute
+        if (!p) {
+            p = await this._getIdealNode().joinChannel({
+                guildId: guildId,
+                channelId: channelId,
+                shardId: shardId,
+                deaf: selfDeaf,
+                mute: selfMute
             });
-    
-            p.on('trackStart', async (track: string) => {
-                const s = CadenceMemory.getInstance().getConnectedServer(guildId);
-                if (!s) return;
 
+            CadenceMemory.getInstance().setConnectedServer(guildId, channelId, channel, p);
+            this._playersByGuildId.set(guildId, p);
+
+            p.on('start', async (data: any) => {
+                this.logger.log('received start event in player (' + p.connection.guildId + ')');
+
+                const s = CadenceMemory.getInstance().getConnectedServer(data.guildId);
+                if (!s) return;
+    
                 s.handleTrackStart();
             });
+    
+            p.on('end', async (data: any) => {
+                this.logger.log('recevied end event in player (' + p.connection.guildId + ')');
 
-            p.on('trackEnd', async (track, reason) => {
-                if (reason != "STOPPED" && reason != "REPLACED") {
-                    this.logger.log('track ended in ' + guildId + ' playing next song in queue');
-
-                    const s = CadenceMemory.getInstance().getConnectedServer(guildId);
+                if (data.reason != "STOPPED" && data.reason != "REPLACED") {
+                    this.logger.log('track ended in ' + data.guildId + ' playing next song in queue');
+    
+                    const s = CadenceMemory.getInstance().getConnectedServer(data.guildId);
                     if (!s) return;
-
+    
                     s.handleTrackEnded();
                     await CadenceLavalink.getInstance().playNextSongInQueue(p, s.loop == LoopType.NONE);
                 }
             });
-
-            p.on('channelLeave', async (left: string) => {
-                const s = CadenceMemory.getInstance().getConnectedServer(guildId);
-                if (!s) return;
-
-                this.leaveChannel(s.guildId);
+    
+            p.on('resumed', () => {
+                this.logger.log('received resumed event in player (' + p.connection.guildId + ')');
             });
 
-            p.on('channelMove', async (from: string, to: string) => {
-                if (p.channelId) {
-                    await p.pause();
-                    await this._wait(1000);
-                    await p.resume();
-
-                    const s = CadenceMemory.getInstance().getConnectedServer(guildId);
-                    if (!s) return;
-                    
-                    s.voiceChannelId = to;
-                }
-            });
-
-            p.on('trackException', async (track, error) => {
-                this.logger.log('trackException on track ' + track + ': ' + error);
+            p.on('exception', async (data: any) => {
+                this.logger.log('received exception event in player (' + p.connection.guildId + ') ' + data);
                 
-                const s = CadenceMemory.getInstance().getConnectedServer(guildId);
+                const s = CadenceMemory.getInstance().getConnectedServer(p.connection.guildId);
                 if (!s) return;
-
+    
                 s.handleTrackEnded();
                 await CadenceLavalink.getInstance().playNextSongInQueue(p, s.loop == LoopType.NONE);
             });
 
-            p.on('trackStuck', async (track: string, ms: number) => {
-                this.logger.log('trackStuck on track ' + track);
-
-                const s = CadenceMemory.getInstance().getConnectedServer(guildId);
-                if (!s) return;
-
-                s.handleTrackEnded();
-                await CadenceLavalink.getInstance().playNextSongInQueue(p, s.loop == LoopType.NONE);
+            p.on('closed', r => {
+                this.logger.log('received closed event in player (' + p.connection.guildId + ') ' + r);
+                this.leaveChannel(p.connection.guildId);
             });
         }
 
@@ -201,16 +197,10 @@ export default class CadenceLavalink {
         const s = CadenceMemory.getInstance().getConnectedServer(guildId);
         if (s) s.handleDisconnect();
 
-        await player.disconnect().destroy();
-        await this._cluster.destroyPlayer(guildId);
+        player.connection.node.leaveChannel(guildId);
+
         CadenceMemory.getInstance().disconnectServer(guildId);
-        return true;
-
-        // if (player.disconnect && await player.destroy() && await this._cluster.destroyPlayer(guildId)) {
-        //     CadenceMemory.getInstance().disconnectServer(guildId);
-        //     return true;
-        // }
-
+        this._playersByGuildId.delete(guildId);
         return true;
     }
 
@@ -223,20 +213,20 @@ export default class CadenceLavalink {
         
     }
 
-    private _buildLavalinkUrl(node: Node): string {
-        return `http://${node.conn.info.host}:${node.conn.info.port}`;
+    private _buildLavalinkUrl(node: ShoukakuSocket): string {
+        return node.rest.url;
     }
 
-    private _getIdealNode(): Node {
-        return this._cluster.idealNodes[0];
+    private _getIdealNode(): ShoukakuSocket {
+        return this._cluster.getNode()
     }
 
-    private async _lavalinkRequest(query: string, node: Node): Promise<any> {
+    private async _lavalinkRequest(query: string, node: ShoukakuSocket): Promise<any> {
         return await (await fetch(
             this._buildLavalinkUrl(node) + query, 
             {
                 headers: {
-                    "Authorization": node.conn.info.password
+                    "Authorization": this._nodeAuthorizations[node.name]
                 }
             }
         )).json();
@@ -253,92 +243,41 @@ export default class CadenceLavalink {
     }
 
     public async init(): Promise<void> {
-        this._client = CadenceDiscord.getInstance().Client;
+        const lavalinkNodes = Config.getInstance().getKeyOrDefault('LavalinkNodes', []);
 
-        this._cluster = new Cluster({
-            nodes: Config.getInstance().getKeyOrDefault("LavalinkNodes", []),
-            user: this._client.user.id,
-            sendGatewayPayload: async (id: string, packet: any): Promise<void> => {
-                if (this._client.guilds.cache) {
-                    const guild = this._client.guilds.cache.get(packet.d.guild_id);
-                    if (guild) return guild.shard.send(packet);
-                } else {
-                    const guild = await this._client.guilds.fetch(packet.d.guild_id).catch(e => {
-                        this.logger.log('could not fetch guild ' + packet.d.guild_id + ' in raw send function');
-                    });
-                    if (guild) {
-                        //@ts-ignore
-                        typeof this._client.ws.send === 'function' ? this._client.ws.send(packet) : guild.shard.send(packet);
-                    }
-                }
+        lavalinkNodes.forEach(n => {
+            this._nodeAuthorizations[n.name] = n.auth;
+        });
+
+        this._cluster = new Shoukaku(
+            new Libraries.DiscordJS(CadenceDiscord.getInstance().Client),
+            lavalinkNodes,
+            {
+                "resumable": true,
+                "moveOnDisconnect": true,
+                "userAgent": "cadence"
             }
+        );
+
+        this._cluster.on('error', (nodeName, error) => {
+            this.logger.log('error on node (' + nodeName + '): ' + error);
         });
 
-        this._cluster.on('nodeError', (node, error) => {
-            this.logger.log('error on node (' + node.conn.info.host + ':' + node.conn.info.port + '): ' + error);
+        this._cluster.on('ready', nodeName => {
+            this.logger.log('connected successfully to node (' + nodeName + ')');
         });
 
-        this._cluster.on('nodeConnect', node => {
-            this.logger.log('connected successfully to node (' + node.conn.info.host + ':' + node.conn.info.port + ')');
+        this._cluster.on('close', (nodeName, code, reason) => {
+            this.logger.log('closed node (' + nodeName + ') with code (' + code + '), reason (' + (reason || 'no reason') + ')');
         });
 
-        setInterval(() => {
-            const nodes = Array.from(this._cluster.nodes.values());
-            for (const n of nodes) {
-                const e = new MessageEmbed()
-                    .setTitle(n.conn.info.host + ":" + n.conn.info.port)
-                    .setColor(EmbedColor.Debug)
-                    .setTimestamp(Date.now())
-                    .setFields([
-                        {
-                            name: "Load",
-                            value: n.stats.cpu.lavalinkLoad.toFixed(2) + "% (L), " + n.stats.cpu.systemLoad.toFixed(2) + "% (C)"
-                        },
-                        {
-                            name: "Players",
-                            value: n.stats.playingPlayers + "/" + n.stats.players,
-                            inline: true
-                        },
-                        {
-                            name: "Uptime",
-                            value: this._msToString(n.stats.uptime),
-                            inline: true
-                        }
-                    ]);
-                CadenceDiscord.getInstance().sendStats(e);
-            }
-        }, 3600e3);
+        this._cluster.on('disconnect', (nodeName, players, moved) => {
+            this.logger.log('disconnected node (' + nodeName + '), (' + players.length + ') players have been ' + (moved ? 'moved' : 'disconnected'));
+        });
 
-        if (this._client.guilds.cache && typeof (this._client.ws as any).send === "undefined") {
-            this._client.ws
-                .on("VOICE_SERVER_UPDATE",this._cluster.handleVoiceUpdate.bind(this._cluster))
-                .on("VOICE_STATE_UPDATE", this._cluster.handleVoiceUpdate.bind(this._cluster))
-                .on("GUILD_CREATE", async data => {
-                    for (const state of data.voice_states) await this._cluster.handleVoiceUpdate({ ...state, guild_id: data.id });
-                });
-        } else {
-            // @ts-ignore
-            this._client.client.on("raw", async (packet: DiscordPacket) => {
-                switch (packet.t) {
-                    case "VOICE_SERVER_UPDATE":
-                        await this._cluster.handleVoiceUpdate(packet.d);
-                        break;
-                    case "VOICE_STATE_UPDATE":
-                        await this._cluster.handleVoiceUpdate(packet.d);
-                        break;
-                    case "GUILD_CREATE":
-                        for (const state of packet.d.voice_states) this._cluster.handleVoiceUpdate({ ...state, guild_id: packet.d.id });
-                        break;
-                }
-            });
-        }
-
-        this.logger.log('trying to connect to all lavalink nodes (' + this._cluster.nodes.size + ')');
-        try {
-            this._cluster.connect();
-        } catch (e) {
-            this.logger.log('could not connect to all nodes: ' + e);
-        }
+        this._cluster.on('debug', (nodeName, info) => {
+            // this.logger.log('debug node (' + nodeName + ') -> ' + info);
+        });
     }
 
     private _msToString(ms: number): string {

@@ -14,14 +14,13 @@ export default class CadenceDiscord {
     private logger: Logger = null;
 
     public Client: discord.Client = null;
+
     private _statusWebhook: discord.WebhookClient = null;
     private _statsWebhook: discord.WebhookClient = null;
 
     private _commandsPath: string = "";
     private _commands: discord.Collection<string, BaseCommand> = null;
     private _aliases: { [k: string]: string } = null;
-
-    private _prefixes: Map<string, string> = null;
 
     public sendStatus(text: string): void {
         this._statusWebhook.send({ embeds: [ EmbedHelper.generic(text, EmbedColor.Debug) ]});
@@ -109,9 +108,9 @@ export default class CadenceDiscord {
             const player = CadenceLavalink.getInstance().getPlayerByGuildId(newState.guild.id);
             if (!player) return;
 
-            await player.pause();
-            await this._wait(1000);
-            await player.resume();
+            // await player.pause();
+            // await this._wait(1000);
+            // await player.resume();
         }
     }
 

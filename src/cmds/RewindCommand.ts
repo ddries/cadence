@@ -51,7 +51,7 @@ class RewindCommand extends BaseCommand {
             return;
         }
 
-        await player.seek(player.position - sec);
+        await player.seekTo(player.position - sec);
         message.react('⏪');
     }
 }

@@ -38,7 +38,7 @@ class NpCommand extends BaseCommand {
             return;
         }
 
-        if (!player.playing || !player.track) {
+        if (!!player.track || !player.track) {
             message.reply({ embeds: [ EmbedHelper.NOK("There's nothing playing!") ]});
             return;
         }

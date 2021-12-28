@@ -1,5 +1,6 @@
 import { GuildChannel, Message, TextBasedChannels } from "discord.js";
 import { Player } from "lavaclient";
+import { ShoukakuPlayer } from "shoukaku";
 import CadenceDiscord from "../api/Cadence.Discord";
 import EmbedHelper from "../api/Cadence.Embed";
 import CadenceLavalink from "../api/Cadence.Lavalink";
@@ -13,7 +14,7 @@ export enum LoopType {
 };
 
 export default class ConnectedServer {
-    public player: Player;
+    public player: ShoukakuPlayer;
     public guildId: string;
     public voiceChannelId: string;
     public textChannelId: string;
@@ -31,7 +32,7 @@ export default class ConnectedServer {
     private _dcTimer: NodeJS.Timeout = null;
     private _aloneInterval: NodeJS.Timer = null;
 
-    constructor(player: Player, voiceChannelId: string, channel: TextBasedChannels, guildId: string) {
+    constructor(player: ShoukakuPlayer, voiceChannelId: string, channel: TextBasedChannels, guildId: string) {
         this.player = player;
         this.voiceChannelId = voiceChannelId;
         this.guildId = guildId;
