@@ -33,7 +33,7 @@ class LoopCommand extends BaseCommand {
 
         const player = CadenceLavalink.getInstance().getPlayerByGuildId(message.guildId);
 
-        if (!player || !!player.track) {
+        if (!player ||!player.track) {
             message.reply({ embeds: [ EmbedHelper.NOK("There's nothing playing!") ]});
             return;
         }

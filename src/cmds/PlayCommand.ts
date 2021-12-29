@@ -63,9 +63,6 @@ class PlayCommand extends BaseCommand {
         }
         
         const player = CadenceLavalink.getInstance().getPlayerByGuildId(message.guildId);
-
-        console.log("PLAY player is");
-        console.log(player);
         
         switch (result.loadType) {
             case "LOAD_FAILED":
@@ -77,9 +74,6 @@ class PlayCommand extends BaseCommand {
                 const track = result.tracks[0];
                 const ct = new CadenceTrack(track.track, track.info, message.author.id);
                 server.addToQueue(ct);
-
-                console.log("player track");
-                console.log(player.track);
 
                 if (!player.track) {
                     await CadenceLavalink.getInstance().playNextSongInQueue(player);

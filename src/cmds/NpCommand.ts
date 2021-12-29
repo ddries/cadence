@@ -25,7 +25,7 @@ class NpCommand extends BaseCommand {
 
     public async run(message: Message, args: string[]): Promise<void> {
         const server = CadenceMemory.getInstance().getConnectedServer(message.guildId);
-
+        
         if (!server) {
             message.reply({ embeds: [ EmbedHelper.NOK("There's nothing playing!") ]});
             return;
@@ -38,7 +38,7 @@ class NpCommand extends BaseCommand {
             return;
         }
 
-        if (!!player.track || !player.track) {
+        if (!player.track) {
             message.reply({ embeds: [ EmbedHelper.NOK("There's nothing playing!") ]});
             return;
         }
