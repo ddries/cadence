@@ -68,7 +68,7 @@ class JumpCommand extends BaseCommand {
 
         // if queue loop is active then real index is just given - 1 as we dont remove songs then
 
-        server.handleTrackEnded();
+        server.handleTrackEnded(false);
         const song = server.jumpToSong(idx - 1);
 
         await CadenceLavalink.getInstance().playTrack(song, player.connection.guildId);

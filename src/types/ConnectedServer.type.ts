@@ -94,7 +94,7 @@ export default class ConnectedServer {
         return this._queueIdx < 0 ? 0 : this._queueIdx;
     }
 
-    public async handleTrackEnded(): Promise<void> {
+    public async handleTrackEnded(shouldCheckLeaveCondition: boolean = true): Promise<void> {
         const t = this.getCurrentTrack();
         if (!t) return;
 
@@ -106,7 +106,7 @@ export default class ConnectedServer {
         if (this.loop == LoopType.QUEUE)
             this._queueCount = this._queue.length;
 
-        if (this.loop == LoopType.NONE && this._queueCount <= 0) {
+        if (shouldCheckLeaveCondition && this.loop == LoopType.NONE && this._queueCount <= 0) {
             if (this._queue.length > 1)
                 this.textChannel.send({ embeds: [ EmbedHelper.Info('The queue has ended!\nTo enable auto-restart and 24/7, use `' + Cadence.DefaultPrefix + 'loop queue`.') ]});
 
@@ -192,7 +192,12 @@ export default class ConnectedServer {
                 this.getCurrentTrack().looped = false;
             case LoopType.QUEUE:
             default:
+                console.log("Queue index is now " + idx);
+                console.log("Queue count is now " + (this._queue.length - idx));
+                console.log("Queue is now:");
+                console.log(this._queue);
                 this._queueIdx = idx;
+                this._queueCount = this._queue.length - idx;
                 return this._queue[this._queueIdx];
         }
     }
