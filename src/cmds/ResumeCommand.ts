@@ -40,7 +40,7 @@ class ResumeCommand extends BaseCommand {
             return;
         }
 
-        const s = await server.player.pause(false);
+        const s = await server.player.setPaused(false);
 
         if (s) {
             message.react('▶️');

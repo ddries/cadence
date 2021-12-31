@@ -48,7 +48,8 @@ class PlayCommand extends BaseCommand {
         await CadenceLavalink.getInstance().joinChannel(
             message.member.voice.channelId,
             message.guildId,
-            message.channel
+            message.channel,
+            message.guild.shardId
         );
 
         let server = CadenceMemory.getInstance().getConnectedServer(message.guildId);
@@ -74,7 +75,7 @@ class PlayCommand extends BaseCommand {
                 const ct = new CadenceTrack(track.track, track.info, message.author.id);
                 server.addToQueue(ct);
 
-                if (!player.playing) {
+                if (!player.track) {
                     await CadenceLavalink.getInstance().playNextSongInQueue(player);
                 } else {
                     message.reply({ embeds: [ EmbedHelper.songBasic(track.info, message.author.id, "Added to Queue!") ]});
@@ -85,7 +86,7 @@ class PlayCommand extends BaseCommand {
                     server.addToQueue(new CadenceTrack(result.tracks[i].track, result.tracks[i].info, message.author.id));
                 }
 
-                if (!player.playing) {
+                if (!player.track) {
                     await CadenceLavalink.getInstance().playNextSongInQueue(player);
                 }
 
