@@ -7,6 +7,8 @@ import fs from 'fs';
 import path from 'path';
 import EmbedHelper, { EmbedColor } from "./Cadence.Embed";
 import CadenceLavalink from "./Cadence.Lavalink";
+import { IGuild } from "./models/GuildSchema";
+import CadenceDb from "./Cadence.Db";
 
 export default class CadenceDiscord {
 
@@ -22,6 +24,8 @@ export default class CadenceDiscord {
     private _commands: discord.Collection<string, BaseCommand> = null;
     private _aliases: { [k: string]: string } = null;
 
+    private _prefixes: Map<string, string> = null;
+
     public sendStatus(text: string): void {
         this._statusWebhook.send({ embeds: [ EmbedHelper.generic(text, EmbedColor.Debug) ]});
     }
@@ -33,6 +37,15 @@ export default class CadenceDiscord {
 
     public resolveGuildNameAndId(guild: discord.Guild): string {
         return guild.name + ' (' + guild.id + ')';
+    }
+
+    public getServerPrefix(guildId: string): string {
+        if (!this._prefixes.has(guildId)) return Cadence.DefaultPrefix;
+        else return this._prefixes.get(guildId);
+    }
+
+    public setServerPrefix(guildId: string, prefix: string): void {
+        this._prefixes.set(guildId, prefix);
     }
 
     public getAllCommands(): discord.Collection<string, BaseCommand> {
@@ -53,13 +66,14 @@ export default class CadenceDiscord {
         }
 
         await this._loadAllCommands();
+        await this._loadAllServers();
     }
 
     private async OnMessage(m: discord.Message): Promise<void> {
         if (m.author.bot) return;
         if (m.channel.type == 'DM') return;
 
-        const prefix = Cadence.DefaultPrefix;
+        const prefix = Cadence.IsMainInstance ? this.getServerPrefix(m.guildId) : Cadence.DefaultPrefix;
 
         if (!m.content.startsWith(prefix) && !m.content.startsWith(Cadence.DefaultPrefix)) return;
 
@@ -83,34 +97,14 @@ export default class CadenceDiscord {
         }
     }
 
-    private async OnVoiceUpdate(oldState: discord.VoiceState, newState: discord.VoiceState): Promise<void> {
-        if (oldState.member.id != this.Client.user.id) return;
-
-        if (
-
-            // If the bot has been unmuted
-            // Or the bot has been deafen/undeafen
-            // We have to reload the player (thanks to lavalink lib)
-
-            ( newState.channel &&
-            newState.channelId &&
-            !newState.mute &&
-            !newState.serverMute &&
-            newState.sessionId ) &&
-
-            ( oldState.channel &&
-            oldState.channelId &&
-            ( oldState.mute || oldState.serverMute ) &&
-            oldState.sessionId )
-
-            || newState.serverDeaf != oldState.serverDeaf
-        ) {
-            const player = CadenceLavalink.getInstance().getPlayerByGuildId(newState.guild.id);
-            if (!player) return;
-
-            // await player.pause();
-            // await this._wait(1000);
-            // await player.resume();
+    private async _loadAllServers(): Promise<void> {
+        // Prefixes
+        if (Cadence.IsMainInstance) {
+            const guilds: Array<IGuild> = await CadenceDb.getInstance().getAllServers();
+            for (const g of guilds) {
+                this.logger.log('loaded prefix ' + g.prefix + ' for guild (' + g.guildId + ')');
+                this._prefixes.set(g.guildId, g.prefix);
+            }
         }
     }
 
@@ -163,6 +157,8 @@ export default class CadenceDiscord {
         this._statusWebhook = new discord.WebhookClient({ url: Config.getInstance().getKeyOrDefault('StatusWebhook', '')});
         this._statsWebhook = new discord.WebhookClient({ url: Config.getInstance().getKeyOrDefault('StatsWebhook', '')});
 
+        this._prefixes = new Map<string, string>();
+
         this._commandsPath = path.join(Cadence.BaseDir, 'cmds');
 
         if (Cadence.Debug)
@@ -175,12 +171,9 @@ export default class CadenceDiscord {
 
         this.Client.once('ready', this.OnReady.bind(this));
         this.Client.on('messageCreate', this.OnMessage.bind(this));
-        this.Client.on('voiceStateUpdate', this.OnVoiceUpdate.bind(this));
 
         this.logger.log('logging to discord network');
         await this.Client.login(
-            Cadence.Debug ?
-                Config.getInstance().getKeyOrDefault('BotTokenDebug', '') :
                 Config.getInstance().getKeyOrDefault('BotToken', '')
         ).catch(e => {
             this.logger.log('could not connect to discord network ' + e);

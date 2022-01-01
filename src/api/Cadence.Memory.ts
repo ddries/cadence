@@ -1,5 +1,4 @@
 import { TextBasedChannels } from "discord.js";
-import { Player } from "lavaclient";
 import { ShoukakuPlayer } from "shoukaku";
 import ConnectedServer from "../types/ConnectedServer.type";
 import Logger from "./Cadence.Logger";

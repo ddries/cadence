@@ -1,4 +1,5 @@
 import Config from './api/Cadence.Config';
+import CadenceDb from './api/Cadence.Db';
 import CadenceDiscord from './api/Cadence.Discord';
 import CadenceLavalink from './api/Cadence.Lavalink';
 import Logger from './api/Cadence.Logger';
@@ -35,7 +36,7 @@ export default class Cadence {
         Cadence.IsMainInstance = Config.getInstance().getKeyOrDefault('IsMainInstance', true);
 
         Cadence.BotName = Config.getInstance().getKeyOrDefault('BotName', '');
-        Cadence.DefaultPrefix = Cadence.Debug ? Config.getInstance().getKeyOrDefault('BotDefaultPrefixDebug', '') : Config.getInstance().getKeyOrDefault('BotDefaultPrefix', '');
+        Cadence.DefaultPrefix = Config.getInstance().getKeyOrDefault('BotDefaultPrefix', '');
         
         Cadence.SongsPerEmbed = Config.getInstance().getKeyOrDefault('SongsPerEmbed', 10);
         
@@ -60,6 +61,7 @@ export default class Cadence {
         console.log();console.log();
 
         await CadenceMemory.getInstance().init();
+        await CadenceDb.getInstance().init();
 
         this.logger.log('starting discord module cadence ' + Cadence.Version + ", debug " + Cadence.Debug.toString());
         await CadenceDiscord.getInstance().init();

@@ -11,6 +11,7 @@ import EmbedHelper, { EmbedColor } from './Cadence.Embed';
 import { LoopType } from '../types/ConnectedServer.type';
 import CadenceTrack from '../types/CadenceTrack.type';
 import { Libraries, Shoukaku, ShoukakuPlayer, ShoukakuSocket } from 'shoukaku';
+import Cadence from '../Cadence';
 
 export default class CadenceLavalink {
 
@@ -255,7 +256,7 @@ export default class CadenceLavalink {
             {
                 "resumable": true,
                 "moveOnDisconnect": true,
-                "userAgent": "cadence"
+                "userAgent": "cadence/" + Cadence.Version
             }
         );
 

@@ -92,7 +92,7 @@ class HelpCommand extends BaseCommand {
             if (cmd.aliases && cmd.aliases.length > 0) {
                 aliasString = "( ";
                 for (let j = 0; j < cmd.aliases.length; j++) {
-                    aliasString += Cadence.DefaultPrefix + cmd.aliases[j];
+                    aliasString += CadenceDiscord.getInstance().getServerPrefix(message.guildId) + cmd.aliases[j];
                     if (j+1 < cmd.aliases.length) {
                         aliasString += ", ";
                     } else {
@@ -101,7 +101,7 @@ class HelpCommand extends BaseCommand {
                 }
             }
 
-            desc += "`" + Cadence.DefaultPrefix + cmd.name + "`: ";
+            desc += "`" + CadenceDiscord.getInstance().getServerPrefix(message.guildId) + cmd.name + "`: ";
             if (aliasString.length > 0)
                 desc += aliasString + " ";
                 
