@@ -1,5 +1,4 @@
 import { MessageEmbed } from "discord.js";
-import { Player } from "lavaclient";
 import Cadence from "../Cadence";
 import CadenceTrack from "../types/CadenceTrack.type";
 import { LavalinkResultTrackInfo } from "../types/TrackResult.type";
@@ -60,7 +59,7 @@ export default class EmbedHelper {
                 totalTime += tracks[i].trackInfo.length;
             else totalTime = -1;
 
-            description += `**(${i + 1})** ${tracks[i].looped ? '🔂 ' : ' '}${tracks[i].beingPlayed ? '➡️ ' : ' '}${tracks[i].trackInfo.title.substr(0, 40)} [<@${tracks[i].requestedById}>]\n`
+            description += `**(${i + 1})** ${tracks[i].looped ? '🔂 ' : ' '}${tracks[i].beingPlayed ? '➡️ ' : ' '}${tracks[i].trackInfo.title.substring(0, 40)} [<@${tracks[i].requestedById}>]\n`
         }
 
         let footer = "";

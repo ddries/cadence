@@ -1,5 +1,4 @@
-import { GuildChannel, Message, TextBasedChannels } from "discord.js";
-import { Player } from "lavaclient";
+import { Message, TextBasedChannels } from "discord.js";
 import { ShoukakuPlayer } from "shoukaku";
 import CadenceDiscord from "../api/Cadence.Discord";
 import EmbedHelper from "../api/Cadence.Embed";
@@ -108,7 +107,7 @@ export default class ConnectedServer {
 
         if (shouldCheckLeaveCondition && this.loop == LoopType.NONE && this._queueCount <= 0) {
             if (this._queue.length > 1)
-                this.textChannel.send({ embeds: [ EmbedHelper.Info('The queue has ended!\nTo enable auto-restart and 24/7, use `' + Cadence.DefaultPrefix + 'loop queue`.') ]});
+                this.textChannel.send({ embeds: [ EmbedHelper.Info('The queue has ended!\nTo enable auto-restart and 24/7, use `' + CadenceDiscord.getInstance().getServerPrefix(this.guildId) + 'loop queue`.') ]});
 
             this.clearQueue();
             CadenceLavalink.getInstance().leaveChannel(this.guildId);
@@ -192,10 +191,6 @@ export default class ConnectedServer {
                 this.getCurrentTrack().looped = false;
             case LoopType.QUEUE:
             default:
-                console.log("Queue index is now " + idx);
-                console.log("Queue count is now " + (this._queue.length - idx));
-                console.log("Queue is now:");
-                console.log(this._queue);
                 this._queueIdx = idx;
                 this._queueCount = this._queue.length - idx;
                 return this._queue[this._queueIdx];
