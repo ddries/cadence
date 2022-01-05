@@ -9,6 +9,7 @@ import EmbedHelper, { EmbedColor } from "./Cadence.Embed";
 import CadenceLavalink from "./Cadence.Lavalink";
 import { IGuild } from "./models/GuildSchema";
 import CadenceDb from "./Cadence.Db";
+import CadenceMemory from "./Cadence.Memory";
 
 export default class CadenceDiscord {
 
@@ -97,6 +98,20 @@ export default class CadenceDiscord {
         }
     }
 
+    private async OnVoiceUpdate(oldState: discord.VoiceState, newState: discord.VoiceState): Promise<void> {
+        if (oldState.member.id != this.Client.user.id) return;
+
+        const server = CadenceMemory.getInstance().getConnectedServer(oldState.guild.id);
+        if (!server) return;
+
+        if (newState.channel && newState.sessionId && (oldState.channelId != newState.channelId || newState.channelId != server.voiceChannelId)) {
+            server.voiceChannelId = newState.channelId;
+            server.player.setPaused(true);
+            (new Promise(res => setTimeout(res, 1000))).then(() => server.player.setPaused(false));
+            this.logger.log('updated voice channel id to (' + server.voiceChannelId + ')');
+        }
+    }
+
     private async _loadAllServers(): Promise<void> {
         // Prefixes
         if (Cadence.IsMainInstance) {
@@ -171,6 +186,7 @@ export default class CadenceDiscord {
 
         this.Client.once('ready', this.OnReady.bind(this));
         this.Client.on('messageCreate', this.OnMessage.bind(this));
+        this.Client.on('voiceStateUpdate', this.OnVoiceUpdate.bind(this));
 
         this.logger.log('logging to discord network');
         await this.Client.login(
