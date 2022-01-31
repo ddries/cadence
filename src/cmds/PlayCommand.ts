@@ -1,5 +1,6 @@
 import { Message } from "discord.js";
 import BaseCommand from "../api/Cadence.BaseCommand";
+import CadenceDb from "../api/Cadence.Db";
 import CadenceDiscord from "../api/Cadence.Discord";
 import EmbedHelper from "../api/Cadence.Embed";
 import CadenceLavalink from "../api/Cadence.Lavalink";
@@ -80,6 +81,14 @@ class PlayCommand extends BaseCommand {
                 } else {
                     message.reply({ embeds: [ EmbedHelper.songBasic(track.info, message.author.id, "Added to Queue!") ]});
                 }
+
+                CadenceDb.getInstance().pushNewSong({
+                    guildId: message.guildId,
+                    requestedById: message.author.id,
+                    dateUnix: (Date.now() / 1000).toString(),
+                    songUrl: ct.trackInfo.uri
+                });
+                
                 break;
             case "PLAYLIST_LOADED":
                 for (let i = 0; i < result.tracks.length; ++i) {

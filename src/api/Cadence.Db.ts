@@ -3,6 +3,7 @@ import mongoose, { mongo } from 'mongoose';
 import Config from "./Cadence.Config";
 import Cadence from "../Cadence";
 import { GuildModel, IGuild } from "./models/GuildSchema";
+import { ISong, SongModel } from "./models/SongSchema";
 
 export default class CadenceDb {
 
@@ -20,6 +21,11 @@ export default class CadenceDb {
 
     public async getAllServers(): Promise<Array<IGuild>> {
         return await GuildModel.find();
+    }
+
+    public async pushNewSong(song: ISong): Promise<void> {
+        const doc = new SongModel(song);
+        await doc?.save();
     }
 
     public async init(): Promise<void> {
