@@ -1,4 +1,4 @@
-import { Message, TextBasedChannels } from "discord.js";
+import { Message, TextBasedChannel } from "discord.js";
 import { ShoukakuPlayer } from "shoukaku";
 import CadenceDiscord from "../api/Cadence.Discord";
 import EmbedHelper from "../api/Cadence.Embed";
@@ -17,7 +17,7 @@ export default class ConnectedServer {
     public guildId: string;
     public voiceChannelId: string;
     public textChannelId: string;
-    public textChannel: TextBasedChannels;
+    public textChannel: TextBasedChannel;
     public nowPlayingMessage: Message;
 
     public loop: LoopType = LoopType.NONE;
@@ -31,7 +31,7 @@ export default class ConnectedServer {
     private _dcTimer: NodeJS.Timeout = null;
     private _aloneInterval: NodeJS.Timer = null;
 
-    constructor(player: ShoukakuPlayer, voiceChannelId: string, channel: TextBasedChannels, guildId: string) {
+    constructor(player: ShoukakuPlayer, voiceChannelId: string, channel: TextBasedChannel, guildId: string) {
         this.player = player;
         this.voiceChannelId = voiceChannelId;
         this.guildId = guildId;

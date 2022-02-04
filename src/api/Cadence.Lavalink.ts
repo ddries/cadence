@@ -1,4 +1,4 @@
-import { Client, MessageEmbed, TextBasedChannels, TextChannel, Message } from 'discord.js';
+import { Client, MessageEmbed, TextBasedChannel, TextChannel, Message } from 'discord.js';
 import Config from './Cadence.Config';
 import CadenceDiscord from './Cadence.Discord';
 import Logger from './Cadence.Logger';
@@ -121,7 +121,7 @@ export default class CadenceLavalink {
         return false;
     }
 
-    public async joinChannel(channelId: string, guildId: string, channel: TextBasedChannels, shardId: number, selfDeaf: boolean = true, selfMute: boolean = false): Promise<ShoukakuPlayer> {
+    public async joinChannel(channelId: string, guildId: string, channel: TextBasedChannel, shardId: number, selfDeaf: boolean = true, selfMute: boolean = false): Promise<ShoukakuPlayer> {
         if (!this._cluster) return null;
 
         this.logger.log('requested to join channel ' + channelId + ' in guild ' + guildId);

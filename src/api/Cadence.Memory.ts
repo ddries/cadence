@@ -1,4 +1,4 @@
-import { TextBasedChannels } from "discord.js";
+import { TextBasedChannel } from "discord.js";
 import { ShoukakuPlayer } from "shoukaku";
 import ConnectedServer from "../types/ConnectedServer.type";
 import Logger from "./Cadence.Logger";
@@ -10,7 +10,7 @@ export default class CadenceMemory {
 
     private _connectedServers: Map<string, ConnectedServer> = null;
 
-    public setConnectedServer(guildId: string, channelId: string, channel: TextBasedChannels, player: ShoukakuPlayer): void {
+    public setConnectedServer(guildId: string, channelId: string, channel: TextBasedChannel, player: ShoukakuPlayer): void {
         if (this._connectedServers.has(guildId))
             this._connectedServers.delete(guildId);
 
