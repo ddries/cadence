@@ -197,6 +197,32 @@ export default class ConnectedServer {
         }
     }
 
+    public moveSong(idxFrom: number, idxTo: number = -1): void {
+        if (idxTo == -1) {
+            idxTo = this._queueIdx + 1;
+        }
+
+        const temp = this._queue[idxFrom];
+
+        if (idxFrom < idxTo) {
+            for (let i = idxFrom; i < idxTo; i++) {
+                this._queue[i] = this._queue[i + 1];
+            }
+        } else {
+            for (let i = idxFrom; i > idxTo; i--) {
+                this._queue[i] = this._queue[i - 1];
+            }
+        }
+
+        this._queue[idxTo] = temp;
+    } 
+
+    public swapSong(idxFrom: number, idxTo: number): void {
+        const temp = this._queue[idxFrom];
+        this._queue[idxFrom] = this._queue[idxTo];
+        this._queue[idxTo] = temp;
+    }
+
     public getQueue(): CadenceTrack[] {
         return this._queue;
     }
@@ -213,5 +239,9 @@ export default class ConnectedServer {
         this._queueIdx = -1;
         this._queue.length = 0;
         this._queueCount = this._queue.length;
+    }
+
+    public checkIndex(idx: number): boolean {
+        return idx > 0 && idx < this._queue.length;
     }
 }
