@@ -8,7 +8,7 @@ import CadenceMemory from "../api/Cadence.Memory";
 import Cadence from "../Cadence";
 import { LoopType } from "../types/ConnectedServer.type";
 
-class JumpCommand extends BaseCommand {
+class MoveCommand extends BaseCommand {
     public name: string;
     public description: string;
     public aliases: string[];
@@ -17,9 +17,9 @@ class JumpCommand extends BaseCommand {
     constructor() {
         super();
 
-        this.name = "jump";
-        this.description = "Jump to the selected song from queue";
-        this.aliases = ["j"];
+        this.name = "move";
+        this.description = "Move one song from queue to the desired position";
+        this.aliases = ["mv"];
         this.requireAdmin = false;
     }
 
@@ -53,37 +53,19 @@ class JumpCommand extends BaseCommand {
             return;
         }
 
-        const idx = parseInt(args[0], 10);
-
-        if (!server.checkIndex(idx)) {
+        const idxFrom = parseInt(args[0], 10) - 1;
+        const idxTo = parseInt(args[1], 10) - 1;
+        
+        if (!server.checkIndex(idxFrom) || (!isNaN(idxTo) && !server.checkIndex(idxTo))) {
             message.reply({ embeds: [ EmbedHelper.NOK("Please enter a valid index!") ]});
             return;
         }
-
-        // given index is real index + 1 (thus, real is given -1)
-        // if no loop is active we are removing 1 song in handleTrackEnded (currently played)
-        // thus, given index is now index, real index is last given index - 1 (thus, real is first given -2)
-        // then we jump to the given song
-        // so we remove until the real index is now index 0
-
-        // if queue loop is active then real index is just given - 1 as we dont remove songs then
-
-        server.handleTrackEnded(false);
-        const song = server.jumpToSong(idx - 1);
-
-        await CadenceLavalink.getInstance().playTrack(song, player.connection.guildId);
-
-        const lastMessage = server.textChannel.lastMessage;
-        let m: Message = null;
-
-        if (lastMessage.id != server.nowPlayingMessage?.id) {
-            m = await server.textChannel.send({ embeds: [ EmbedHelper.songBasic(song.trackInfo, song.requestedById, "Now Playing!") ]});
-        } else {
-            m = await lastMessage.edit({ embeds: [ EmbedHelper.songBasic(song.trackInfo, song.requestedById, "Now Playing!") ]});
-        }
-
-        server.nowPlayingMessage = m;
+    
+        //Codigo original y superior al anterior
+        if(isNaN(idxTo)) server.moveSong(idxFrom);
+        else server.moveSong(idxFrom, idxTo);
+        message.react('✅');
     }
 }
 
-export default new JumpCommand();
+export default new MoveCommand();
