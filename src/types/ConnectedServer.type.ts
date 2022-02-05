@@ -24,6 +24,8 @@ export default class ConnectedServer {
     public loopedTrack: CadenceTrack = null;
     public shuffle: boolean = false;
 
+    public isNightcore: boolean = false;
+
     private _queue: CadenceTrack[] = [];
     private _queueIdx: number = -1;
     private _queueCount: number = 0;
@@ -221,6 +223,24 @@ export default class ConnectedServer {
         const temp = this._queue[idxFrom];
         this._queue[idxFrom] = this._queue[idxTo];
         this._queue[idxTo] = temp;
+    }
+
+    public toggleNightcore(): void {
+        this.isNightcore = !this.isNightcore;
+
+        if (this.isNightcore) {
+            this.player.setTimescale({
+                speed: 1.18,
+                pitch: 1.3,
+                rate: 1
+            });
+        } else {
+            this.player.setTimescale({
+                speed: 1,
+                pitch: 1,
+                rate: 1
+            });
+        }
     }
 
     public getQueue(): CadenceTrack[] {
