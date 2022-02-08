@@ -217,7 +217,7 @@ export default class ConnectedServer {
         }
 
         this._queue[idxTo] = temp;
-    } 
+    }
 
     public swapSong(idxFrom: number, idxTo: number): void {
         const temp = this._queue[idxFrom];

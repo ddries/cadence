@@ -82,12 +82,12 @@ class PlayCommand extends BaseCommand {
                     message.reply({ embeds: [ EmbedHelper.songBasic(track.info, message.author.id, "Added to Queue!") ]});
                 }
 
-                CadenceDb.getInstance().pushNewSong({
-                    guildId: message.guildId,
-                    requestedById: message.author.id,
-                    dateUnix: (Date.now() / 1000).toString(),
-                    songUrl: ct.trackInfo.uri
-                });
+                // CadenceDb.getInstance().pushNewSong({
+                //     guildId: message.guildId,
+                //     requestedById: message.author.id,
+                //     dateUnix: (Date.now() / 1000).toString(),
+                //     songUrl: ct.trackInfo.uri
+                // });
                 
                 break;
             case "PLAYLIST_LOADED":

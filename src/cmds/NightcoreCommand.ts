@@ -5,7 +5,7 @@ import CadenceLavalink from "../api/Cadence.Lavalink";
 import CadenceMemory from "../api/Cadence.Memory";
 import Cadence from "../Cadence";
 
-class ClearCommand extends BaseCommand {
+class NightcoreCommand extends BaseCommand {
     public name: string;
     public description: string;
     public aliases: string[];
@@ -53,4 +53,4 @@ class ClearCommand extends BaseCommand {
     }
 }
 
-export default new ClearCommand();
+export default new NightcoreCommand();

@@ -43,19 +43,25 @@ class LoopCommand extends BaseCommand {
             return;
         }
 
-        if (args.length <= 0) {
-            if (server.loop != LoopType.NONE) {
-                server.loop = LoopType.NONE;
-                server.getCurrentTrack().looped = false;
-                server.loopQueue(false);
-                message.reply({ embeds: [ EmbedHelper.Info("Disabled loop!") ]});
-                return;
-            }
-
+        // no args + no loop = track loop
+        if (args.length <= 0 && server.loop == LoopType.NONE) {
             server.loop = LoopType.TRACK;
             server.getCurrentTrack().looped = true;
             message.reply({ embeds: [ EmbedHelper.Info("Looping the current track! If you wish to loop the whole queue, use `" + CadenceDiscord.getInstance().getServerPrefix(message.guildId) + "loop queue`.") ]});
-        } else if (args[0] == 'queue') {
+            return;
+        }
+
+        // no args + any loop = disable loop
+        if (args.length <= 0 && server.loop != LoopType.NONE) {
+            server.loop = LoopType.NONE;
+            server.getCurrentTrack().looped = false;
+            server.loopQueue(false);
+            message.reply({ embeds: [ EmbedHelper.Info("Disabled loop!") ]});
+            return;
+        }
+
+        // args queue + no loop or loop track = loop queue
+        if (args.length > 0 && args[0] == 'queue' && server.loop != LoopType.QUEUE) {
             if (server.loop == LoopType.TRACK) {
                 server.loop = LoopType.NONE;
                 server.getCurrentTrack().looped = false;
@@ -63,6 +69,7 @@ class LoopCommand extends BaseCommand {
             
             server.loopQueue(true);
             message.reply({ embeds: [ EmbedHelper.Info("Looping the whole queue!") ]});
+            return;
         }
     }
 }
