@@ -42,6 +42,25 @@ export default class ConnectedServer {
         this._aloneInterval = setInterval(this._onAloneTimer, 600_000); // 10 min
     }
 
+    public getClone(): ConnectedServer {
+        const c = new ConnectedServer(null, this.voiceChannelId, this.textChannel, this.guildId);
+
+        c.textChannelId = this.textChannelId;
+        c.nowPlayingMessage = this.nowPlayingMessage;
+
+        c.loop = Object.assign({}, this.loop);
+        c.loopedTrack = Object.assign({}, this.loopedTrack);
+        c.shuffle = this.shuffle;
+
+        c._queue = Object.assign({}, this._queue);
+        c._queueIdx = this._queueIdx;
+        c._queueCount = this._queueCount;
+        
+        c._aloneInterval = Object.assign({}, this._aloneInterval);        
+
+        return c;
+    }
+
     private _onAloneTimer(): void {
         const guild = CadenceDiscord.getInstance().Client.guilds.cache.get(this.guildId);
 
