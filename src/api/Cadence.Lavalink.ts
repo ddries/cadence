@@ -178,7 +178,7 @@ export default class CadenceLavalink {
             });
 
             p.on('closed', r => {
-                this.logger.log('received closed event in player (' + p.connection.guildId + ') ' + r);
+                this.logger.log('received closed event in player (' + p.connection.guildId + ') ' + JSON.stringify(r));
                 this.leaveChannel(p.connection.guildId);
             });
         }
