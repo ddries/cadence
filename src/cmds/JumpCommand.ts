@@ -53,7 +53,14 @@ class JumpCommand extends BaseCommand {
             return;
         }
 
-        const idx = parseInt(args[0], 10);
+        let idx = parseInt(args[0], 10);
+
+        if (isNaN(idx)) {
+            message.reply({ embeds: [ EmbedHelper.NOK("Please enter the song index! Usage: " + CadenceDiscord.getInstance().getServerPrefix(message.guildId) + "jump [index].") ]});
+            return;
+        }
+        
+        idx--;
 
         if (!server.checkIndex(idx)) {
             message.reply({ embeds: [ EmbedHelper.NOK("Please enter a valid index!") ]});

@@ -240,7 +240,8 @@ export default class ConnectedServer {
         this._queueCount = this._queue.length;
     }
 
+    // end-user index (it's real queue index + 1)
     public checkIndex(idx: number): boolean {
-        return idx > 0 && idx < this._queue.length;
+        return idx > 0 && idx <= this._queue.length;
     }
 }

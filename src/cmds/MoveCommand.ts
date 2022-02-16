@@ -53,8 +53,16 @@ class MoveCommand extends BaseCommand {
             return;
         }
 
-        const idxFrom = parseInt(args[0], 10) - 1;
-        const idxTo = parseInt(args[1], 10) - 1;
+        let idxFrom = parseInt(args[0], 10);
+        let idxTo = parseInt(args[1], 10);
+
+        if (isNaN(idxFrom) || isNaN(idxTo)) {
+            message.reply({ embeds: [ EmbedHelper.NOK("Please enter the song index! Usage: " + CadenceDiscord.getInstance().getServerPrefix(message.guildId) + "jump [index].") ]});
+            return;
+        }
+
+        idxFrom--;
+        idxTo--;
         
         if (!server.checkIndex(idxFrom) || (!isNaN(idxTo) && !server.checkIndex(idxTo))) {
             message.reply({ embeds: [ EmbedHelper.NOK("Please enter a valid index!") ]});
