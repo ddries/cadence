@@ -177,8 +177,39 @@ export default class CadenceLavalink {
                 await CadenceLavalink.getInstance().playNextSongInQueue(p, s.loop == LoopType.NONE);
             });
 
-            p.on('closed', r => {
+            p.on('closed', async r => {
                 this.logger.log('received closed event in player (' + p.connection.guildId + ') ' + JSON.stringify(r));
+                // the connection was closed abnormally, we try to reconnect the previous session
+                if (r.code == 1006) {
+                    const s = CadenceMemory.getInstance().getConnectedServer(r.guildId);
+                    if (s) {
+                        this.logger.log('trying to reconnect from disconnected server on (' + s.guildId + ')');
+                        // copy the server that has been disconnected
+                        // const tmp = s.getClone();
+                        // // the current track that was being played in order to resume
+                        // const track = s.getCurrentTrack();
+                        // current position of the track being played
+                        const currentPosition = p.position;
+                        
+                        try {
+                            await p.connection.reconnect();
+                            // if it resolves, the connection was resumed
+                            // then we resume the track that was being played
+                            p.resume({
+                                startTime: currentPosition
+                            });
+
+                            this.logger.log('resumed successfully disconnected session on (' + s.guildId + ')');
+                        } catch(e) {
+                            this.logger.log('the connection could not be resumed, ending session on (' + s.guildId + ')');
+                            this.leaveChannel(p.connection.guildId);
+                        }
+
+                        return;
+                    }
+                }
+
+                // if anyting fails we just disconnect
                 this.leaveChannel(p.connection.guildId);
             });
         }

@@ -6,7 +6,6 @@ import Logger from "./Cadence.Logger";
 import fs from 'fs';
 import path from 'path';
 import EmbedHelper, { EmbedColor } from "./Cadence.Embed";
-import CadenceLavalink from "./Cadence.Lavalink";
 import { IGuild } from "./models/GuildSchema";
 import CadenceDb from "./Cadence.Db";
 import CadenceMemory from "./Cadence.Memory";
