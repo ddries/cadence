@@ -4,6 +4,7 @@ import CadenceDiscord from './api/Cadence.Discord';
 import CadenceLavalink from './api/Cadence.Lavalink';
 import Logger from './api/Cadence.Logger';
 import CadenceMemory from './api/Cadence.Memory';
+import CadenceSpotify from './api/Cadence.Spotify';
 
 export default class Cadence {
 
@@ -66,6 +67,7 @@ export default class Cadence {
         this.logger.log('starting discord module cadence ' + Cadence.Version + ", debug " + Cadence.Debug.toString());
         await CadenceDiscord.getInstance().init();
 
+        await CadenceSpotify.getInstance().init();
         await CadenceLavalink.getInstance().init();
 
         if (!Cadence.Debug)

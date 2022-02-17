@@ -5,6 +5,7 @@ import CadenceDiscord from "../api/Cadence.Discord";
 import EmbedHelper from "../api/Cadence.Embed";
 import CadenceLavalink from "../api/Cadence.Lavalink";
 import CadenceMemory from "../api/Cadence.Memory";
+import CadenceSpotify from "../api/Cadence.Spotify";
 import Cadence from "../Cadence";
 import CadenceTrack from "../types/CadenceTrack.type";
 import { LavalinkResult } from "../types/TrackResult.type";
@@ -57,13 +58,22 @@ class PlayCommand extends BaseCommand {
         
         let result: LavalinkResult = null;
         if (CadenceLavalink.getInstance().isValidUrl(linkOrKeyword)) {
-            result = await CadenceLavalink.getInstance().resolveLinkIntoTracks(linkOrKeyword);
+            if (linkOrKeyword.includes("youtube") || linkOrKeyword.includes("you")) {
+                result = await CadenceLavalink.getInstance().resolveLinkIntoTracks(linkOrKeyword);
+            } else {
+                result = await CadenceSpotify.getInstance().resolveLinkIntoTracks(linkOrKeyword);
+            }
         } else {
             for (let i = 1; i < args.length; ++i) linkOrKeyword += " " + args[i];
             result = await CadenceLavalink.getInstance().resolveYoutubeIntoTracks(linkOrKeyword.trim());
         }
         
         const player = CadenceLavalink.getInstance().getPlayerByGuildId(message.guildId);
+
+        if (result == null) {
+            message.reply({ embeds: [ EmbedHelper.NOK("We couldn't find anything with that link! (Private Spotify links do not work)") ]});
+            return;
+        }
         
         switch (result.loadType) {
             case "LOAD_FAILED":
