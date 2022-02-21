@@ -196,7 +196,9 @@ export default class CadenceLavalink {
                             // if it resolves, the connection was resumed
                             // then we resume the track that was being played
                             p.resume({
-                                startTime: currentPosition
+                                noReplace: false,
+                                startTime: currentPosition,
+                                pause: false
                             });
 
                             this.logger.log('resumed successfully disconnected session on (' + s.guildId + ')');
