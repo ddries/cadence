@@ -1,14 +1,23 @@
 import crypto from 'crypto';
+import fs from 'fs';
+import path from 'path';
+import Cadence from '../Cadence';
 
 export default class Logger {
 
     private _prefix: string = "";
+    private _fileName: string = "";
 
-    constructor(prefix: string) {
+    constructor(prefix: string, fileName: string = "") {
         this._prefix = prefix;
+        this._fileName = fileName;
+
+        // if (this._fileName.length > 0) {
+        //     fs.writeFile(path.join(Cadence.BaseLogDir, this._fileName), '', () => { });
+        // }
     }
 
-    public log(text: string): void {
+    public log(text: string, explicitLogBlock: boolean = false): void {
         let _logText = this.getFormattedTimestamp() + " ";
 
         if (this._prefix.length > 0)
@@ -19,6 +28,10 @@ export default class Logger {
         _logText += text;
 
         console.log(_logText);
+
+        if (this._fileName.length > 0 && !explicitLogBlock) {
+            fs.appendFile(path.join(Cadence.BaseLogDir, this._fileName), _logText + "\n",  () => { });
+        }
     }
 
     private getLogId(log: string): string {

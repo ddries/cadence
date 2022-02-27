@@ -18,7 +18,7 @@ export default class Config {
     }
 
     private constructor() {
-        this.logger = new Logger("cadence-config");
+        this.logger = new Logger("cadence-config", 'config.log');
     }
 
     public async init(): Promise<void> {

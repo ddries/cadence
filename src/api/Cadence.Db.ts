@@ -29,7 +29,7 @@ export default class CadenceDb {
     }
 
     public async init(): Promise<void> {
-        this._logger = new Logger('cadence-db');
+        this._logger = new Logger('cadence-db', 'db.log');
 
         const mongoHost = Config.getInstance().getKeyOrDefault('MongoHost', '');
         const mongoPort = Config.getInstance().getKeyOrDefault('MongoPort', 27017);

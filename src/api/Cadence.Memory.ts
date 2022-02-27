@@ -33,7 +33,7 @@ export default class CadenceMemory {
     }
 
     private constructor() {
-        this.logger = new Logger('cadence-memory');
+        this.logger = new Logger('cadence-memory', 'mem.log');
     }
 
     public async init(): Promise<void> {

@@ -273,7 +273,7 @@ export default class CadenceLavalink {
     }
 
     private constructor() {
-        this.logger = new Logger('cadence-lavalink');
+        this.logger = new Logger('cadence-lavalink', 'lavalink.log');
     }
 
     public async init(): Promise<void> {

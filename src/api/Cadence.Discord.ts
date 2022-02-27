@@ -155,7 +155,7 @@ export default class CadenceDiscord {
     }
 
     private constructor() {
-        this.logger = new Logger('cadence-discord');
+        this.logger = new Logger('cadence-discord', 'discord.log');
     }
 
     public async init(): Promise<void> {

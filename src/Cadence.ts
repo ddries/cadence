@@ -5,6 +5,8 @@ import CadenceLavalink from './api/Cadence.Lavalink';
 import Logger from './api/Cadence.Logger';
 import CadenceMemory from './api/Cadence.Memory';
 import CadenceSpotify from './api/Cadence.Spotify';
+import path from 'path';
+import fs from 'fs';
 
 export default class Cadence {
 
@@ -20,17 +22,25 @@ export default class Cadence {
 
     public static BaseDir: string = __dirname;
     public static BaseScript: string = __filename;
+    public static BaseLogDir: string = path.join(this.BaseDir, 'logs');
 
     public static SongsPerEmbed: number = 0;
 
     private constructor() {
-        this.logger = new Logger('cadence-core');
+        this.logger = new Logger('cadence-core', 'core.log');
     }
 
     public async init(): Promise<void> {
-        this.logger.log('started cadence preload')
+        this.logger.log('started cadence preload', true)
         
         await Config.getInstance().init();
+
+        fs.access(Cadence.BaseLogDir, e => {
+            if (e) {
+                fs.mkdir(Cadence.BaseLogDir, { recursive: true }, () => { });
+                this.logger.log('created log directory: ' + Cadence.BaseLogDir);
+            }
+        });
 
         Cadence.Debug = Config.getInstance().getKeyOrDefault('Debug', true);
         Cadence.Version = Config.getInstance().getKeyOrDefault('Version', '0.0.0');

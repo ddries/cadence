@@ -83,7 +83,7 @@ export default class CadenceSpotify {
     }
 
     private constructor() {
-        this.logger = new Logger('cadence-spotify');
+        this.logger = new Logger('cadence-spotify', 'spotify.log');
     }
 
     public async init(): Promise<void> {
