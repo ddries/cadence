@@ -11,10 +11,6 @@ export default class Logger {
     constructor(prefix: string, fileName: string = "") {
         this._prefix = prefix;
         this._fileName = fileName;
-
-        // if (this._fileName.length > 0) {
-        //     fs.writeFile(path.join(Cadence.BaseLogDir, this._fileName), '', () => { });
-        // }
     }
 
     public log(text: string, explicitLogBlock: boolean = false): void {
