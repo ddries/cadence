@@ -1,12 +1,10 @@
 import { Message } from "discord.js";
 import BaseCommand from "../api/Cadence.BaseCommand";
-import Config from "../api/Cadence.Config";
 import CadenceDiscord from "../api/Cadence.Discord";
 import EmbedHelper from "../api/Cadence.Embed";
 import CadenceLavalink from "../api/Cadence.Lavalink";
 import CadenceMemory from "../api/Cadence.Memory";
 import Cadence from "../Cadence";
-import { LoopType } from "../types/ConnectedServer.type";
 
 class SwapCommand extends BaseCommand {
     public name: string;

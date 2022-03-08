@@ -1,7 +1,5 @@
 import { Message } from "discord.js";
 import BaseCommand from "../api/Cadence.BaseCommand";
-import Config from "../api/Cadence.Config";
-import CadenceDiscord from "../api/Cadence.Discord";
 import EmbedHelper from "../api/Cadence.Embed";
 import CadenceLavalink from "../api/Cadence.Lavalink";
 import CadenceMemory from "../api/Cadence.Memory";

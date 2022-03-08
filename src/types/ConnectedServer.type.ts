@@ -3,7 +3,6 @@ import { ShoukakuPlayer } from "shoukaku";
 import CadenceDiscord from "../api/Cadence.Discord";
 import EmbedHelper from "../api/Cadence.Embed";
 import CadenceLavalink from "../api/Cadence.Lavalink";
-import Cadence from "../Cadence";
 import CadenceTrack from "./CadenceTrack.type";
 
 export enum LoopType {

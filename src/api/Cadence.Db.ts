@@ -1,5 +1,5 @@
 import Logger from "./Cadence.Logger";
-import mongoose, { mongo } from 'mongoose';
+import mongoose from 'mongoose';
 import Config from "./Cadence.Config";
 import Cadence from "../Cadence";
 import { GuildModel, IGuild } from "./models/GuildSchema";

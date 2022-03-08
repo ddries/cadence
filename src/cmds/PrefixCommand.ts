@@ -3,7 +3,6 @@ import BaseCommand from "../api/Cadence.BaseCommand";
 import CadenceDb from "../api/Cadence.Db";
 import CadenceDiscord from "../api/Cadence.Discord";
 import EmbedHelper from "../api/Cadence.Embed";
-import CadenceMemory from "../api/Cadence.Memory";
 
 
 class PrefixCommand extends BaseCommand {

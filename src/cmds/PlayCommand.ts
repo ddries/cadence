@@ -1,12 +1,10 @@
 import { Message } from "discord.js";
 import BaseCommand from "../api/Cadence.BaseCommand";
-import CadenceDb from "../api/Cadence.Db";
 import CadenceDiscord from "../api/Cadence.Discord";
 import EmbedHelper from "../api/Cadence.Embed";
 import CadenceLavalink from "../api/Cadence.Lavalink";
 import CadenceMemory from "../api/Cadence.Memory";
 import CadenceSpotify from "../api/Cadence.Spotify";
-import Cadence from "../Cadence";
 import CadenceTrack from "../types/CadenceTrack.type";
 import { LavalinkResult } from "../types/TrackResult.type";
 
