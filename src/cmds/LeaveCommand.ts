@@ -1,35 +1,34 @@
-import { Message } from "discord.js";
+import { SlashCommandBuilder } from "@discordjs/builders";
+import { CommandInteraction, GuildMember, } from "discord.js";
 import BaseCommand from "../api/Cadence.BaseCommand";
 import EmbedHelper from "../api/Cadence.Embed";
 import CadenceLavalink from "../api/Cadence.Lavalink";
 import CadenceMemory from "../api/Cadence.Memory";
 
-class LeaveCommand extends BaseCommand {
-    public name: string;
-    public description: string;
-    public aliases: string[];
-    public requireAdmin: boolean;
+export const Command: BaseCommand = {
+    name: "leave",
+    description: "Leave the current voice session",
+    aliases: ["stop", "dc"],
+    requireAdmin: false,
 
-    constructor() {
-        super();
-        this.name = "leave";
-        this.aliases = ["stop", "dc"];
-        this.description = "Leave the current voice session";
-    }
+    run: async (interaction: CommandInteraction): Promise<void> => {
+        const server = CadenceMemory.getInstance().getConnectedServer(interaction.guildId);
 
-    public async run(m: Message, args: string[]): Promise<void> {
-        const server = CadenceMemory.getInstance().getConnectedServer(m.guildId);
-
-        if (server && server.voiceChannelId != m.member.voice.channelId) {
-            m.reply({ embeds: [ EmbedHelper.NOK("I'm already being used in another voice channel!") ]});
+        if (server && server.voiceChannelId != (interaction.member as GuildMember).voice.channelId) {
+            interaction.reply({ embeds: [ EmbedHelper.NOK("I'm already being used in another voice channel!") ], ephemeral: true });
             return;
         }
 
-        const b = await CadenceLavalink.getInstance().leaveChannel(m.guildId);
+        const b = await CadenceLavalink.getInstance().leaveChannel(interaction.guildId);
         if (b) {
-            m.react('👋')
+            interaction.reply({ content: '👋' });
         }
-    }
+    },
+
+    slashCommandBody: new SlashCommandBuilder()
+                        .setName("leave")
+                        .setDescription("Leave the current voice session")      
+                        .toJSON()
+
 
 }
-export default new LeaveCommand();

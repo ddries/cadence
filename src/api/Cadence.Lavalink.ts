@@ -35,7 +35,7 @@ export default class CadenceLavalink {
 
         this.logger.log('requested to play track ' + track.base64 + ' in ' + guildId);
         
-        const result = await player.playTrack(track.base64);
+        const result = player.playTrack(track.base64);
 
         if (result) {
             track.beingPlayed = true;
@@ -96,7 +96,7 @@ export default class CadenceLavalink {
         const t = s.getNextSong();
         if (!t) {
             if (s.getQueue().length <= 0) {
-                await player.stopTrack();
+                player.stopTrack();
             }
             return false;
         }

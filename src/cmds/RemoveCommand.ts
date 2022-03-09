@@ -1,68 +1,58 @@
-import { Message } from "discord.js";
+import { SlashCommandBuilder } from "@discordjs/builders";
+import { CommandInteraction, GuildMember } from "discord.js";
 import BaseCommand from "../api/Cadence.BaseCommand";
-import CadenceDiscord from "../api/Cadence.Discord";
 import EmbedHelper from "../api/Cadence.Embed";
 import CadenceLavalink from "../api/Cadence.Lavalink";
 import CadenceMemory from "../api/Cadence.Memory";
 import Cadence from "../Cadence";
 
-class RemoveCommand extends BaseCommand {
-    public name: string;
-    public description: string;
-    public aliases: string[];
-    public requireAdmin: boolean;
+export const Command: BaseCommand = {
+    name: "remove",
+    description: "Remove the selected song from queue",
+    aliases: ["rm"],
+    requireAdmin: false,
 
-    constructor() {
-        super();
-
-        this.name = "remove";
-        this.description = "Remove the selected song from queue";
-        this.aliases = ["rm"];
-        this.requireAdmin = false;
-    }
-
-    public async run(message: Message, args: string[]): Promise<void> {
-        const server = CadenceMemory.getInstance().getConnectedServer(message.guildId);
+    run: async (interaction: CommandInteraction): Promise<void> => {
+        const server = CadenceMemory.getInstance().getConnectedServer(interaction.guildId);
 
         if (!server) {
-            message.reply({ embeds: [ EmbedHelper.NOK("There's nothing playing!") ]});
+            interaction.reply({ embeds: [ EmbedHelper.NOK("There's nothing playing!") ], ephemeral: true });
             return;
         }
 
-        if (!CadenceLavalink.getInstance().getPlayerByGuildId(message.guildId)) {
-            message.reply({ embeds: [ EmbedHelper.NOK("There's nothing playing!") ]});
+        if (!CadenceLavalink.getInstance().getPlayerByGuildId(interaction.guildId)) {
+            interaction.reply({ embeds: [ EmbedHelper.NOK("There's nothing playing!") ], ephemeral: true });
             return;
         }
 
-        if (!message.member.voice?.channelId || message.member.voice.channelId != server.voiceChannelId) {
-            message.reply({ embeds: [ EmbedHelper.NOK("You must be connected to the same voice channel as " + Cadence.BotName + "!") ]});
+        if (!(interaction.member as GuildMember).voice?.channelId || (interaction.member as GuildMember).voice.channelId != server.voiceChannelId) {
+            interaction.reply({ embeds: [ EmbedHelper.NOK("You must be connected to the same voice channel as " + Cadence.BotName + "!") ], ephemeral: true });
             return;
         }
 
         if (server.isQueueEmpty()) {
-            message.reply({ embeds: [ EmbedHelper.NOK("There's nothing in the queue!") ]});
+            interaction.reply({ embeds: [ EmbedHelper.NOK("There's nothing in the queue!") ], ephemeral: true });
             return;
         }
 
-        if (args.length < 1) {
-            message.reply({ embeds: [ EmbedHelper.NOK("Please enter the song index! Usage: " + CadenceDiscord.getInstance().getServerPrefix(message.guildId) + "remove [index].") ]});
-            return;
-        }
-
-        const idx = parseInt(args[0], 10);
+        const idx = interaction.options.getInteger('song', true);
 
         if (idx > server.getQueue().length) {
-            message.reply({ embeds: [ EmbedHelper.NOK("Please enter a valid index!") ]});
+            interaction.reply({ embeds: [ EmbedHelper.NOK("Please enter a valid index!") ], ephemeral: true });
             return;
         }
 
         if (idx - 1 == server.getCurrentQueueIndex()) {
-            await CadenceLavalink.getInstance().getPlayerByGuildId(message.guildId).stopTrack();
+            CadenceLavalink.getInstance().getPlayerByGuildId(interaction.guildId).stopTrack();
         }
 
         server.removeFromQueueIdx(idx-1);
-        message.react('✅');
-    }
+        interaction.reply({ content: '✅' });
+    },
+    
+    slashCommandBody: new SlashCommandBuilder()
+                        .setName("remove")
+                        .setDescription("Remove the selected song from queue")
+                        .addIntegerOption(o => o.setName("song").setDescription("Song number").setMinValue(1).setRequired(true))
+                        .toJSON()
 }
-
-export default new RemoveCommand();

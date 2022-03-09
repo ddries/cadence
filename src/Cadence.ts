@@ -24,6 +24,7 @@ export default class Cadence {
     public static BaseScript: string = __filename;
     public static BaseLogDir: string = path.join(this.BaseDir, 'logs');
 
+    public static NowPlayingEnabled: boolean = true;
     public static SongsPerEmbed: number = 0;
 
     private constructor() {
@@ -50,6 +51,7 @@ export default class Cadence {
         Cadence.DefaultPrefix = Config.getInstance().getKeyOrDefault('BotDefaultPrefix', '');
         
         Cadence.SongsPerEmbed = Config.getInstance().getKeyOrDefault('SongsPerEmbed', 10);
+        Cadence.NowPlayingEnabled = Config.getInstance().getKeyOrDefault('NowPlayingEnabled', true);
         
         console.log();
         console.log();
@@ -94,7 +96,8 @@ export default class Cadence {
 
 }
 
-
-;(async () => {
-    await Cadence.getInstance().init();
-})();
+if (require.main === module) {
+    ;(async () => {
+        await Cadence.getInstance().init();
+    })();
+}

@@ -69,7 +69,9 @@ export default class EmbedHelper {
         
         footer += "Queue duration: " + (totalTime < 0 ? '♾️' : (Math.ceil(totalTime / 1000 / 60) + " minutes."));
 
-        embed.setFooter(footer);
+        embed.setFooter({
+            text: footer
+        });
 
         embed.setDescription(description);
         return embed;
