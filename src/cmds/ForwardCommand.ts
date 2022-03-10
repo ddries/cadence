@@ -42,7 +42,7 @@ export const Command: BaseCommand = {
         }
 
         player.seekTo(player.position + sec);
-        interaction.reply({ content: '⏩'});
+        interaction.reply({ embeds: [ EmbedHelper.OK("Forwarded " + sec + " seconds.") ]});
     },
 
     slashCommandBody: new SlashCommandBuilder()

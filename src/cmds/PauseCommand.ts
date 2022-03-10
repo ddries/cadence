@@ -33,7 +33,8 @@ export const Command: BaseCommand = {
         }
 
         server.player.setPaused(true);
-        interaction.reply({ content: '⏸' });
+        interaction.reply({ embeds: [ EmbedHelper.OK("Player paused.") ]});
+        // interaction.reply({ content: '⏸' });
     },
 
     slashCommandBody: new SlashCommandBuilder()

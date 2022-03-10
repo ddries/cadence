@@ -53,7 +53,7 @@ export const Command: BaseCommand = {
         if(isNaN(idxTo)) server.moveSong(idxFrom);
         else server.moveSong(idxFrom, idxTo);
 
-        interaction.reply({ content: '✅' });
+        interaction.reply({ embeds: [ EmbedHelper.OK("Song moved.") ]});
     },
 
     slashCommandBody: new SlashCommandBuilder()
