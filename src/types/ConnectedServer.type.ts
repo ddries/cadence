@@ -38,7 +38,7 @@ export default class ConnectedServer {
         this.textChannel = channel;
         this.nowPlayingMessage = null;
 
-        this._aloneInterval = setInterval(this._onAloneTimer, 600_000); // 10 min
+        this._aloneInterval = setInterval(this._onAloneTimer.bind(this), 600_000); // 10 min
     }
 
     public getClone(): ConnectedServer {
