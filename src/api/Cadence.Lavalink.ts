@@ -96,7 +96,7 @@ export default class CadenceLavalink {
         const t = s.getNextSong();
         if (!t) {
             if (s.getQueue().length <= 0) {
-                await player.stopTrack();
+                player.stopTrack();
             }
             return false;
         }
@@ -150,7 +150,7 @@ export default class CadenceLavalink {
             });
     
             p.on('end', async (data: any) => {
-                this.logger.log('recevied end event in player (' + p.connection.guildId + ')');
+                this.logger.log('received end event in player (' + p.connection.guildId + ')');
 
                 if (data.reason != "STOPPED" && data.reason != "REPLACED") {
                     this.logger.log('track ended in ' + data.guildId + ' playing next song in queue');

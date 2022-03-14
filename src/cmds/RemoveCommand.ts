@@ -5,6 +5,7 @@ import EmbedHelper from "../api/Cadence.Embed";
 import CadenceLavalink from "../api/Cadence.Lavalink";
 import CadenceMemory from "../api/Cadence.Memory";
 import Cadence from "../Cadence";
+import { LoopType } from "../types/ConnectedServer.type";
 
 class RemoveCommand extends BaseCommand {
     public name: string;
@@ -49,19 +50,41 @@ class RemoveCommand extends BaseCommand {
             return;
         }
 
-        const idx = parseInt(args[0], 10);
+        let idx = parseInt(args[0], 10);
 
-        if (idx > server.getQueue().length) {
+        if (isNaN(idx)) {
+            message.reply({ embeds: [ EmbedHelper.NOK("Please enter the song index! Usage: " + CadenceDiscord.getInstance().getServerPrefix(message.guildId) + "remove [index].") ]});
+            return;
+        }
+
+        if (!server.checkIndex(idx)) {
             message.reply({ embeds: [ EmbedHelper.NOK("Please enter a valid index!") ]});
             return;
         }
 
-        if (idx - 1 == server.getCurrentQueueIndex()) {
-            await CadenceLavalink.getInstance().getPlayerByGuildId(message.guildId).stopTrack();
-        }
+        idx--;
 
-        server.removeFromQueueIdx(idx-1);
+        const player = CadenceLavalink.getInstance().getPlayerByGuildId(message.guildId);
         message.react('✅');
+
+        if (idx == server.getCurrentQueueIndex()) {
+            // if we are looping current track, we disable it
+            if (server.loop == LoopType.TRACK) {
+                server.loop = LoopType.NONE;
+            }
+
+            // if its last track, we disconnect
+            if (server.getQueueLength() == 1) {
+                player.stopTrack();
+                server.handleTrackEnded();
+                return;
+            }
+
+            // otherwise play next one
+            CadenceLavalink.getInstance().playNextSongInQueue(player);
+        }
+        
+        server.removeFromQueueIdx(idx);
     }
 }
 

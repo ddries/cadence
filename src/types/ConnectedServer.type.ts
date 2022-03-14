@@ -149,6 +149,10 @@ export default class ConnectedServer {
     public removeFromQueueIdx(idx: number): void {
         this._queue.splice(idx, 1);
         this._queueCount--;
+
+        // if the removed idx is before current index we should update current
+        if (idx < this._queueIdx)
+            this._queueIdx--;
     }
 
     public getNextSong(): CadenceTrack {
@@ -232,6 +236,10 @@ export default class ConnectedServer {
 
     public isQueueEmpty(): boolean {
         return this._queue.length <= 0;
+    }
+
+    public getQueueLength(): number {
+        return this._queueCount;
     }
 
     public shuffleQueue(): void {
