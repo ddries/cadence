@@ -13,10 +13,12 @@ export enum LoopType {
 
 export default class ConnectedServer {
     public player: ShoukakuPlayer;
+
     public guildId: string;
     public voiceChannelId: string;
     public textChannelId: string;
     public textChannel: TextBasedChannel;
+    
     public nowPlayingMessage: Message;
 
     public loop: LoopType = LoopType.NONE;
@@ -120,7 +122,10 @@ export default class ConnectedServer {
     }
 
     public async handleDisconnect(): Promise<void> {
-
+        if (this._aloneInterval) {
+            clearInterval(this._aloneInterval);
+            this._aloneInterval = null;
+        }
     }
 
     public loopQueue(status: boolean): void {
