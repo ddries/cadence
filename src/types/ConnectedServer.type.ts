@@ -92,16 +92,18 @@ export default class ConnectedServer {
                     this.updatePlayerControllerButtonsIfAny();
                     break;
                 case 'loop':
-                    if (this.loop != LoopType.TRACK) {
-                        if (this.loop == LoopType.QUEUE) {
-                            this.loopQueue(false);
-                        }
-
-                        this.getCurrentTrack().looped = true;
+                    // no loop > loop track > loop queue > no loop ...
+                    if (this.loop == LoopType.NONE) {
                         this.loop = LoopType.TRACK;
+                        this.getCurrentTrack().looped = true;
+                    } else if (this.loop == LoopType.TRACK) {
+                        this.loop = LoopType.NONE;
+                        this.getCurrentTrack().looped = false;
+                        this.loopQueue(true);
                     } else {
                         this.loop = LoopType.NONE;
                         this.getCurrentTrack().looped = false;
+                        this.loopQueue(false);
                     }
                     this.updatePlayerControllerButtonsIfAny();
                     break;
@@ -155,8 +157,9 @@ export default class ConnectedServer {
                     .setCustomId('resume-pause'),
                 new MessageButton()
                     .setStyle('PRIMARY')
-                    .setEmoji('🔂')
-                    .setLabel(this.loop != LoopType.TRACK ? 'Loop' : 'Disable loop')
+                    .setEmoji('🔁')
+                    // no loop > loop track > loop queue > no loop ...
+                    .setLabel(this.loop == LoopType.NONE ? 'Loop' : (this.loop == LoopType.TRACK ? 'Loop queue' : 'Disable loop'))
                     .setCustomId('loop')
         ]);
 
