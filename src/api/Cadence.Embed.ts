@@ -30,16 +30,7 @@ export default class EmbedHelper {
         for (let i = currentProgress; i < totalCharacters; ++i) description += "─";
         let startAsText = this._msToString(currentPosition);
 
-        const remaining = totalDuration - currentPosition;
-        // for (let i = 0; i <= (totalCharacters - this._msToString(remaining).length); i+=2) {
-        //     description += "᲼᲼";
-        // }
-        // description += this._msToString(remaining);
-
-        description += "\n⏳ " + startAsText + " — " + this._msToString(remaining);
-
-        // if (track.looped)
-        //     description += "🔂";
+        description += "\n⏳ " + startAsText + " — " + this._msToString(totalDuration);
 
         return new MessageEmbed()
             .setTitle(track.trackInfo.title)
