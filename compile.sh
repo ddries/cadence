@@ -1,1 +1,1 @@
-rm -rf dist/ && tsc && cp cadence.json dist/
+rm -rf dist/ && tsc
