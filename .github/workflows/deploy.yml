@@ -1,0 +1,20 @@
+name: Deploy
+on:
+  push:
+    branches:
+      - dev
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - run: echo "checkout repository"
+      - uses: actions/checkou@v3
+      - run: echo "setup node"
+      - uses: actions/setup-node@v2
+        with:
+          node-version: '16'
+      - run: echo "fetching deps"
+      - run: npm i
+      - run: npm i typescript -g
+      - run: node -v
+
