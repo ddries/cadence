@@ -8,7 +8,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - run: echo "checkout repository"
-      - uses: actions/checkou@v3
+      - uses: actions/checkout@v3
       - run: echo "setup node"
       - uses: actions/setup-node@v2
         with:
