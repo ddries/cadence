@@ -19,6 +19,14 @@ jobs:
       - run: npm i
       - run: npm i typescript -g
 
+      - run: echo "generating config file"
+      - name: base64-to-file
+        uses: timheuer/base64-to-file@v1.1
+        with:
+          fileName: 'cadence.json'
+          fileDir: './'
+          encodedString: ${{ secrets.CADENCE_CONFIG }}
+
       - run: echo "compiling code"
       - run: sh compile.sh
 
