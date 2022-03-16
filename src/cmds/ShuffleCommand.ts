@@ -20,7 +20,7 @@ class ShuffleCommand extends BaseCommand {
         this.requireAdmin = false;
     }
 
-    public async run(message: Message): Promise<void> {
+    public run(message: Message): void {
         // message.reply({ embeds: [ EmbedHelper.NOK("Currently not available.") ]});
         // return;
         const server = CadenceMemory.getInstance().getConnectedServer(message.guildId);

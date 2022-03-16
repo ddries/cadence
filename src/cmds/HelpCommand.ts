@@ -49,7 +49,7 @@ class HelpCommand extends BaseCommand {
 
         const reply = await m.reply({ embeds: [ embed ], components: [ rowOptions ] });
 
-        const filter = (b) => b.user.id === m.author.id;
+        const filter = b => b.user.id === m.author.id;
         const collector = reply.createMessageComponentCollector({
             filter,
             time: 120 * 1000
@@ -72,7 +72,11 @@ class HelpCommand extends BaseCommand {
                         new MessageEmbed()
                             .setURL('https://cadence.driescode.dev')
                             .setColor(EmbedColor.Info)
-                            .setAuthor(Cadence.BotName, 'https://cdn.discordapp.com/attachments/692929962486792235/881589916901998652/adagio.jpg', 'https://cadence.driescode.dev')
+                            .setAuthor({
+                                name: Cadence.BotName,
+                                iconURL: "https://cdn.discordapp.com/attachments/692929962486792235/881589916901998652/adagio.jpg",
+                                url: "https://cadence.driescode.dev"
+                            })
                             .setDescription(this._buildDescription(m, CadenceDiscord.getInstance().Client, array))
                     ]
                 })

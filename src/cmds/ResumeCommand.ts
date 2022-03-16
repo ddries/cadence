@@ -20,7 +20,7 @@ class ResumeCommand extends BaseCommand {
         this.requireAdmin = false;
     }
 
-    public async run(message: Message, args: string[]): Promise<void> {
+    public run(message: Message, args: string[]): void {
         const server = CadenceMemory.getInstance().getConnectedServer(message.guildId);
 
         if (!server) {
@@ -40,11 +40,13 @@ class ResumeCommand extends BaseCommand {
             return;
         }
 
-        const s = await server.player.setPaused(false);
+        const s = server.player.setPaused(false);
 
         if (s) {
             message.react('▶️');
         }
+
+        server.updatePlayerControllerButtonsIfAny();
     }
 }
 

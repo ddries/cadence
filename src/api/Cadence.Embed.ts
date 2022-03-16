@@ -6,7 +6,7 @@ import { LavalinkResultTrackInfo } from "../types/TrackResult.type";
 export default class EmbedHelper {
 
     public static generic(text: string, color: EmbedColor, title = ""): MessageEmbed {
-        return this._simple(text, color, title).setFooter(Cadence.BotName).setTimestamp(Date.now());
+        return this._simple(text, color, title).setFooter({ text: Cadence.BotName }).setTimestamp(Date.now());
     }
 
     public static songBasic(trackInfo: LavalinkResultTrackInfo, authorId: string, title: string): MessageEmbed {
@@ -28,12 +28,17 @@ export default class EmbedHelper {
         for (let i = 0; i < currentProgress; ++i) description += '─';
         description += "⚪";
         for (let i = currentProgress; i < totalCharacters; ++i) description += "─";
+        let startAsText = this._msToString(currentPosition);
+        description += "\n" + startAsText;
 
         const remaining = totalDuration - currentPosition;
-        description += " ⏳" + this._msToString(remaining);
+        for (let i = 0; i <= (totalCharacters - this._msToString(remaining).length); i+=2) {
+            description += "᲼᲼";
+        }
+        description += this._msToString(remaining);
 
-        if (track.looped)
-            description += "🔂";
+        // if (track.looped)
+        //     description += "🔂";
 
         return new MessageEmbed()
             .setTitle(track.trackInfo.title)
@@ -69,7 +74,9 @@ export default class EmbedHelper {
         
         footer += "Queue duration: " + (totalTime < 0 ? '♾️' : (Math.ceil(totalTime / 1000 / 60) + " minutes."));
 
-        embed.setFooter(footer);
+        embed.setFooter({
+            text: footer
+        });
 
         embed.setDescription(description);
         return embed;
@@ -100,25 +107,7 @@ export default class EmbedHelper {
         var m = Math.floor(ms % 3600 / 60);
         var s = Math.floor(ms % 3600 % 60);
 
-        let result = "";
-
-        if (h > 0) {
-            result += h + "h ";
-        }
-
-        if (m > 0) {
-            result += m + "m ";
-        }
-
-        if (s > 0) {
-            result += s + "s ";
-        }
-
-        if (h > 12) {
-            result = "♾️";
-        }
-
-        return result;
+        return (h > 0 ? ((h >= 10 ? h : ('0' + h)) + ':') : '') + (m >= 10 ? m : ('0' + m)) + ':' + (s >= 10 ? s : ('0' + s));
     }
 
 }

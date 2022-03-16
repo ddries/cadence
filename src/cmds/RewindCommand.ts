@@ -20,7 +20,7 @@ class RewindCommand extends BaseCommand {
         this.requireAdmin = false;
     }
 
-    public async run(message: Message, args: string[]): Promise<void> {
+    public run(message: Message, args: string[]): void {
         const server = CadenceMemory.getInstance().getConnectedServer(message.guildId);
 
         if (!server) {
@@ -41,14 +41,13 @@ class RewindCommand extends BaseCommand {
         }
 
         const sec = parseInt(args[0], 10) * 1_000;
-        const song = server.getCurrentTrack();
         
         if (sec >= player.position) {
-            message.reply({ embeds: [ EmbedHelper.NOK("You can't rewind more than the song duration! Maximum " + Math.round(player.position / 1000) + " seconds.") ]});
+            message.reply({ embeds: [ EmbedHelper.NOK("You can't rewind more than the song duration! Maximum " + Math.round(player.position / 1_000) + " seconds.") ]});
             return;
         }
 
-        await player.seekTo(player.position - sec);
+        player.seekTo(player.position - sec);
         message.react('⏪');
     }
 }

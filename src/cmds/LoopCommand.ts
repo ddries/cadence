@@ -22,7 +22,7 @@ class LoopCommand extends BaseCommand {
         this.requireAdmin = false;
     }
 
-    public async run(message: Message, args: string[]): Promise<void> {
+    public run(message: Message, args: string[]): void {
         const server = CadenceMemory.getInstance().getConnectedServer(message.guildId);
 
         if (!server) {
@@ -47,6 +47,7 @@ class LoopCommand extends BaseCommand {
             server.loop = LoopType.TRACK;
             server.getCurrentTrack().looped = true;
             message.reply({ embeds: [ EmbedHelper.Info("Looping the current track! If you wish to loop the whole queue, use `" + CadenceDiscord.getInstance().getServerPrefix(message.guildId) + "loop queue`.") ]});
+            server.updatePlayerControllerButtonsIfAny();
             return;
         }
 
@@ -56,6 +57,7 @@ class LoopCommand extends BaseCommand {
             server.getCurrentTrack().looped = false;
             server.loopQueue(false);
             message.reply({ embeds: [ EmbedHelper.Info("Disabled loop!") ]});
+            server.updatePlayerControllerButtonsIfAny();
             return;
         }
 
@@ -68,6 +70,7 @@ class LoopCommand extends BaseCommand {
             
             server.loopQueue(true);
             message.reply({ embeds: [ EmbedHelper.Info("Looping the whole queue!") ]});
+            server.updatePlayerControllerButtonsIfAny();
             return;
         }
     }

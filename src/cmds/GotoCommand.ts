@@ -92,7 +92,7 @@ class GotoCommand extends BaseCommand {
             else return new Date(seconds * 1000).toISOString().substring(14, 19)
         };
 
-        await player.seekTo(totalSeek);
+        player.seekTo(totalSeek);
         message.reply({ embeds: [ EmbedHelper.OK("⏳ Jumped to " + stringifySeconds(totalSeek / 1_000)) ]});
     }
 }

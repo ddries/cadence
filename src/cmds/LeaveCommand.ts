@@ -17,7 +17,7 @@ class LeaveCommand extends BaseCommand {
         this.description = "Leave the current voice session";
     }
 
-    public async run(m: Message, args: string[]): Promise<void> {
+    public run(m: Message, args: string[]): void {
         const server = CadenceMemory.getInstance().getConnectedServer(m.guildId);
 
         if (server && server.voiceChannelId != m.member.voice.channelId) {
@@ -25,7 +25,7 @@ class LeaveCommand extends BaseCommand {
             return;
         }
 
-        const b = await CadenceLavalink.getInstance().leaveChannel(m.guildId);
+        const b = CadenceLavalink.getInstance().leaveChannel(m.guildId);
         if (b) {
             m.react('👋')
         }
