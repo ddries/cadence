@@ -9,12 +9,34 @@ jobs:
     steps:
       - run: echo "checkout repository"
       - uses: actions/checkout@v3
+
       - run: echo "setup node"
       - uses: actions/setup-node@v2
         with:
           node-version: '16'
+
       - run: echo "fetching deps"
       - run: npm i
       - run: npm i typescript -g
-      - run: node -v
+
+      - run: echo "compiling code"
+      - run: sh compile.sh
+
+      - run: echo "initializing docker"
+      - uses: docker/setup-buildx-action@v1
+      - uses: docker/login-action@v1
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+      
+      - run: echo "building docker image"
+      - uses: docker/build-push-action@v2
+        with:
+          context: ./
+          tags: |
+            ddries/cadence:latest
+          push: ${{ github.ref == 'refs/heads/master' }}
+      
+      - run: echo "built docker image ${{ steps.docker_build.outputs.digest }}"
+
 
