@@ -23,7 +23,7 @@ export default class CadenceLavalink {
 
     private _playersByGuildId: Map<string, ShoukakuPlayer> = new Map<string, ShoukakuPlayer>();
 
-    public async playTrack(track: CadenceTrack, guildId: string): Promise<boolean> {
+    public playTrack(track: CadenceTrack, guildId: string): boolean {
         if (!CadenceMemory.getInstance().isServerConnected(guildId)) return false;
 
         const player = this.getPlayerByGuildId(guildId);
@@ -35,7 +35,7 @@ export default class CadenceLavalink {
 
         this.logger.log('requested to play track ' + track.base64 + ' in ' + guildId);
         
-        const result = await player.playTrack(track.base64);
+        const result = player.playTrack(track.base64);
 
         if (result) {
             track.beingPlayed = true;
@@ -89,7 +89,7 @@ export default class CadenceLavalink {
         return trackInfo;
     }
 
-    public async playNextSongInQueue(player: ShoukakuPlayer, notify: boolean = true): Promise<boolean> {
+    public async playNextSongInQueue(player: ShoukakuPlayer): Promise<boolean> {
         const s = CadenceMemory.getInstance().getConnectedServer(player.connection.guildId);
         if (!s) return false;
 
@@ -101,20 +101,8 @@ export default class CadenceLavalink {
             return false;
         }
 
-        if (await this.playTrack(t, player.connection.guildId)) {
-            if (notify) {
-                const lastMessage = s.textChannel.lastMessage;
-                let m: Message = null;
-
-                if (lastMessage.id != s.nowPlayingMessage?.id) {
-                    m = await s.textChannel.send({ embeds: [ EmbedHelper.songBasic(t.trackInfo, t.requestedById, "Now Playing!") ]});
-                } else {
-                    m = await lastMessage.edit({ embeds: [ EmbedHelper.songBasic(t.trackInfo, t.requestedById, "Now Playing!") ]});
-                }
-
-                s.nowPlayingMessage = m;
-            }
-
+        if (this.playTrack(t, player.connection.guildId)) {
+            s.sendPlayerController();
             return true;
         }
 
@@ -159,7 +147,7 @@ export default class CadenceLavalink {
                     if (!s) return;
     
                     s.handleTrackEnded();
-                    await CadenceLavalink.getInstance().playNextSongInQueue(p, s.loop == LoopType.NONE);
+                    await CadenceLavalink.getInstance().playNextSongInQueue(p);
                 }
             });
     
@@ -174,7 +162,7 @@ export default class CadenceLavalink {
                 if (!s) return;
     
                 s.handleTrackEnded();
-                await CadenceLavalink.getInstance().playNextSongInQueue(p, s.loop == LoopType.NONE);
+                await CadenceLavalink.getInstance().playNextSongInQueue(p);
             });
 
             p.on('closed', async r => {
@@ -220,7 +208,7 @@ export default class CadenceLavalink {
         return null;
     }
 
-    public async leaveChannel(guildId: string): Promise<boolean> {
+    public leaveChannel(guildId: string): boolean {
         if (!this._cluster) return false;
 
         this.logger.log('requested to leave channel in guild ' + guildId);
@@ -312,29 +300,6 @@ export default class CadenceLavalink {
         this._cluster.on('debug', (nodeName, info) => {
             // this.logger.log('debug node (' + nodeName + ') -> ' + info);
         });
-    }
-
-    private _msToString(ms: number): string {
-        ms /= 1000;
-        var h = Math.floor(ms / 3600);
-        var m = Math.floor(ms % 3600 / 60);
-        var s = Math.floor(ms % 3600 % 60);
-
-        let result = "";
-
-        if (h > 0) {
-            result += h + "h ";
-        }
-
-        if (m > 0) {
-            result += m + "m ";
-        }
-
-        if (s > 0) {
-            result += s + "s ";
-        }
-
-        return result;
     }
 
     public static getInstance(): CadenceLavalink {

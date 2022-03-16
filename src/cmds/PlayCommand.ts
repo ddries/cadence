@@ -88,6 +88,12 @@ class PlayCommand extends BaseCommand {
                     await CadenceLavalink.getInstance().playNextSongInQueue(player);
                 } else {
                     message.reply({ embeds: [ EmbedHelper.songBasic(track.info, message.author.id, "Added to Queue!") ]});
+
+                    // if there was any current player controller
+                    // we update buttons (next/back changed?)
+                    if (server.nowPlayingMessage?.message) {
+                        server.nowPlayingMessage.message?.edit({ components: server._buildButtonComponents() });
+                    }
                 }
 
                 // CadenceDb.getInstance().pushNewSong({
@@ -105,6 +111,12 @@ class PlayCommand extends BaseCommand {
 
                 if (!player.track) {
                     await CadenceLavalink.getInstance().playNextSongInQueue(player);
+                } else {
+                    // if there was any current player controller
+                    // we update buttons (next/back changed?)
+                    if (server.nowPlayingMessage?.message) {
+                        server.nowPlayingMessage.message?.edit({ components: server._buildButtonComponents() });
+                    }
                 }
 
                 message.reply({ embeds: [ EmbedHelper.OK(`Added **${result.tracks.length}** songs to the queue!`) ]});

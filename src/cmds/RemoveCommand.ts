@@ -22,7 +22,7 @@ class RemoveCommand extends BaseCommand {
         this.requireAdmin = false;
     }
 
-    public async run(message: Message, args: string[]): Promise<void> {
+    public run(message: Message, args: string[]): void {
         const server = CadenceMemory.getInstance().getConnectedServer(message.guildId);
 
         if (!server) {
@@ -85,6 +85,7 @@ class RemoveCommand extends BaseCommand {
         }
         
         server.removeFromQueueIdx(idx);
+        server.updatePlayerControllerButtonsIfAny();
     }
 }
 

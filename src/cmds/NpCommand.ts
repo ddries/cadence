@@ -1,9 +1,10 @@
-import { Message } from "discord.js";
+import { ButtonInteraction, Message, MessageActionRow, MessageButton } from "discord.js";
 import BaseCommand from "../api/Cadence.BaseCommand";
 import EmbedHelper from "../api/Cadence.Embed";
 import CadenceLavalink from "../api/Cadence.Lavalink";
 import CadenceMemory from "../api/Cadence.Memory";
 import Cadence from "../Cadence";
+import { LoopType } from "../types/ConnectedServer.type";
 
 class NpCommand extends BaseCommand {
     public name: string;
@@ -21,7 +22,7 @@ class NpCommand extends BaseCommand {
     }
 
     public async run(message: Message, args: string[]): Promise<void> {
-        const server = CadenceMemory.getInstance().getConnectedServer(message.guildId);
+        let server = CadenceMemory.getInstance().getConnectedServer(message.guildId);
         
         if (!server) {
             message.reply({ embeds: [ EmbedHelper.NOK("There's nothing playing!") ]});
@@ -46,7 +47,7 @@ class NpCommand extends BaseCommand {
             return;
         }
 
-        message.reply({ embeds: [ EmbedHelper.np(song, player.position) ] });
+        server.sendPlayerController();
     }
 }
 

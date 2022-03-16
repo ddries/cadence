@@ -58,16 +58,15 @@ class MoveCommand extends BaseCommand {
             message.reply({ embeds: [ EmbedHelper.NOK("Please enter the song index! Usage: " + CadenceDiscord.getInstance().getServerPrefix(message.guildId) + "jump [index].") ]});
             return;
         }
-
-        idxFrom--;
-        idxTo--;
         
         if (!server.checkIndex(idxFrom) || (!isNaN(idxTo) && !server.checkIndex(idxTo))) {
             message.reply({ embeds: [ EmbedHelper.NOK("Please enter a valid index!") ]});
             return;
         }
+
+        idxFrom--;
+        idxTo--;
     
-        //Codigo original y superior al anterior
         if(isNaN(idxTo)) server.moveSong(idxFrom);
         else server.moveSong(idxFrom, idxTo);
         message.react('✅');

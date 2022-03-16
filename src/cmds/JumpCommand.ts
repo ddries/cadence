@@ -21,7 +21,7 @@ class JumpCommand extends BaseCommand {
         this.requireAdmin = false;
     }
 
-    public async run(message: Message, args: string[]): Promise<void> {
+    public run(message: Message, args: string[]): void {
         const server = CadenceMemory.getInstance().getConnectedServer(message.guildId);
 
         if (!server) {
@@ -57,8 +57,6 @@ class JumpCommand extends BaseCommand {
             message.reply({ embeds: [ EmbedHelper.NOK("Please enter the song index! Usage: " + CadenceDiscord.getInstance().getServerPrefix(message.guildId) + "jump [index].") ]});
             return;
         }
-        
-        idx--;
 
         if (!server.checkIndex(idx)) {
             message.reply({ embeds: [ EmbedHelper.NOK("Please enter a valid index!") ]});
@@ -76,18 +74,8 @@ class JumpCommand extends BaseCommand {
         server.handleTrackEnded(false);
         const song = server.jumpToSong(idx - 1);
 
-        await CadenceLavalink.getInstance().playTrack(song, player.connection.guildId);
-
-        const lastMessage = server.textChannel.lastMessage;
-        let m: Message = null;
-
-        if (lastMessage.id != server.nowPlayingMessage?.id) {
-            m = await server.textChannel.send({ embeds: [ EmbedHelper.songBasic(song.trackInfo, song.requestedById, "Now Playing!") ]});
-        } else {
-            m = await lastMessage.edit({ embeds: [ EmbedHelper.songBasic(song.trackInfo, song.requestedById, "Now Playing!") ]});
-        }
-
-        server.nowPlayingMessage = m;
+        CadenceLavalink.getInstance().playTrack(song, player.connection.guildId);
+        server.sendPlayerController();
     }
 }
 

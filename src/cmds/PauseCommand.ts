@@ -45,6 +45,8 @@ class PauseCommand extends BaseCommand {
         if (s) {
             message.react('⏸');
         }
+
+        server.updatePlayerControllerButtonsIfAny();
     }
 }
 
