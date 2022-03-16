@@ -36,17 +36,7 @@ jobs:
         with:
           context: ./
           tags: |
-            ${{ secrets.DOCKER_HUB_USERNAME }}/cadence:latest
+            ${{ secrets.DOCKERHUB_USER }}/cadence:latest
           push: ${{ github.ref == 'refs/heads/master' }}
       
       - run: echo "built docker image ${{ steps.docker_build.outputs.digest }}"
-
-      - run: echo "webhook to restart cadence"
-      - name: Workflow Webhook Action
-        uses: distributhor/workflow-webhook@v2.0.3
-        env:
-          webhook_url: ${{ secrets.WEBHOOK_URL }}
-          webhook_secret: ${{ secrets.WEBHOOK_SECRET }}
-
-
-
