@@ -29,13 +29,14 @@ export default class EmbedHelper {
         description += "⚪";
         for (let i = currentProgress; i < totalCharacters; ++i) description += "─";
         let startAsText = this._msToString(currentPosition);
-        description += "\n" + startAsText;
 
         const remaining = totalDuration - currentPosition;
-        for (let i = 0; i <= (totalCharacters - this._msToString(remaining).length); i+=2) {
-            description += "᲼᲼";
-        }
-        description += this._msToString(remaining);
+        // for (let i = 0; i <= (totalCharacters - this._msToString(remaining).length); i+=2) {
+        //     description += "᲼᲼";
+        // }
+        // description += this._msToString(remaining);
+
+        description += "\n⏳ " + startAsText + " — " + this._msToString(remaining);
 
         // if (track.looped)
         //     description += "🔂";
