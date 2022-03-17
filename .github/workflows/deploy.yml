@@ -22,7 +22,7 @@ jobs:
       - run: echo "compiling code"
       - run: sh compile.sh
 
-      -run: chmod +x docker-entry.sh
+      - run: chmod +x docker-entry.sh
 
       - run: echo "initializing docker"
       - uses: docker/setup-buildx-action@v1
