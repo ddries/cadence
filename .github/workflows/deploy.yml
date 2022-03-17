@@ -31,12 +31,16 @@ jobs:
         with:
           username: ${{ secrets.DOCKERHUB_USER }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - run: mv Dockerfile dist/
+      - run: mv .dockerignore dist/
+      - run: mv docker-entry.sh dist/
       
       - run: echo "building docker image"
       - name: docker_build
         uses: docker/build-push-action@v2
         with:
-          context: ./
+          context: dist/
           tags: |
             ${{ secrets.DOCKERHUB_USER }}/cadence:latest
           push: ${{ github.ref == 'refs/heads/master' }}
