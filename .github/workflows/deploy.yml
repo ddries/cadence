@@ -35,6 +35,7 @@ jobs:
       - run: mv Dockerfile dist/
       - run: mv .dockerignore dist/
       - run: mv docker-entry.sh dist/
+      - run: mv *.json dist/
       
       - run: echo "building docker image"
       - name: docker_build
