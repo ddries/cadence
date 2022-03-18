@@ -172,10 +172,7 @@ export default class CadenceLavalink {
                     const s = CadenceMemory.getInstance().getConnectedServer(r.guildId);
                     if (s) {
                         this.logger.log('trying to reconnect from disconnected server on (' + s.guildId + ')');
-                        // copy the server that has been disconnected
-                        // const tmp = s.getClone();
-                        // // the current track that was being played in order to resume
-                        // const track = s.getCurrentTrack();
+
                         // current position of the track being played
                         const currentPosition = p.position;
                         
@@ -184,9 +181,9 @@ export default class CadenceLavalink {
                             // if it resolves, the connection was resumed
                             // then we resume the track that was being played
                             p.resume({
-                                noReplace: false,
+                                // noReplace: false,
                                 startTime: currentPosition,
-                                pause: false
+                                // pause: false
                             });
 
                             this.logger.log('resumed successfully disconnected session on (' + s.guildId + ')');
