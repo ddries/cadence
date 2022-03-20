@@ -97,7 +97,7 @@ export default class ConnectedServer {
                         this.loop = LoopType.TRACK;
                         this.getCurrentTrack().looped = true;
                     } else if (this.loop == LoopType.TRACK) {
-                        this.loop = LoopType.NONE;
+                        this.loop = LoopType.QUEUE;
                         this.getCurrentTrack().looped = false;
                         this.loopQueue(true);
                     } else {
@@ -121,7 +121,7 @@ export default class ConnectedServer {
 
                         CadenceLavalink.getInstance().playTrack(song, this.player.connection.guildId);
                         // new song, send again
-                        this.sendPlayerController(true);
+                        this.sendPlayerController();
                     }
                     break;
                 case 'stop':
