@@ -22,15 +22,15 @@ export default class EmbedHelper {
         const totalDuration: number = track.trackInfo.length;
         const currentPosition: number = position;
 
+        let description: string = "";
         const currentProgress: number = Math.ceil((totalCharacters * currentPosition) / totalDuration);
 
-        let description: string = "";
         for (let i = 0; i < currentProgress; ++i) description += '─';
         description += "⚪";
         for (let i = currentProgress; i < totalCharacters; ++i) description += "─";
         let startAsText = this._msToString(currentPosition);
 
-        description += "\n⏳ " + startAsText + " — " + this._msToString(totalDuration);
+        description += "\n⏳ " + (track.trackInfo.isStream ? '♾' : (startAsText + " — " + this._msToString(totalDuration)));
 
         return new MessageEmbed()
             .setTitle(track.trackInfo.title)
@@ -51,11 +51,16 @@ export default class EmbedHelper {
         let totalTime = 0;
         let i = offset;
         let j = tracks.length < (i + Cadence.SongsPerEmbed) ? tracks.length : (i + Cadence.SongsPerEmbed);
-        for (; i  < j; ++i) {
+
+        // queue duration is the total duration
+        for (let i = 0; i < tracks.length; i++) {
             if (!tracks[i].trackInfo.isStream && totalTime >= 0)
                 totalTime += tracks[i].trackInfo.length;
             else totalTime = -1;
+        }
 
+        // but we only show current page tracks
+        for (; i  < j; ++i) {
             description += `**(${i + 1})** ${tracks[i].looped ? '🔂 ' : ' '}${tracks[i].beingPlayed ? '➡️ ' : ' '}${tracks[i].trackInfo.title.substring(0, 40)} [<@${tracks[i].requestedById}>]\n`
         }
 
