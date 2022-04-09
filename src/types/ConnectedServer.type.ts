@@ -108,13 +108,17 @@ export default class ConnectedServer {
                     this.updatePlayerControllerButtonsIfAny();
                     break;
                 case 'next':
-                    if (this.getQueueLength() > 1 && this.loop != LoopType.TRACK) {
+                    // if queue loop is enabled
+                    // they can do whatever they want
+                    if (this.loop == LoopType.QUEUE || (this.getQueueLength() > 1 && this.loop != LoopType.TRACK)) {
                         this.handleTrackEnded();
                         CadenceLavalink.getInstance().playNextSongInQueue(this.player);
                     }
                     break;
                 case 'back':
-                    if (this.getCurrentQueueIndex() > 0  && this.loop != LoopType.TRACK) {
+                    // if queue loop is enabled
+                    // they can do whatever they want
+                    if (this.loop == LoopType.QUEUE || (this.getCurrentQueueIndex() > 0  && this.loop != LoopType.TRACK)) {
                         this.handleTrackEnded(false);
 
                         const song = this.jumpToSong(this.getCurrentQueueIndex() - 1);
@@ -163,7 +167,9 @@ export default class ConnectedServer {
                     .setCustomId('loop')
         ]);
 
-        if (this.getCurrentQueueIndex() > 0  && this.loop != LoopType.TRACK) {
+        // if queue loop is enabled
+        // they can do whatever they want
+        if (this.loop == LoopType.QUEUE || (this.getCurrentQueueIndex() > 0  && this.loop != LoopType.TRACK)) {
             rowOptions.addComponents([
                 new MessageButton()
                     .setStyle('SECONDARY')
@@ -182,7 +188,9 @@ export default class ConnectedServer {
             ]);
         }
 
-        if (this.getQueueLength() > 1 && this.loop != LoopType.TRACK) {
+        // if queue loop is enabled
+        // they can do whatever they want
+        if (this.loop == LoopType.QUEUE || (this.getQueueLength() > 1 && this.loop != LoopType.TRACK)) {
             rowOptions.addComponents([
                 new MessageButton()
                     .setStyle('SECONDARY')
