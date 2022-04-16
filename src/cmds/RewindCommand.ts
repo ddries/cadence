@@ -1,55 +1,51 @@
-import { Message } from "discord.js";
+import { SlashCommandBuilder } from "@discordjs/builders";
+import { CommandInteraction, GuildMember } from "discord.js";
 import BaseCommand from "../api/Cadence.BaseCommand";
 import EmbedHelper from "../api/Cadence.Embed";
 import CadenceLavalink from "../api/Cadence.Lavalink";
 import CadenceMemory from "../api/Cadence.Memory";
 import Cadence from "../Cadence";
 
-class RewindCommand extends BaseCommand {
-    public name: string;
-    public description: string;
-    public aliases: string[];
-    public requireAdmin: boolean;
+export const Command: BaseCommand = {
+    name: "rewind",
+    description: "Rewind the song the given amount of seconds",
+    aliases: ["r", "rw"],
+    requireAdmin: false,
 
-    constructor() {
-        super();
-
-        this.name = "rewind";
-        this.description = "Rewind the song the given amount of seconds.";
-        this.aliases = ["r", "rw"];
-        this.requireAdmin = false;
-    }
-
-    public run(message: Message, args: string[]): void {
-        const server = CadenceMemory.getInstance().getConnectedServer(message.guildId);
+    run: async (interaction: CommandInteraction): Promise<void> => {
+        const server = CadenceMemory.getInstance().getConnectedServer(interaction.guildId);
 
         if (!server) {
-            message.reply({ embeds: [ EmbedHelper.NOK("There's nothing playing!") ]});
+            interaction.reply({ embeds: [ EmbedHelper.NOK("There's nothing playing!") ], ephemeral: true });
             return;
         }
 
-        const player = CadenceLavalink.getInstance().getPlayerByGuildId(message.guildId);
+        const player = CadenceLavalink.getInstance().getPlayerByGuildId(interaction.guildId);
 
         if (!player) {
-            message.reply({ embeds: [ EmbedHelper.NOK("There's nothing playing!") ]});
+            interaction.reply({ embeds: [ EmbedHelper.NOK("There's nothing playing!") ], ephemeral: true });
             return;
         }
 
-        if (!message.member.voice?.channelId || message.member.voice.channelId != server.voiceChannelId) {
-            message.reply({ embeds: [ EmbedHelper.NOK("You must be connected to the same voice channel as " + Cadence.BotName + "!") ]});
+        if (!(interaction.member as GuildMember).voice?.channelId || (interaction.member as GuildMember).voice.channelId != server.voiceChannelId) {
+            interaction.reply({ embeds: [ EmbedHelper.NOK("You must be connected to the same voice channel as " + Cadence.BotName + "!") ], ephemeral: true });
             return;
         }
 
-        const sec = parseInt(args[0], 10) * 1_000;
+        const sec = interaction.options.getInteger('seconds', true) * 1_000;
         
         if (sec >= player.position) {
-            message.reply({ embeds: [ EmbedHelper.NOK("You can't rewind more than the song duration! Maximum " + Math.round(player.position / 1_000) + " seconds.") ]});
+            interaction.reply({ embeds: [ EmbedHelper.NOK("You can't rewind more than the song duration! Maximum " + Math.round(player.position / 1000) + " seconds.") ], ephemeral: true });
             return;
         }
 
         player.seekTo(player.position - sec);
-        message.react('⏪');
-    }
-}
+        interaction.reply({ embeds: [ EmbedHelper.OK("Rewind " + sec + " seconds.") ]});
+    },
 
-export default new RewindCommand();
+    slashCommandBody: new SlashCommandBuilder()
+                        .setName("rewind")
+                        .setDescription("Rewind the song the given amount of seconds")
+                        .addIntegerOption(o => o.setName('seconds').setDescription('Amount of seconds').setRequired(true).setMinValue(1))
+                        .toJSON()
+}

@@ -1,25 +1,19 @@
-import { Message } from "discord.js";
+import { SlashCommandBuilder } from "@discordjs/builders";
+import { CommandInteraction } from "discord.js";
 import BaseCommand from "../api/Cadence.BaseCommand";
-import Cadence from "../Cadence";
 
-class PingCommand extends BaseCommand {
-    public name: string;
-    public description: string;
-    public aliases: string[];
-    public requireAdmin: boolean;
+export const Command: BaseCommand = {
+    name: "ping",
+    description: "Get some feedback from cadence!",
+    aliases: [],
+    requireAdmin: false,
 
-    constructor() {
-        super();
+    run: (interaction: CommandInteraction): void => {
+        interaction.reply({ content: "pong!", ephemeral: true });
+    },
 
-        this.name = "ping";
-        this.description = "Get some feedback from " + Cadence.BotName + "!";
-        this.aliases = [];
-        this.requireAdmin = false;
-    }
-
-    public run(message: Message): void {
-        message.reply('Pong!');
-    }
+    slashCommandBody: new SlashCommandBuilder()
+                        .setName("ping")
+                        .setDescription("Get some feedback from cadence!")
+                        .toJSON()
 }
-
-export default new PingCommand();

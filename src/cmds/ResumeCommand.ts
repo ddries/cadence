@@ -1,47 +1,45 @@
-import { Message } from "discord.js";
+import { SlashCommandBuilder } from "@discordjs/builders";
+import { CommandInteraction, GuildMember } from "discord.js";
 import BaseCommand from "../api/Cadence.BaseCommand";
 import EmbedHelper from "../api/Cadence.Embed";
 import CadenceLavalink from "../api/Cadence.Lavalink";
 import CadenceMemory from "../api/Cadence.Memory";
 import Cadence from "../Cadence";
 
-class ResumeCommand extends BaseCommand {
-    public name: string;
-    public description: string;
-    public aliases: string[];
-    public requireAdmin: boolean;
+export const Command: BaseCommand = {
+    name: "resume",
+    description: "Resume the current song if it was paused",
+    aliases: [],
+    requireAdmin: false,
 
-    constructor() {
-        super();
-
-        this.name = "resume";
-        this.description = "Resumes the current song if it was paused";
-        this.aliases = [];
-        this.requireAdmin = false;
-    }
-
-    public run(message: Message, args: string[]): void {
-        const server = CadenceMemory.getInstance().getConnectedServer(message.guildId);
+    run: async (interaction: CommandInteraction): Promise<void> => {
+        const server = CadenceMemory.getInstance().getConnectedServer(interaction.guildId);
 
         if (!server) {
-            message.reply({ embeds: [ EmbedHelper.NOK("There's nothing playing!") ]});
+            interaction.reply({ embeds: [ EmbedHelper.NOK("There's nothing playing!") ], ephemeral: true });
             return;
         }
 
-        const player = CadenceLavalink.getInstance().getPlayerByGuildId(message.guildId);
+        const player = CadenceLavalink.getInstance().getPlayerByGuildId(interaction.guildId);
 
         if (!player) {
-            message.reply({ embeds: [ EmbedHelper.NOK("There's nothing playing!") ]});
+            interaction.reply({ embeds: [ EmbedHelper.NOK("There's nothing playing!") ], ephemeral: true });
             return;
         }
         
-        if (!message.member.voice?.channelId || message.member.voice.channelId != server.voiceChannelId) {
-            message.reply({ embeds: [ EmbedHelper.NOK("You must be connected to the same voice channel as " + Cadence.BotName + "!") ]});
+        if (!(interaction.member as GuildMember).voice?.channelId || (interaction.member as GuildMember).voice.channelId != server.voiceChannelId) {
+            interaction.reply({ embeds: [ EmbedHelper.NOK("You must be connected to the same voice channel as " + Cadence.BotName + "!") ], ephemeral: true });
             return;
         }
 
-        const s = server.player.setPaused(false);
+        server.player.setPaused(false);
+        interaction.reply({ embeds: [ EmbedHelper.OK("Player resumed.") ]});
+    },
 
+    slashCommandBody: new SlashCommandBuilder()
+                        .setName("resume")
+                        .setDescription("Resume the current song if it was paused")
+                        .toJSON()
         if (s) {
             message.react('▶️');
         }
@@ -49,5 +47,3 @@ class ResumeCommand extends BaseCommand {
         server.updatePlayerControllerButtonsIfAny();
     }
 }
-
-export default new ResumeCommand();

@@ -1,25 +1,17 @@
-import { Client, Message, MessageActionRow, MessageButton, MessageEmbed } from "discord.js";
+import { SlashCommandBuilder } from "@discordjs/builders";
+import { CommandInteraction, Message, MessageActionRow, MessageButton, MessageEmbed } from "discord.js";
 import BaseCommand from "../api/Cadence.BaseCommand";
 import CadenceDiscord from "../api/Cadence.Discord";
 import { EmbedColor } from "../api/Cadence.Embed";
 import Cadence from "../Cadence";
 
-class HelpCommand extends BaseCommand {
-    public name: string;
-    public description: string;
-    public aliases: string[];
-    public requireAdmin: boolean;
+export const Command: BaseCommand = {
+    name: "help",
+    description: "Display help",
+    aliases: ["h"],
+    requireAdmin: false,
 
-    constructor() {
-        super();
-
-        this.name = "help";
-        this.description = "Display help and information";
-        this.aliases = ["h"];
-        this.requireAdmin = false;
-    }
-
-    public async run(m: Message, args: string[]): Promise<void> {
+    run: async (interaction: CommandInteraction): Promise<void> => {
         const musicCommands = ["play", "np", "pause", "resume", "next", "queue", "shuffle", "clear", "jump", "remove", "loop", "forward", "rewind", "goto", "move", "swap"];
         const utilityCommands = ["help", "leave", "prefix", "ping"];
 
@@ -44,16 +36,50 @@ class HelpCommand extends BaseCommand {
         const embed = new MessageEmbed()
             .setURL('https://cadence.driescode.dev')
             .setColor(EmbedColor.Info)
-            .setAuthor(Cadence.BotName, 'https://cdn.discordapp.com/attachments/692929962486792235/881589916901998652/adagio.jpg', 'https://cadence.driescode.dev')
+            .setAuthor({
+                name: Cadence.BotName,
+                iconURL: 'https://cdn.discordapp.com/attachments/692929962486792235/881589916901998652/adagio.jpg',
+                url: 'https://cadence.driescode.dev'
+            })
             .setDescription(Cadence.BotName + ' is the easiest way to play music in Discord. Add it to your server and start playing the best music with your friends!\n\nJump between help categories with the buttons below.')
 
-        const reply = await m.reply({ embeds: [ embed ], components: [ rowOptions ] });
+        await interaction.reply({ embeds: [ embed ], components: [ rowOptions ] });
+        const reply = await interaction.fetchReply() as Message;
 
-        const filter = b => b.user.id === m.author.id;
+        const filter = (b) => b.user.id === interaction.user.id;
         const collector = reply.createMessageComponentCollector({
             filter,
             time: 120 * 1000
         });
+
+        const _buildDescription = (commands: string[]): string => {
+            let desc = "";
+            let allCommands = CadenceDiscord.getInstance().getAllCommands();
+            for (const [key, cmd] of allCommands.entries()) {
+                if (!commands.includes(key)) continue;
+    
+                let aliasString = "";
+                if (cmd.aliases && cmd.aliases.length > 0) {
+                    aliasString = "( ";
+                    for (let j = 0; j < cmd.aliases.length; j++) {
+                        aliasString += CadenceDiscord.getInstance().getServerPrefix(interaction.guildId) + cmd.aliases[j];
+                        if (j+1 < cmd.aliases.length) {
+                            aliasString += ", ";
+                        } else {
+                            aliasString += " )";
+                        }
+                    }
+                }
+    
+                desc += "`" + CadenceDiscord.getInstance().getServerPrefix(interaction.guildId) + cmd.name + "`: ";
+                if (aliasString.length > 0)
+                    desc += aliasString + " ";
+                    
+                desc += cmd.description + "\n\n";
+            }
+    
+            return desc;
+        }
 
         collector.on('collect', interaction => {
             interaction.deferUpdate().then(async () => {
@@ -74,46 +100,20 @@ class HelpCommand extends BaseCommand {
                             .setColor(EmbedColor.Info)
                             .setAuthor({
                                 name: Cadence.BotName,
-                                iconURL: "https://cdn.discordapp.com/attachments/692929962486792235/881589916901998652/adagio.jpg",
-                                url: "https://cadence.driescode.dev"
+                                iconURL: 'https://cdn.discordapp.com/attachments/692929962486792235/881589916901998652/adagio.jpg',
+                                url: 'https://cadence.driescode.dev'
                             })
-                            .setDescription(this._buildDescription(m, CadenceDiscord.getInstance().Client, array))
+                            .setDescription(_buildDescription(array))
                     ]
                 })
             }).catch(e => {
                 console.log(e);
             });
         });
-    }
+    },
 
-    private _buildDescription(message: Message, client: Client, commands: string[]): string {
-        let desc = "";
-        let allCommands = CadenceDiscord.getInstance().getAllCommands();
-        for (const [key, cmd] of allCommands.entries()) {
-            if (!commands.includes(key)) continue;
-
-            let aliasString = "";
-            if (cmd.aliases && cmd.aliases.length > 0) {
-                aliasString = "( ";
-                for (let j = 0; j < cmd.aliases.length; j++) {
-                    aliasString += CadenceDiscord.getInstance().getServerPrefix(message.guildId) + cmd.aliases[j];
-                    if (j+1 < cmd.aliases.length) {
-                        aliasString += ", ";
-                    } else {
-                        aliasString += " )";
-                    }
-                }
-            }
-
-            desc += "`" + CadenceDiscord.getInstance().getServerPrefix(message.guildId) + cmd.name + "`: ";
-            if (aliasString.length > 0)
-                desc += aliasString + " ";
-                
-            desc += cmd.description + "\n\n";
-        }
-
-        return desc;
-    }
-
+    slashCommandBody: new SlashCommandBuilder()
+                        .setName("help")
+                        .setDescription("Display help")
+                        .toJSON()
 }
-export default new HelpCommand();

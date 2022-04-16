@@ -1,57 +1,53 @@
-import { Message } from "discord.js";
+import { SlashCommandBuilder } from "@discordjs/builders";
+import { CommandInteraction, GuildMember } from "discord.js";
 import BaseCommand from "../api/Cadence.BaseCommand";
 import EmbedHelper from "../api/Cadence.Embed";
 import CadenceLavalink from "../api/Cadence.Lavalink";
 import CadenceMemory from "../api/Cadence.Memory";
 import Cadence from "../Cadence";
 
-class ForwardCommand extends BaseCommand {
-    public name: string;
-    public description: string;
-    public aliases: string[];
-    public requireAdmin: boolean;
+export const Command: BaseCommand = {
+    name: "forward",
+    description: "Forward the song the given amount of seconds",
+    aliases: ["f", "ff"],
+    requireAdmin: false,
 
-    constructor() {
-        super();
-
-        this.name = "forward";
-        this.description = "Forward the song the given amount of seconds.";
-        this.aliases = ["f", "ff"];
-        this.requireAdmin = false;
-    }
-
-    public async run(message: Message, args: string[]): Promise<void> {
-        const server = CadenceMemory.getInstance().getConnectedServer(message.guildId);
+    run: async (interaction: CommandInteraction): Promise<void> => {
+        const server = CadenceMemory.getInstance().getConnectedServer(interaction.guildId);
 
         if (!server) {
-            message.reply({ embeds: [ EmbedHelper.NOK("There's nothing playing!") ]});
+            interaction.reply({ embeds: [ EmbedHelper.NOK("There's nothing playing!") ], ephemeral: true });
             return;
         }
 
-        const player = CadenceLavalink.getInstance().getPlayerByGuildId(message.guildId);
+        const player = CadenceLavalink.getInstance().getPlayerByGuildId(interaction.guildId);
 
         if (!player) {
-            message.reply({ embeds: [ EmbedHelper.NOK("There's nothing playing!") ]});
+            interaction.reply({ embeds: [ EmbedHelper.NOK("There's nothing playing!") ], ephemeral: true });
             return;
         }
 
-        if (!message.member.voice?.channelId || message.member.voice.channelId != server.voiceChannelId) {
-            message.reply({ embeds: [ EmbedHelper.NOK("You must be connected to the same voice channel as " + Cadence.BotName + "!") ]});
+        if (!(interaction.member as GuildMember).voice?.channelId || (interaction.member as GuildMember).voice.channelId != server.voiceChannelId) {
+            interaction.reply({ embeds: [ EmbedHelper.NOK("You must be connected to the same voice channel as " + Cadence.BotName + "!") ], ephemeral: true });
             return;
         }
 
-        const sec = parseInt(args[0], 10) * 1_000;
+        const sec = interaction.options.getInteger('seconds', true) * 1_000;
         const song = server.getCurrentTrack();
         const remaining = (song.trackInfo.length - player.position);
         
         if (sec >= remaining) {
-            message.reply({ embeds: [ EmbedHelper.NOK("You can't forward more than the remaining time! Maximum " + Math.round(remaining / 1_000) + " seconds.") ]});
+            interaction.reply({ embeds: [ EmbedHelper.NOK("You can't forward more than the remaining time! Maximum " + Math.round(remaining) + " seconds.") ], ephemeral: true });
             return;
         }
 
         player.seekTo(player.position + sec);
-        message.react('⏩');
-    }
-}
+        interaction.reply({ embeds: [ EmbedHelper.OK("Forwarded " + sec + " seconds.") ]});
+    },
 
-export default new ForwardCommand();
+    slashCommandBody: new SlashCommandBuilder()
+                        .setName("forward")
+                        .setDescription("Forward the song the given amount of seconds")
+                        .addIntegerOption(o => o.setName('seconds').setDescription('Amount of seconds').setRequired(true))
+                        .toJSON()
+}
