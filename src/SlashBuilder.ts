@@ -65,6 +65,7 @@ class SlashBuilder {
         for (const f of commandFiles) {
             const c: BaseCommand = (await import(path.join(__dirname, 'cmds', f)))['Command'];
             if (!c) continue;
+            if (!c.disabled) continue;
             commands.push(c.slashCommandBody);
             console.log('info\tfetched command ' + c.name);
         }

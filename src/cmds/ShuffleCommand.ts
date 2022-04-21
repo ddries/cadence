@@ -36,7 +36,7 @@ export const Command: BaseCommand = {
         }
 
         server.shuffleQueue();
-        interaction.reply({ embeds: [ EmbedHelper.OK("Shuffle " + (server.shuffle ? "enabled" : "disabled") + ".") ]});
+        interaction.reply({ embeds: [ EmbedHelper.OK("🔀 " + (server.shuffle ? "Enabled" : "Disabled") + " shuffle") ]});
     },
 
     slashCommandBody: new SlashCommandBuilder()

@@ -11,6 +11,7 @@ export const Command: BaseCommand = {
     description: "Swap two songs from the queue",
     aliases: ["sw"],
     requireAdmin: false,
+    disabled: true,
 
     run: async (interaction: CommandInteraction): Promise<void> => {
         const server = CadenceMemory.getInstance().getConnectedServer(interaction.guildId);

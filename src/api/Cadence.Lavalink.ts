@@ -89,7 +89,7 @@ export default class CadenceLavalink {
         return trackInfo;
     }
 
-    public async playNextSongInQueue(player: ShoukakuPlayer): Promise<boolean> {
+    public playNextSongInQueue(player: ShoukakuPlayer): boolean {
         const s = CadenceMemory.getInstance().getConnectedServer(player.connection.guildId);
         if (!s) return false;
 
@@ -101,12 +101,13 @@ export default class CadenceLavalink {
             return false;
         }
 
-        if (this.playTrack(t, player.connection.guildId)) {
-            s.sendPlayerController();
-            return true;
-        }
+        return this.playTrack(t, player.connection.guildId);
+        // if () {
+        //     // s.sendPlayerController();
+        //     return true;
+        // }
 
-        return false;
+        // return false;
     }
 
     public async joinChannel(channelId: string, guildId: string, channel: TextBasedChannel, shardId: number, selfDeaf: boolean = true, selfMute: boolean = false): Promise<ShoukakuPlayer> {

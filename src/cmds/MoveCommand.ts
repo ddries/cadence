@@ -40,10 +40,10 @@ export const Command: BaseCommand = {
         let idxFrom = interaction.options.getInteger('song', true);
         let idxTo = interaction.options.getInteger('position', false);
 
-        idxFrom--;
+        // idxFrom--;
 
-        if (idxTo != null)
-            idxTo--;
+        // if (idxTo != null)
+        //     idxTo--;
         
         if (!server.checkIndex(idxFrom) || (!isNaN(idxTo) && idxTo != null && !server.checkIndex(idxTo))) {
             interaction.reply({ embeds: [ EmbedHelper.NOK("Please enter a valid index!") ], ephemeral: true });
@@ -51,12 +51,19 @@ export const Command: BaseCommand = {
         }
 
         idxFrom--;
-        idxTo--;
+
+        if (idxTo != null)
+            idxTo--;
     
         if(isNaN(idxTo)) server.moveSong(idxFrom);
         else server.moveSong(idxFrom, idxTo);
 
-        interaction.reply({ embeds: [ EmbedHelper.OK("Song moved.") ]});
+        const track = server.getSongAtIndex(idxTo);
+        if (!track) {
+            interaction.reply({ embeds: [ EmbedHelper.OK("Song moved.") ]});
+        } else {
+            interaction.reply({ embeds: [ EmbedHelper.OK("Song " + track.trackInfo.title + " moved to #" + (idxTo + 1)) ]});
+        }
     },
 
     slashCommandBody: new SlashCommandBuilder()

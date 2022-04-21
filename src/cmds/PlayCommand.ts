@@ -1,5 +1,5 @@
 import { SlashCommandBuilder } from "@discordjs/builders";
-import { CommandInteraction, GuildMember } from "discord.js";
+import { CommandInteraction, GuildMember, Message } from "discord.js";
 import BaseCommand from "../api/Cadence.BaseCommand";
 import EmbedHelper from "../api/Cadence.Embed";
 import CadenceLavalink from "../api/Cadence.Lavalink";
@@ -70,17 +70,17 @@ export const Command: BaseCommand = {
                 server.addToQueue(ct);
 
                 if (!player.track) {
-                    await CadenceLavalink.getInstance().playNextSongInQueue(player, false);
-                    interaction.editReply({ embeds: [ EmbedHelper.songBasic(ct.trackInfo, ct.requestedById, "Now Playing!") ]});
+                    if (CadenceLavalink.getInstance().playNextSongInQueue(player)) {
+                        const m = await interaction.editReply({ embeds: [ EmbedHelper.np(ct, player.position) ], components: server._buildButtonComponents() }) as Message;
+                        server.setMessageAsMusicPlayer(m);
+                    }
+                    // interaction.editReply({ embeds: [ EmbedHelper.Info("I've sent again the music player controller.") ] });
                 } else {
                     interaction.editReply({ embeds: [ EmbedHelper.songBasic(track.info, interaction.user.id, "Added to Queue!") ]});
-                    message.reply({ embeds: [ EmbedHelper.songBasic(track.info, message.author.id, "Added to Queue!") ]});
 
                     // if there was any current player controller
                     // we update buttons (next/back changed?)
-                    if (server.nowPlayingMessage?.message) {
-                        server.nowPlayingMessage.message?.edit({ components: server._buildButtonComponents() });
-                    }
+                    server.updatePlayerControllerButtonsIfAny();
                 }
 
                 // CadenceDb.getInstance().pushNewSong({
@@ -97,19 +97,20 @@ export const Command: BaseCommand = {
                 }
 
                 if (!player.track) {
-                    await CadenceLavalink.getInstance().playNextSongInQueue(player);
+                    if (CadenceLavalink.getInstance().playNextSongInQueue(player)) {
+                        const m = await interaction.editReply({ embeds: [ EmbedHelper.np(ct, player.position) ], components: server._buildButtonComponents()}) as Message;
+                        server.setMessageAsMusicPlayer(m);
+                    }
+                    // CadenceLavalink.getInstance().playNextSongInQueue(player);
+                    // interaction.editReply({ embeds: [ EmbedHelper.Info("I've sent again the music player controller.") ] });
                 } else {
                     // if there was any current player controller
                     // we update buttons (next/back changed?)
-                    if (server.nowPlayingMessage?.message) {
-                        server.nowPlayingMessage.message?.edit({ components: server._buildButtonComponents() });
-                    }
+                    server.updatePlayerControllerButtonsIfAny();
                 }
 
-                    interaction.editReply({ embeds: [ EmbedHelper.songBasic(current.trackInfo, current.requestedById, "Now Playing!"), EmbedHelper.OK(`Added **${result.tracks.length}** songs to the queue!`) ]});
-                } else {
-                    interaction.editReply({ embeds: [ EmbedHelper.OK(`Added **${result.tracks.length}** songs to the queue!`) ]});
-                }                
+                interaction.editReply({ embeds: [ EmbedHelper.OK(`Added **${result.tracks.length}** songs to the queue!`) ]});
+                break;            
         }
     },
 

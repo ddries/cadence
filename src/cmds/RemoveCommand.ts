@@ -1,5 +1,5 @@
 import { SlashCommandBuilder } from "@discordjs/builders";
-import { CommandInteraction, GuildMember } from "discord.js";
+import { CommandInteraction, GuildMember, TextBasedChannel } from "discord.js";
 import BaseCommand from "../api/Cadence.BaseCommand";
 import EmbedHelper from "../api/Cadence.Embed";
 import CadenceLavalink from "../api/Cadence.Lavalink";
@@ -43,12 +43,17 @@ export const Command: BaseCommand = {
             return;
         }
 
-        if (idx - 1 == server.getCurrentQueueIndex()) {
-            CadenceLavalink.getInstance().getPlayerByGuildId(interaction.guildId).stopTrack();
-        }
+        const trackName = server.getSongAtIndex(idx)?.trackInfo.title;
 
         server.removeFromQueueIdx(idx-1);
-        interaction.reply({ content: '✅' });
+        interaction.reply({ embeds: [ EmbedHelper.OK('🗑 Removed ' + trackName) ]});
+
+        if (idx - 1 == server.getCurrentQueueIndex()) {
+            if (CadenceLavalink.getInstance().playNextSongInQueue(server.player)) {
+                const m = await (server.musicPlayer.message.channel as TextBasedChannel).send({ embeds: [ EmbedHelper.np(server.getCurrentTrack(), server.player.position) ], components: server._buildButtonComponents() });
+                server.setMessageAsMusicPlayer(m);
+            }
+        }
     },
     
     slashCommandBody: new SlashCommandBuilder()

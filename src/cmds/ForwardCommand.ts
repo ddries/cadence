@@ -40,9 +40,8 @@ export const Command: BaseCommand = {
             interaction.reply({ embeds: [ EmbedHelper.NOK("You can't forward more than the remaining time! Maximum " + Math.round(remaining) + " seconds.") ], ephemeral: true });
             return;
         }
-
         player.seekTo(player.position + sec);
-        interaction.reply({ embeds: [ EmbedHelper.OK("Forwarded " + sec + " seconds.") ]});
+        interaction.reply({ embeds: [ EmbedHelper.OK("⌛️ Now playing at " + EmbedHelper._msToString(player.position + sec)) ]});
     },
 
     slashCommandBody: new SlashCommandBuilder()

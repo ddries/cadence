@@ -6,6 +6,7 @@ export default interface BaseCommand {
     description: string;
 
     requireAdmin: boolean;
+    disabled?: boolean;
 
     run(interaction: CommandInteraction): void;
     slashCommandBody: any;

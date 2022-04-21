@@ -50,6 +50,8 @@ export const Command: BaseCommand = {
             return;
         }
 
+        idx--;
+
         // given index is real index + 1 (thus, real is given -1)
         // if no loop is active we are removing 1 song in handleTrackEnded (currently played)
         // thus, given index is now index, real index is last given index - 1 (thus, real is first given -2)
@@ -61,21 +63,24 @@ export const Command: BaseCommand = {
         server.handleTrackEnded(false);
         const song = server.jumpToSong(idx);
 
-        await CadenceLavalink.getInstance().playTrack(song, player.connection.guildId);
+        CadenceLavalink.getInstance().playTrack(song, player.connection.guildId);
 
-        if (!Cadence.NowPlayingEnabled)
-            return;
+        const message = await interaction.reply({ embeds: [ EmbedHelper.np(song, server.player.position) ], components: server._buildButtonComponents(), fetchReply: true }) as Message;
+        server.setMessageAsMusicPlayer(message);
+        // server.sendPlayerController();
+        // if (!Cadence.NowPlayingEnabled)
+        //     return;
 
-        const lastMessage = server.textChannel.lastMessage;
-        let m: Message = null;
+        // const lastMessage = server.textChannel.lastMessage;
+        // let m: Message = null;
 
-        if (lastMessage.id != server.nowPlayingMessage?.id) {
-            m = await server.textChannel.send({ embeds: [ EmbedHelper.songBasic(song.trackInfo, song.requestedById, "Now Playing!") ]});
-        } else {
-            m = await lastMessage.edit({ embeds: [ EmbedHelper.songBasic(song.trackInfo, song.requestedById, "Now Playing!") ]});
-        }
+        // if (lastMessage.id != server.nowPlayingMessage?.id) {
+        //     m = await server.textChannel.send({ embeds: [ EmbedHelper.songBasic(song.trackInfo, song.requestedById, "Now Playing!") ]});
+        // } else {
+        //     m = await lastMessage.edit({ embeds: [ EmbedHelper.songBasic(song.trackInfo, song.requestedById, "Now Playing!") ]});
+        // }
 
-        server.nowPlayingMessage = m;
+        // server.nowPlayingMessage = m;
     },
 
     slashCommandBody: new SlashCommandBuilder()

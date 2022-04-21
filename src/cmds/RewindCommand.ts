@@ -40,7 +40,7 @@ export const Command: BaseCommand = {
         }
 
         player.seekTo(player.position - sec);
-        interaction.reply({ embeds: [ EmbedHelper.OK("Rewind " + sec + " seconds.") ]});
+        interaction.reply({ embeds: [ EmbedHelper.OK("⌛️ Now playing at " + EmbedHelper._msToString(player.position - sec)) ]});
     },
 
     slashCommandBody: new SlashCommandBuilder()
