@@ -9,7 +9,6 @@ import Cadence from "../Cadence";
 export const Command: BaseCommand = {
     name: "shuffle",
     description: "Randomize the queue",
-    aliases: [],
     requireAdmin: false,
 
     run: async (interaction: CommandInteraction): Promise<void> => {

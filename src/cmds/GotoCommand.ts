@@ -9,7 +9,6 @@ import Cadence from "../Cadence";
 export const Command: BaseCommand = {
     name: "goto",
     description: "Go to the given position in the song",
-    aliases: [],
     requireAdmin: false,
 
     run: async (interaction: CommandInteraction): Promise<void> => {

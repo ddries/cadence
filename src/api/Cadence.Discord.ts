@@ -22,7 +22,6 @@ export default class CadenceDiscord {
 
     private _commandsPath: string = "";
     private _commands: discord.Collection<string, BaseCommand> = null;
-    private _aliases: { [k: string]: string } = null;
 
     private _prefixes: Map<string, string> = null;
 
@@ -112,7 +111,6 @@ export default class CadenceDiscord {
         this.logger.log('loading all comands');
 
         this._commands = new discord.Collection<string, BaseCommand>();
-        this._aliases = {};
 
         if (!fs.existsSync(this._commandsPath)) fs.mkdirSync(this._commandsPath);
 
@@ -122,12 +120,6 @@ export default class CadenceDiscord {
             if (!commandModule) continue;
             
             this._commands.set(commandModule.name, commandModule);
-
-            if (commandModule.aliases && commandModule.aliases.length > 0) {
-                for (const a of commandModule.aliases) {
-                    this._aliases[a] = commandModule.name;
-                }
-            }
         }
 
     }

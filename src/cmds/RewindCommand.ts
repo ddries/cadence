@@ -9,7 +9,6 @@ import Cadence from "../Cadence";
 export const Command: BaseCommand = {
     name: "rewind",
     description: "Rewind the song the given amount of seconds",
-    aliases: ["r", "rw"],
     requireAdmin: false,
 
     run: async (interaction: CommandInteraction): Promise<void> => {

@@ -5,7 +5,6 @@ import BaseCommand from "../api/Cadence.BaseCommand";
 export const Command: BaseCommand = {
     name: "ping",
     description: "Get some feedback from cadence!",
-    aliases: [],
     requireAdmin: false,
 
     run: (interaction: CommandInteraction): void => {

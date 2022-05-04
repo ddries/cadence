@@ -11,7 +11,6 @@ import { LavalinkResult } from "../types/TrackResult.type";
 export const Command: BaseCommand = {
     name: "play",
     description: "Play the given song as a link or keyworkds to search for. Accepts playlists!",
-    aliases: ["p"],
     requireAdmin: false,
 
     run: async (interaction: CommandInteraction): Promise<void> => {
@@ -74,7 +73,6 @@ export const Command: BaseCommand = {
                         const m = await interaction.editReply({ embeds: [ EmbedHelper.np(ct, player.position) ], components: server._buildButtonComponents() }) as Message;
                         server.setMessageAsMusicPlayer(m);
                     }
-                    // interaction.editReply({ embeds: [ EmbedHelper.Info("I've sent again the music player controller.") ] });
                 } else {
                     interaction.editReply({ embeds: [ EmbedHelper.songBasic(track.info, interaction.user.id, "Added to Queue!") ]});
 
@@ -101,8 +99,6 @@ export const Command: BaseCommand = {
                         const m = await interaction.editReply({ embeds: [ EmbedHelper.np(ct, player.position) ], components: server._buildButtonComponents()}) as Message;
                         server.setMessageAsMusicPlayer(m);
                     }
-                    // CadenceLavalink.getInstance().playNextSongInQueue(player);
-                    // interaction.editReply({ embeds: [ EmbedHelper.Info("I've sent again the music player controller.") ] });
                 } else {
                     // if there was any current player controller
                     // we update buttons (next/back changed?)

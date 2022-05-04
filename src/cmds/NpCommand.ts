@@ -8,7 +8,6 @@ import CadenceMemory from "../api/Cadence.Memory";
 export const Command: BaseCommand = {
     name: "np",
     description: "Display the current song and progress",
-    aliases: [],
     requireAdmin: false,
     
     run: async (interaction: CommandInteraction): Promise<void> => {

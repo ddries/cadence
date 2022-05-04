@@ -9,7 +9,6 @@ import Cadence from "../Cadence";
 export const Command: BaseCommand = {
     name: "swap",
     description: "Swap two songs from the queue",
-    aliases: ["sw"],
     requireAdmin: false,
     disabled: true,
 

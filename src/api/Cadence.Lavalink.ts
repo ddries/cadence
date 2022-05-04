@@ -157,7 +157,7 @@ export default class CadenceLavalink {
             });
 
             p.on('exception', async (data: any) => {
-                this.logger.log('received exception event in player (' + p.connection.guildId + ') ' + data);
+                this.logger.log('received exception event in player (' + p.connection.guildId + ') ' + JSON.stringify(data));
                 
                 const s = CadenceMemory.getInstance().getConnectedServer(p.connection.guildId);
                 if (!s) return;

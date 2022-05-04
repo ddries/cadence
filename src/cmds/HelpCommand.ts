@@ -8,7 +8,6 @@ import Cadence from "../Cadence";
 export const Command: BaseCommand = {
     name: "help",
     description: "Display help",
-    aliases: ["h"],
     requireAdmin: false,
 
     run: async (interaction: CommandInteraction): Promise<void> => {
@@ -59,17 +58,6 @@ export const Command: BaseCommand = {
                 if (!commands.includes(key)) continue;
     
                 let aliasString = "";
-                if (cmd.aliases && cmd.aliases.length > 0) {
-                    aliasString = "( ";
-                    for (let j = 0; j < cmd.aliases.length; j++) {
-                        aliasString += CadenceDiscord.getInstance().getServerPrefix(interaction.guildId) + cmd.aliases[j];
-                        if (j+1 < cmd.aliases.length) {
-                            aliasString += ", ";
-                        } else {
-                            aliasString += " )";
-                        }
-                    }
-                }
     
                 desc += "`" + CadenceDiscord.getInstance().getServerPrefix(interaction.guildId) + cmd.name + "`: ";
                 if (aliasString.length > 0)

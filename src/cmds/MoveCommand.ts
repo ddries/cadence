@@ -9,7 +9,6 @@ import Cadence from "../Cadence";
 export const Command: BaseCommand = {
     name: "move",
     description: "Move one song from queue to the desired position",
-    aliases: ["mv"],
     requireAdmin: false,
 
     run: async (interaction: CommandInteraction): Promise<void> => {

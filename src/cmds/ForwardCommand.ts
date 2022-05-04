@@ -9,7 +9,6 @@ import Cadence from "../Cadence";
 export const Command: BaseCommand = {
     name: "forward",
     description: "Forward the song the given amount of seconds",
-    aliases: ["f", "ff"],
     requireAdmin: false,
 
     run: async (interaction: CommandInteraction): Promise<void> => {

@@ -10,7 +10,6 @@ import Cadence from "../Cadence";
 export const Command: BaseCommand = {
     name: "jump",
     description: "Jump to the selected song from queue",
-    aliases: ["j"],
     requireAdmin: false,
 
     run: async (interaction: CommandInteraction): Promise<void> => {

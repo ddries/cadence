@@ -73,10 +73,17 @@ class SlashBuilder {
         const rest = new REST({ version: '9' }).setToken(token);
 
         try {
-            await rest.put(
-                Routes.applicationGuildCommands(clientId, guildId),
-                { body: commands }
-            );
+            if (guildId) {
+                await rest.put(
+                    Routes.applicationGuildCommands(clientId, guildId),
+                    { body: commands }
+                );
+            } else {
+                await rest.put(
+                    Routes.applicationCommands(clientId),
+                    { body: commands }
+                );
+            }
 
             console.log('info\tsuccessfully uploaded commands');
         } catch(e) {

@@ -10,7 +10,6 @@ import { LoopType } from "../types/ConnectedServer.type";
 export const Command: BaseCommand = {
     name: "remove",
     description: "Remove the selected song from queue",
-    aliases: ["rm"],
     requireAdmin: false,
 
     run: async (interaction: CommandInteraction): Promise<void> => {

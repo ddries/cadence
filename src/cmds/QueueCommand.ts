@@ -9,7 +9,6 @@ import { LoopType } from "../types/ConnectedServer.type";
 export const Command: BaseCommand = {
     name: "queue",
     description: "Display the current queue",
-    aliases: ["q"],
     requireAdmin: false,
 
     run: async (interaction: CommandInteraction): Promise<void> => {
