@@ -1,11 +1,12 @@
-import discord from 'discord.js';
+import discord, { CommandInteraction } from 'discord.js';
 
-export default abstract class BaseCommand {
-    public abstract name: string;
-    public abstract aliases: string[];
-    public abstract description: string;
+export default interface BaseCommand {
+    name: string;
+    description: string;
 
-    public abstract requireAdmin: boolean;
+    requireAdmin: boolean;
+    disabled?: boolean;
 
-    public abstract run(m: discord.Message, args: string[]): void;
+    run(interaction: CommandInteraction): void;
+    slashCommandBody: any;
 }

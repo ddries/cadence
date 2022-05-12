@@ -22,7 +22,6 @@ export default class CadenceDiscord {
 
     private _commandsPath: string = "";
     private _commands: discord.Collection<string, BaseCommand> = null;
-    private _aliases: { [k: string]: string } = null;
 
     private _prefixes: Map<string, string> = null;
 
@@ -69,31 +68,17 @@ export default class CadenceDiscord {
         await this._loadAllServers();
     }
 
-    private async OnMessage(m: discord.Message): Promise<void> {
-        if (m.author.bot) return;
-        if (m.channel.type == 'DM') return;
+    private async OnInteraction(i: discord.Interaction): Promise<void> {
+        if (i.user.bot) return; // ??
+        if (!i.isCommand()) return;
+        if (i.channel.type == 'DM') return;
 
-        const prefix = Cadence.IsMainInstance ? this.getServerPrefix(m.guildId) : Cadence.DefaultPrefix;
-
-        if (!m.content.startsWith(prefix) && !m.content.startsWith(Cadence.DefaultPrefix)) return;
-
-        let args = [];
-        if (!m.content.startsWith(prefix)) {
-            args = m.content.slice(Cadence.DefaultPrefix.length).trim().split(/ +/);
-        } else {
-            args = m.content.slice(prefix.length).trim().split(/ +/);
-        }
-
-        let command = args.shift().toLocaleLowerCase();
-
-        if (!this._commands.has(command) && this._aliases.hasOwnProperty(command)) {
-            command = this._aliases[command];
-        }
+        let command = i.commandName.toLocaleLowerCase();
 
         try {
-            this._commands.get(command)?.run(m, args);
+            this._commands.get(command)?.run(i);
         } catch (e) {
-            this.logger.log('could not execute command ' + command + ' in ' + this.resolveGuildNameAndId(m.guild) + ': ' + e)
+            this.logger.log('could not execute command ' + command + ' in ' + this.resolveGuildNameAndId(i.guild) + ': ' + e)
         }
     }
 
@@ -126,20 +111,15 @@ export default class CadenceDiscord {
         this.logger.log('loading all comands');
 
         this._commands = new discord.Collection<string, BaseCommand>();
-        this._aliases = {};
 
         if (!fs.existsSync(this._commandsPath)) fs.mkdirSync(this._commandsPath);
 
         const commandFiles = fs.readdirSync(this._commandsPath).filter(f => f.endsWith('.js'));
         for (const f of commandFiles) {
-            const commandModule: BaseCommand = (await import(this._resolveCommandPath(f)))['default'];
+            const commandModule: BaseCommand = (await import(this._resolveCommandPath(f)))['Command'];
+            if (!commandModule) continue;
+            
             this._commands.set(commandModule.name, commandModule);
-
-            if (commandModule.aliases && commandModule.aliases.length > 0) {
-                for (const a of commandModule.aliases) {
-                    this._aliases[a] = commandModule.name;
-                }
-            }
         }
 
     }
@@ -184,7 +164,7 @@ export default class CadenceDiscord {
         }
 
         this.Client.once('ready', this.OnReady.bind(this));
-        this.Client.on('messageCreate', this.OnMessage.bind(this));
+        this.Client.on('interactionCreate', this.OnInteraction.bind(this));
         this.Client.on('voiceStateUpdate', this.OnVoiceUpdate.bind(this));
 
         this.logger.log('logging to discord network');

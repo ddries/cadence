@@ -1,76 +1,74 @@
-import { Message } from "discord.js";
+import { SlashCommandBuilder } from "@discordjs/builders";
+import { CommandInteraction, GuildMember } from "discord.js";
 import BaseCommand from "../api/Cadence.BaseCommand";
-import CadenceDiscord from "../api/Cadence.Discord";
 import EmbedHelper from "../api/Cadence.Embed";
 import CadenceLavalink from "../api/Cadence.Lavalink";
 import CadenceMemory from "../api/Cadence.Memory";
 import Cadence from "../Cadence";
 
-class MoveCommand extends BaseCommand {
-    public name: string;
-    public description: string;
-    public aliases: string[];
-    public requireAdmin: boolean;
+export const Command: BaseCommand = {
+    name: "move",
+    description: "Move one song from queue to the desired position",
+    requireAdmin: false,
 
-    constructor() {
-        super();
-
-        this.name = "move";
-        this.description = "Move one song from queue to the desired position";
-        this.aliases = ["mv"];
-        this.requireAdmin = false;
-    }
-
-    public async run(message: Message, args: string[]): Promise<void> {
-        const server = CadenceMemory.getInstance().getConnectedServer(message.guildId);
+    run: async (interaction: CommandInteraction): Promise<void> => {
+        const server = CadenceMemory.getInstance().getConnectedServer(interaction.guildId);
 
         if (!server) {
-            message.reply({ embeds: [ EmbedHelper.NOK("There's nothing playing!") ]});
+            interaction.reply({ embeds: [ EmbedHelper.NOK("There's nothing playing!") ], ephemeral: true });
             return;
         }
 
-        const player = CadenceLavalink.getInstance().getPlayerByGuildId(message.guildId);
+        const player = CadenceLavalink.getInstance().getPlayerByGuildId(interaction.guildId);
 
         if (!player) {
-            message.reply({ embeds: [ EmbedHelper.NOK("There's nothing playing!") ]});
+            interaction.reply({ embeds: [ EmbedHelper.NOK("There's nothing playing!") ], ephemeral: true });
             return;
         }
 
-        if (!message.member.voice?.channelId || message.member.voice.channelId != server.voiceChannelId) {
-            message.reply({ embeds: [ EmbedHelper.NOK("You must be connected to the same voice channel as " + Cadence.BotName + "!") ]});
+        if (!(interaction.member as GuildMember).voice?.channelId || (interaction.member as GuildMember).voice.channelId != server.voiceChannelId) {
+            interaction.reply({ embeds: [ EmbedHelper.NOK("You must be connected to the same voice channel as " + Cadence.BotName + "!") ], ephemeral: true });
             return;
         }
 
         if (server.isQueueEmpty()) {
-            message.reply({ embeds: [ EmbedHelper.NOK("There's nothing in the queue!") ]});
+            interaction.reply({ embeds: [ EmbedHelper.NOK("There's nothing in the queue!") ], ephemeral: true });
             return;
         }
 
-        if (args.length < 1) {
-            message.reply({ embeds: [ EmbedHelper.NOK("Please enter the song index! Usage: " + CadenceDiscord.getInstance().getServerPrefix(message.guildId) + "jump [index].") ]});
-            return;
-        }
+        let idxFrom = interaction.options.getInteger('song', true);
+        let idxTo = interaction.options.getInteger('position', false);
 
-        let idxFrom = parseInt(args[0], 10);
-        let idxTo = parseInt(args[1], 10);
+        // idxFrom--;
 
-        if (isNaN(idxFrom) || isNaN(idxTo)) {
-            message.reply({ embeds: [ EmbedHelper.NOK("Please enter the song index! Usage: " + CadenceDiscord.getInstance().getServerPrefix(message.guildId) + "jump [index].") ]});
-            return;
-        }
+        // if (idxTo != null)
+        //     idxTo--;
         
-        if (!server.checkIndex(idxFrom) || (!isNaN(idxTo) && !server.checkIndex(idxTo))) {
-            message.reply({ embeds: [ EmbedHelper.NOK("Please enter a valid index!") ]});
+        if (!server.checkIndex(idxFrom) || (!isNaN(idxTo) && idxTo != null && !server.checkIndex(idxTo))) {
+            interaction.reply({ embeds: [ EmbedHelper.NOK("Please enter a valid index!") ], ephemeral: true });
             return;
         }
 
         idxFrom--;
-        idxTo--;
+
+        if (idxTo != null)
+            idxTo--;
     
         if(isNaN(idxTo)) server.moveSong(idxFrom);
         else server.moveSong(idxFrom, idxTo);
-        message.react('✅');
-    }
-}
 
-export default new MoveCommand();
+        const track = server.getSongAtIndex(idxTo);
+        if (!track) {
+            interaction.reply({ embeds: [ EmbedHelper.OK("Song moved.") ]});
+        } else {
+            interaction.reply({ embeds: [ EmbedHelper.OK("Song " + track.trackInfo.title + " moved to #" + (idxTo + 1)) ]});
+        }
+    },
+
+    slashCommandBody: new SlashCommandBuilder()
+                        .setName("move")
+                        .setDescription("JMove one song from queue to the desired position")      
+                        .addIntegerOption(o => o.setName("song").setDescription("Desired song number to move").setRequired(true).setMinValue(1))
+                        .addIntegerOption(o => o.setName("position").setDescription("Desired new position for the song, [default]: next song").setRequired(false).setMinValue(1))
+                        .toJSON()
+}

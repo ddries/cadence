@@ -1,92 +1,63 @@
-import { Message } from "discord.js";
+import { SlashCommandBuilder } from "@discordjs/builders";
+import { CommandInteraction, GuildMember, TextBasedChannel } from "discord.js";
 import BaseCommand from "../api/Cadence.BaseCommand";
-import CadenceDiscord from "../api/Cadence.Discord";
 import EmbedHelper from "../api/Cadence.Embed";
 import CadenceLavalink from "../api/Cadence.Lavalink";
 import CadenceMemory from "../api/Cadence.Memory";
 import Cadence from "../Cadence";
 import { LoopType } from "../types/ConnectedServer.type";
 
-class RemoveCommand extends BaseCommand {
-    public name: string;
-    public description: string;
-    public aliases: string[];
-    public requireAdmin: boolean;
+export const Command: BaseCommand = {
+    name: "remove",
+    description: "Remove the selected song from queue",
+    requireAdmin: false,
 
-    constructor() {
-        super();
-
-        this.name = "remove";
-        this.description = "Remove the selected song from queue";
-        this.aliases = ["rm"];
-        this.requireAdmin = false;
-    }
-
-    public run(message: Message, args: string[]): void {
-        const server = CadenceMemory.getInstance().getConnectedServer(message.guildId);
+    run: async (interaction: CommandInteraction): Promise<void> => {
+        const server = CadenceMemory.getInstance().getConnectedServer(interaction.guildId);
 
         if (!server) {
-            message.reply({ embeds: [ EmbedHelper.NOK("There's nothing playing!") ]});
+            interaction.reply({ embeds: [ EmbedHelper.NOK("There's nothing playing!") ], ephemeral: true });
             return;
         }
 
-        if (!CadenceLavalink.getInstance().getPlayerByGuildId(message.guildId)) {
-            message.reply({ embeds: [ EmbedHelper.NOK("There's nothing playing!") ]});
+        if (!CadenceLavalink.getInstance().getPlayerByGuildId(interaction.guildId)) {
+            interaction.reply({ embeds: [ EmbedHelper.NOK("There's nothing playing!") ], ephemeral: true });
             return;
         }
 
-        if (!message.member.voice?.channelId || message.member.voice.channelId != server.voiceChannelId) {
-            message.reply({ embeds: [ EmbedHelper.NOK("You must be connected to the same voice channel as " + Cadence.BotName + "!") ]});
+        if (!(interaction.member as GuildMember).voice?.channelId || (interaction.member as GuildMember).voice.channelId != server.voiceChannelId) {
+            interaction.reply({ embeds: [ EmbedHelper.NOK("You must be connected to the same voice channel as " + Cadence.BotName + "!") ], ephemeral: true });
             return;
         }
 
         if (server.isQueueEmpty()) {
-            message.reply({ embeds: [ EmbedHelper.NOK("There's nothing in the queue!") ]});
+            interaction.reply({ embeds: [ EmbedHelper.NOK("There's nothing in the queue!") ], ephemeral: true });
             return;
         }
 
-        if (args.length < 1) {
-            message.reply({ embeds: [ EmbedHelper.NOK("Please enter the song index! Usage: " + CadenceDiscord.getInstance().getServerPrefix(message.guildId) + "remove [index].") ]});
+        const idx = interaction.options.getInteger('song', true);
+
+        if (idx > server.getQueue().length) {
+            interaction.reply({ embeds: [ EmbedHelper.NOK("Please enter a valid index!") ], ephemeral: true });
             return;
         }
 
-        let idx = parseInt(args[0], 10);
+        const trackName = server.getSongAtIndex(idx)?.trackInfo.title;
 
-        if (isNaN(idx)) {
-            message.reply({ embeds: [ EmbedHelper.NOK("Please enter the song index! Usage: " + CadenceDiscord.getInstance().getServerPrefix(message.guildId) + "remove [index].") ]});
-            return;
-        }
+        server.removeFromQueueIdx(idx-1);
+        interaction.reply({ embeds: [ EmbedHelper.OK('🗑 Removed ' + trackName) ]});
 
-        if (!server.checkIndex(idx)) {
-            message.reply({ embeds: [ EmbedHelper.NOK("Please enter a valid index!") ]});
-            return;
-        }
-
-        idx--;
-
-        const player = CadenceLavalink.getInstance().getPlayerByGuildId(message.guildId);
-        message.react('✅');
-
-        if (idx == server.getCurrentQueueIndex()) {
-            // if we are looping current track, we disable it
-            if (server.loop == LoopType.TRACK) {
-                server.loop = LoopType.NONE;
+        if (idx - 1 == server.getCurrentQueueIndex()) {
+            if (CadenceLavalink.getInstance().playNextSongInQueue(server.player)) {
+                const m = await (server.musicPlayer.message.channel as TextBasedChannel).send({ embeds: [ EmbedHelper.np(server.getCurrentTrack(), server.player.position) ], components: server._buildButtonComponents() });
+                server.setMessageAsMusicPlayer(m);
             }
-
-            // if its last track, we disconnect
-            if (server.getQueueLength() == 1) {
-                player.stopTrack();
-                server.handleTrackEnded();
-                return;
-            }
-
-            // otherwise play next one
-            CadenceLavalink.getInstance().playNextSongInQueue(player);
         }
-        
-        server.removeFromQueueIdx(idx);
-        server.updatePlayerControllerButtonsIfAny();
-    }
+    },
+    
+    slashCommandBody: new SlashCommandBuilder()
+                        .setName("remove")
+                        .setDescription("Remove the selected song from queue")
+                        .addIntegerOption(o => o.setName("song").setDescription("Song number").setMinValue(1).setRequired(true))
+                        .toJSON()
 }
-
-export default new RemoveCommand();

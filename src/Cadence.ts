@@ -7,6 +7,7 @@ import CadenceMemory from './api/Cadence.Memory';
 import CadenceSpotify from './api/Cadence.Spotify';
 import path from 'path';
 import fs from 'fs';
+import CadenceWebsockets from './api/Cadence.Websockets';
 
 export default class Cadence {
 
@@ -24,6 +25,7 @@ export default class Cadence {
     public static BaseScript: string = __filename;
     public static BaseLogDir: string = path.join(this.BaseDir, 'logs');
 
+    public static NowPlayingEnabled: boolean = true;
     public static SongsPerEmbed: number = 0;
 
     private constructor() {
@@ -50,6 +52,7 @@ export default class Cadence {
         Cadence.DefaultPrefix = Config.getInstance().getKeyOrDefault('BotDefaultPrefix', '');
         
         Cadence.SongsPerEmbed = Config.getInstance().getKeyOrDefault('SongsPerEmbed', 10);
+        Cadence.NowPlayingEnabled = Config.getInstance().getKeyOrDefault('NowPlayingEnabled', true);
         
         console.log();
         console.log();
@@ -74,6 +77,9 @@ export default class Cadence {
         await CadenceMemory.getInstance().init();
         await CadenceDb.getInstance().init();
 
+        if (false)
+            await CadenceWebsockets.getInstance().init();
+
         this.logger.log('starting discord module cadence ' + Cadence.Version + ", debug " + Cadence.Debug.toString());
         await CadenceDiscord.getInstance().init();
 
@@ -94,7 +100,8 @@ export default class Cadence {
 
 }
 
-
-;(async () => {
-    await Cadence.getInstance().init();
-})();
+if (require.main === module) {
+    ;(async () => {
+        await Cadence.getInstance().init();
+    })();
+}

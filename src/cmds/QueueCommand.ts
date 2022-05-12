@@ -1,40 +1,31 @@
-import { Message, MessageActionRow, MessageButton } from "discord.js";
+import { SlashCommandBuilder } from "@discordjs/builders";
+import { CommandInteraction, Message, MessageActionRow, MessageButton } from "discord.js";
 import BaseCommand from "../api/Cadence.BaseCommand";
 import EmbedHelper from "../api/Cadence.Embed";
 import CadenceLavalink from "../api/Cadence.Lavalink";
 import CadenceMemory from "../api/Cadence.Memory";
 import { LoopType } from "../types/ConnectedServer.type";
 
-class HelpCommand extends BaseCommand {
-    public name: string;
-    public description: string;
-    public aliases: string[];
-    public requireAdmin: boolean;
+export const Command: BaseCommand = {
+    name: "queue",
+    description: "Display the current queue",
+    requireAdmin: false,
 
-    constructor() {
-        super();
-
-        this.name = "queue";
-        this.description = "Displays the current queue";
-        this.aliases = ["q"];
-        this.requireAdmin = false;
-    }
-
-    public async run(message: Message, args: string[]): Promise<void> {
-        const server = CadenceMemory.getInstance().getConnectedServer(message.guildId);
+    run: async (interaction: CommandInteraction): Promise<void> => {
+        const server = CadenceMemory.getInstance().getConnectedServer(interaction.guildId);
         if (!server) {
-            message.reply({ embeds: [ EmbedHelper.NOK("There's nothing playing!") ]});
+            interaction.reply({ embeds: [ EmbedHelper.NOK("There's nothing playing!") ], ephemeral: true });
             return;
         }
 
-        const player = CadenceLavalink.getInstance().getPlayerByGuildId(message.guildId);
+        const player = CadenceLavalink.getInstance().getPlayerByGuildId(interaction.guildId);
         if (!player) {
-            message.reply({ embeds: [ EmbedHelper.NOK("There's nothing playing!") ]});
+            interaction.reply({ embeds: [ EmbedHelper.NOK("There's nothing playing!") ], ephemeral: true });
             return;
         }
 
         if (server.isQueueEmpty()) {
-            message.reply({ embeds: [ EmbedHelper.NOK("There's nothing in the queue!") ]});
+            interaction.reply({ embeds: [ EmbedHelper.NOK("There's nothing in the queue!") ], ephemeral: true });
             return;
         }
 
@@ -44,7 +35,7 @@ class HelpCommand extends BaseCommand {
         const embed = EmbedHelper.queue(server.getQueue(), page, requiredPages, server.loop == LoopType.QUEUE, server.shuffle);
 
         if (requiredPages <= 1) {
-            message.reply({ embeds: [ embed ] });
+            interaction.reply({ embeds: [ embed ] });
         } else {
             const btnRow = new MessageActionRow()
                 .addComponents(
@@ -60,9 +51,10 @@ class HelpCommand extends BaseCommand {
                     ]
             );
 
-            const reply = await message.reply({ embeds: [ embed ], components: [ btnRow ] });
+            interaction.reply({ embeds: [ embed ], components: [ btnRow ] });
+            const reply = await interaction.fetchReply() as Message;
 
-            const filter = b => b.user.id === message.author.id;
+            const filter = b => b.user.id === interaction.user.id;
             const collector = reply.createMessageComponentCollector({
                 filter,
                 time: 30 * 1000
@@ -91,7 +83,10 @@ class HelpCommand extends BaseCommand {
                 });
             });
         }
-    }
-}
+    },
 
-export default new HelpCommand();
+    slashCommandBody: new SlashCommandBuilder()
+                        .setName("queue")
+                        .setDescription("Display the current queue")
+                        .toJSON()
+}

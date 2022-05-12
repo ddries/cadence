@@ -98,7 +98,7 @@ export default class EmbedHelper {
             .setColor(color);
     }
 
-    private static _msToString(ms: number): string {
+    public static _msToString(ms: number): string {
         ms /= 1000;
         var h = Math.floor(ms / 3600);
         var m = Math.floor(ms % 3600 / 60);

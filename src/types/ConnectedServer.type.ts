@@ -21,6 +21,7 @@ export default class ConnectedServer {
     public textChannel: TextBasedChannel;
     
     public nowPlayingMessage: { message: Message, collector: any };
+    public musicPlayer: { message: Message, collector: any };
 
     public loop: LoopType = LoopType.NONE;
     public loopedTrack: CadenceTrack = null;
@@ -39,42 +40,27 @@ export default class ConnectedServer {
         this.voiceChannelId = voiceChannelId;
         this.guildId = guildId;
         this.textChannel = channel;
-        this.nowPlayingMessage = { message: null, collector: null };
+        this.musicPlayer = { message: null, collector: null };
 
         this._aloneInterval = setInterval(this._onAloneTimer.bind(this), 600_000); // 10 min
     }
 
-    public async sendPlayerController(removeLastMessage: boolean = true): Promise<void> {
-        const song = this.getCurrentTrack();
-        let reply;
+    public async setMessageAsMusicPlayer(message: Message, removeLastMessage: boolean = true, updateComponents: boolean = false): Promise<void> {
+        const track = this.getCurrentTrack();
+        if (!track) return;
 
-        // if the previous message is the last one
-        // we can simply edit the embed
-        // otherwise we (delete?) the previous message and send the new one
-        if (this.nowPlayingMessage.message && this.textChannel.lastMessageId == this.nowPlayingMessage.message.id) {
-            this.nowPlayingMessage.message.edit({ embeds: [ EmbedHelper.np(song, this.player.position) ], components: this._buildButtonComponents() });
-            this.nowPlayingMessage.collector?.stop('timeout');
-
-            reply = this.nowPlayingMessage.message;
-        } else if (this.nowPlayingMessage.message && this.textChannel.lastMessageId != this.nowPlayingMessage.message.id) {
-            if (!removeLastMessage) {
-                this.nowPlayingMessage.message.edit({ components: [] });
-            } else {
-                this.nowPlayingMessage.message?.delete();
-            }
-            this.nowPlayingMessage.collector?.stop('timeout');
+        if (removeLastMessage) {
+            this.musicPlayer.message?.delete();
+            this.musicPlayer.collector?.stop('timeout');
         }
 
-        if (!reply) {
-            reply = await this.textChannel.send({ embeds: [ EmbedHelper.np(song, this.player.position) ], components: this._buildButtonComponents() });
-        }
+        if (updateComponents)
+            await message.edit({ components: this._buildButtonComponents() });
 
-        const col = reply.createMessageComponentCollector({
-            // time: song.trackInfo.length - this.player.position + 250
-        });
-        
-        this.nowPlayingMessage.message = reply;
-        this.nowPlayingMessage.collector = col;
+        this.musicPlayer.message = message;
+
+        const col = this.musicPlayer.message.createMessageComponentCollector({ });
+        this.musicPlayer.collector = col;
 
         col.on('collect', async (interaction: ButtonInteraction) => {
             if ((interaction.member as GuildMember).voice?.channelId != this.voiceChannelId) {
@@ -108,20 +94,33 @@ export default class ConnectedServer {
                     this.updatePlayerControllerButtonsIfAny();
                     break;
                 case 'next':
+                    // if queue loop is enabled
+                    // they can do whatever they want
                     if (this.getQueueLength() > 1 && this.loop != LoopType.TRACK) {
                         this.handleTrackEnded();
-                        CadenceLavalink.getInstance().playNextSongInQueue(this.player);
+
+                        if (CadenceLavalink.getInstance().playNextSongInQueue(this.player)) {
+                            // const m = await interaction.editReply({ embeds: [ EmbedHelper.np(this.getCurrentTrack(), this.player.position) ]}) as Message;
+                            const m = await (this.musicPlayer.message.channel as TextBasedChannel).send({ embeds: [ EmbedHelper.np(this.getCurrentTrack(), this.player.position) ], components: this._buildButtonComponents() });
+                            this.setMessageAsMusicPlayer(m);
+                        }
                     }
                     break;
                 case 'back':
-                    if (this.getCurrentQueueIndex() > 0  && this.loop != LoopType.TRACK) {
+                    // if queue loop is enabled
+                    // they can do whatever they want
+                    if ((this.loop == LoopType.QUEUE && this.getQueueLength() > 1) || (this.getCurrentQueueIndex() > 0  && this.loop != LoopType.TRACK)) {
                         this.handleTrackEnded(false);
 
                         const song = this.jumpToSong(this.getCurrentQueueIndex() - 1);
 
-                        CadenceLavalink.getInstance().playTrack(song, this.player.connection.guildId);
+                        if (CadenceLavalink.getInstance().playTrack(song, this.player.connection.guildId)) {
+                            // const m = await interaction.editReply({ embeds: [ EmbedHelper.np(song, this.player.position) ]}) as Message;
+                            const m = await (this.musicPlayer.message.channel as TextBasedChannel).send({ embeds: [ EmbedHelper.np(this.getCurrentTrack(), this.player.position) ], components: this._buildButtonComponents() });
+                            this.setMessageAsMusicPlayer(m);
+                        }
                         // new song, send again
-                        this.sendPlayerController();
+                        // this.sendPlayerController();
                     }
                     break;
                 case 'stop':
@@ -130,20 +129,119 @@ export default class ConnectedServer {
             }
         });
 
-        col.on('end', (interaction, reason: string) => {
+        col.on('end', (_interaction, reason: string) => {
             if (reason == 'timeout') {
                 return;
             }
 
-            if (reply) {
-                reply.edit({ components: [] });
-            }
+            this.musicPlayer.message?.edit({ components: [] });
         });
     }
 
+    // public async sendPlayerController(removeLastMessage: boolean = true): Promise<void> {
+    //     const song = this.getCurrentTrack();
+    //     let reply;
+
+    //     // if the previous message is the last one
+    //     // we can simply edit the embed
+    //     // otherwise we (delete?) the previous message and send the new one
+    //     if (this.nowPlayingMessage.message && this.textChannel.lastMessageId == this.nowPlayingMessage.message.id) {
+    //         this.nowPlayingMessage.message.edit({ embeds: [ EmbedHelper.np(song, this.player.position) ], components: this._buildButtonComponents() });
+    //         this.nowPlayingMessage.collector?.stop('timeout');
+
+    //         reply = this.nowPlayingMessage.message;
+    //     } else if (this.nowPlayingMessage.message && this.textChannel.lastMessageId != this.nowPlayingMessage.message.id) {
+    //         if (!removeLastMessage) {
+    //             this.nowPlayingMessage.message.edit({ components: [] });
+    //         } else {
+    //             this.nowPlayingMessage.message?.delete();
+    //         }
+    //         this.nowPlayingMessage.collector?.stop('timeout');
+    //     }
+
+    //     if (!reply) {
+    //         reply = await this.textChannel.send({ embeds: [ EmbedHelper.np(song, this.player.position) ], components: this._buildButtonComponents() });
+    //     }
+
+    //     const col = reply.createMessageComponentCollector({
+    //         // time: song.trackInfo.length - this.player.position + 250
+    //     });
+        
+    //     this.nowPlayingMessage.message = reply;
+    //     this.nowPlayingMessage.collector = col;
+
+    //     col.on('collect', async (interaction: ButtonInteraction) => {
+    //         if ((interaction.member as GuildMember).voice?.channelId != this.voiceChannelId) {
+    //             interaction.reply({ embeds: [ EmbedHelper.NOK("You have to be connected in the same voice channel as " + Cadence.BotName + "!") ], ephemeral: true });
+    //             return;
+    //         }
+
+    //         // since we defer the update
+    //         // we can do nothing at all
+    //         await interaction.deferUpdate();
+
+    //         switch (interaction.customId) {
+    //             case 'resume-pause':
+    //                 this.player.setPaused(!this.player.paused);
+    //                 this.updatePlayerControllerButtonsIfAny();
+    //                 break;
+    //             case 'loop':
+    //                 // no loop > loop track > loop queue > no loop ...
+    //                 if (this.loop == LoopType.NONE) {
+    //                     this.loop = LoopType.TRACK;
+    //                     this.getCurrentTrack().looped = true;
+    //                 } else if (this.loop == LoopType.TRACK) {
+    //                     this.loop = LoopType.QUEUE;
+    //                     this.getCurrentTrack().looped = false;
+    //                     this.loopQueue(true);
+    //                 } else {
+    //                     this.loop = LoopType.NONE;
+    //                     this.getCurrentTrack().looped = false;
+    //                     this.loopQueue(false);
+    //                 }
+    //                 this.updatePlayerControllerButtonsIfAny();
+    //                 break;
+    //             case 'next':
+    //                 // if queue loop is enabled
+    //                 // they can do whatever they want
+    //                 if (this.loop == LoopType.QUEUE || (this.getQueueLength() > 1 && this.loop != LoopType.TRACK)) {
+    //                     this.handleTrackEnded();
+    //                     CadenceLavalink.getInstance().playNextSongInQueue(this.player);
+    //                 }
+    //                 break;
+    //             case 'back':
+    //                 // if queue loop is enabled
+    //                 // they can do whatever they want
+    //                 if (this.loop == LoopType.QUEUE || (this.getCurrentQueueIndex() > 0  && this.loop != LoopType.TRACK)) {
+    //                     this.handleTrackEnded(false);
+
+    //                     const song = this.jumpToSong(this.getCurrentQueueIndex() - 1);
+
+    //                     CadenceLavalink.getInstance().playTrack(song, this.player.connection.guildId);
+    //                     // new song, send again
+    //                     this.sendPlayerController();
+    //                 }
+    //                 break;
+    //             case 'stop':
+    //                 CadenceLavalink.getInstance().leaveChannel(this.guildId);
+    //                 break;
+    //         }
+    //     });
+
+    //     col.on('end', (interaction, reason: string) => {
+    //         if (reason == 'timeout') {
+    //             return;
+    //         }
+
+    //         if (reply) {
+    //             reply.edit({ components: [] });
+    //         }
+    //     });
+    // }
+
     public updatePlayerControllerButtonsIfAny(): void {
-        if (this.nowPlayingMessage?.message) {
-            this.nowPlayingMessage.message?.edit({ components: this._buildButtonComponents() });
+        if (this.musicPlayer?.message) {
+            this.musicPlayer.message?.edit({ components: this._buildButtonComponents() });
         }
     }
 
@@ -163,7 +261,9 @@ export default class ConnectedServer {
                     .setCustomId('loop')
         ]);
 
-        if (this.getCurrentQueueIndex() > 0  && this.loop != LoopType.TRACK) {
+        // if queue loop is enabled
+        // they can do whatever they want
+        if ((this.loop == LoopType.QUEUE && this.getQueueLength() > 1) || (this.getCurrentQueueIndex() > 0  && this.loop != LoopType.TRACK)) {
             rowOptions.addComponents([
                 new MessageButton()
                     .setStyle('SECONDARY')
@@ -182,7 +282,9 @@ export default class ConnectedServer {
             ]);
         }
 
-        if (this.getQueueLength() > 1 && this.loop != LoopType.TRACK) {
+        // if queue loop is enabled
+        // they can do whatever they want
+        if ((this.loop == LoopType.QUEUE && this.getQueueLength() > 1) || (this.getQueueLength() > 1 && this.loop != LoopType.TRACK)) {
             rowOptions.addComponents([
                 new MessageButton()
                     .setStyle('SECONDARY')
@@ -305,9 +407,9 @@ export default class ConnectedServer {
             this._aloneInterval = null;
         }
 
-        if (this.nowPlayingMessage) {
-            this.nowPlayingMessage.message?.edit({ components: [] });
-            this.nowPlayingMessage.collector?.stop();
+        if (this.musicPlayer) {
+            this.musicPlayer.message?.edit({ components: [] });
+            this.musicPlayer.collector?.stop();
         }
     }
 
@@ -317,6 +419,12 @@ export default class ConnectedServer {
         } else {
             this.loop = LoopType.NONE;
         }
+    }
+
+    public getSongAtIndex(index: number): CadenceTrack {
+        if (index < 0) return null;
+        if (index >= this._queue.length) return null;
+        return this._queue[index];
     }
 
     public addToQueue(track: CadenceTrack): void {
@@ -388,6 +496,8 @@ export default class ConnectedServer {
 
         if (idxFrom == this._queueIdx) {
             this._queueIdx = idxTo;
+        } else if (idxTo == this._queueIdx) {
+            this._queueIdx = idxFrom;
         }
 
         this._queue[idxTo] = temp;

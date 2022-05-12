@@ -1,4 +1,5 @@
-import { Message } from "discord.js";
+import { SlashCommandBuilder } from "@discordjs/builders";
+import { CommandInteraction, GuildMember, Message } from "discord.js";
 import BaseCommand from "../api/Cadence.BaseCommand";
 import CadenceDiscord from "../api/Cadence.Discord";
 import EmbedHelper from "../api/Cadence.Embed";
@@ -6,62 +7,49 @@ import CadenceLavalink from "../api/Cadence.Lavalink";
 import CadenceMemory from "../api/Cadence.Memory";
 import Cadence from "../Cadence";
 
-class JumpCommand extends BaseCommand {
-    public name: string;
-    public description: string;
-    public aliases: string[];
-    public requireAdmin: boolean;
+export const Command: BaseCommand = {
+    name: "jump",
+    description: "Jump to the selected song from queue",
+    requireAdmin: false,
 
-    constructor() {
-        super();
-
-        this.name = "jump";
-        this.description = "Jump to the selected song from queue";
-        this.aliases = ["j"];
-        this.requireAdmin = false;
-    }
-
-    public run(message: Message, args: string[]): void {
-        const server = CadenceMemory.getInstance().getConnectedServer(message.guildId);
+    run: async (interaction: CommandInteraction): Promise<void> => {
+        const server = CadenceMemory.getInstance().getConnectedServer(interaction.guildId);
 
         if (!server) {
-            message.reply({ embeds: [ EmbedHelper.NOK("There's nothing playing!") ]});
+            interaction.reply({ embeds: [ EmbedHelper.NOK("There's nothing playing!") ], ephemeral: true });
             return;
         }
 
-        const player = CadenceLavalink.getInstance().getPlayerByGuildId(message.guildId);
+        const player = CadenceLavalink.getInstance().getPlayerByGuildId(interaction.guildId);
 
         if (!player) {
-            message.reply({ embeds: [ EmbedHelper.NOK("There's nothing playing!") ]});
+            interaction.reply({ embeds: [ EmbedHelper.NOK("There's nothing playing!") ]});
             return;
         }
 
-        if (!message.member.voice?.channelId || message.member.voice.channelId != server.voiceChannelId) {
-            message.reply({ embeds: [ EmbedHelper.NOK("You must be connected to the same voice channel as " + Cadence.BotName + "!") ]});
+        if (!(interaction.member as GuildMember).voice?.channelId || (interaction.member as GuildMember).voice.channelId != server.voiceChannelId) {
+            interaction.reply({ embeds: [ EmbedHelper.NOK("You must be connected to the same voice channel as " + Cadence.BotName + "!") ], ephemeral: true });
             return;
         }
 
         if (server.isQueueEmpty()) {
-            message.reply({ embeds: [ EmbedHelper.NOK("There's nothing in the queue!") ]});
+            interaction.reply({ embeds: [ EmbedHelper.NOK("There's nothing in the queue!") ], ephemeral: true });
             return;
         }
 
-        if (args.length < 1) {
-            message.reply({ embeds: [ EmbedHelper.NOK("Please enter the song index! Usage: " + CadenceDiscord.getInstance().getServerPrefix(message.guildId) + "jump [index].") ]});
-            return;
-        }
-
-        let idx = parseInt(args[0], 10);
+        let idx = interaction.options.getInteger('song', true);
 
         if (isNaN(idx)) {
-            message.reply({ embeds: [ EmbedHelper.NOK("Please enter the song index! Usage: " + CadenceDiscord.getInstance().getServerPrefix(message.guildId) + "jump [index].") ]});
+            interaction.reply({ embeds: [ EmbedHelper.NOK("Please enter the song index! Usage: " + CadenceDiscord.getInstance().getServerPrefix(interaction.guildId) + "jump [index].") ], ephemeral: true });
             return;
         }
 
         if (!server.checkIndex(idx)) {
-            message.reply({ embeds: [ EmbedHelper.NOK("Please enter a valid index!") ]});
+            interaction.reply({ embeds: [ EmbedHelper.NOK("Please enter a valid index!") ], ephemeral: true });
             return;
         }
+
+        idx--;
 
         // given index is real index + 1 (thus, real is given -1)
         // if no loop is active we are removing 1 song in handleTrackEnded (currently played)
@@ -72,11 +60,31 @@ class JumpCommand extends BaseCommand {
         // if queue loop is active then real index is just given - 1 as we dont remove songs then
 
         server.handleTrackEnded(false);
-        const song = server.jumpToSong(idx - 1);
+        const song = server.jumpToSong(idx);
 
         CadenceLavalink.getInstance().playTrack(song, player.connection.guildId);
-        server.sendPlayerController();
-    }
-}
 
-export default new JumpCommand();
+        const message = await interaction.reply({ embeds: [ EmbedHelper.np(song, server.player.position) ], components: server._buildButtonComponents(), fetchReply: true }) as Message;
+        server.setMessageAsMusicPlayer(message);
+        // server.sendPlayerController();
+        // if (!Cadence.NowPlayingEnabled)
+        //     return;
+
+        // const lastMessage = server.textChannel.lastMessage;
+        // let m: Message = null;
+
+        // if (lastMessage.id != server.nowPlayingMessage?.id) {
+        //     m = await server.textChannel.send({ embeds: [ EmbedHelper.songBasic(song.trackInfo, song.requestedById, "Now Playing!") ]});
+        // } else {
+        //     m = await lastMessage.edit({ embeds: [ EmbedHelper.songBasic(song.trackInfo, song.requestedById, "Now Playing!") ]});
+        // }
+
+        // server.nowPlayingMessage = m;
+    },
+
+    slashCommandBody: new SlashCommandBuilder()
+                        .setName("jump")
+                        .setDescription("Jump to the selected song from queue")      
+                        .addIntegerOption(o => o.setName("song").setDescription("Song number to jump at").setRequired(true).setMinValue(1))
+                        .toJSON()
+}

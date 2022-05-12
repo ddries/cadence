@@ -1,57 +1,43 @@
-import { Message } from "discord.js";
+import { SlashCommandBuilder, time } from "@discordjs/builders";
+import { CommandInteraction, GuildMember } from "discord.js";
 import BaseCommand from "../api/Cadence.BaseCommand";
-import CadenceDiscord from "../api/Cadence.Discord";
 import EmbedHelper from "../api/Cadence.Embed";
 import CadenceLavalink from "../api/Cadence.Lavalink";
 import CadenceMemory from "../api/Cadence.Memory";
 import Cadence from "../Cadence";
 
-class GotoCommand extends BaseCommand {
-    public name: string;
-    public description: string;
-    public aliases: string[];
-    public requireAdmin: boolean;
+export const Command: BaseCommand = {
+    name: "goto",
+    description: "Go to the given position in the song",
+    requireAdmin: false,
 
-    constructor() {
-        super();
-
-        this.name = "goto";
-        this.description = "Go to the given position in the song";
-        this.aliases = [];
-        this.requireAdmin = false;
-    }
-
-    public async run(message: Message, args: string[]): Promise<void> {
-        const server = CadenceMemory.getInstance().getConnectedServer(message.guildId);
+    run: async (interaction: CommandInteraction): Promise<void> => {
+        const server = CadenceMemory.getInstance().getConnectedServer(interaction.guildId);
 
         if (!server) {
-            message.reply({ embeds: [ EmbedHelper.NOK("There's nothing playing!") ]});
+            interaction.reply({ embeds: [ EmbedHelper.NOK("There's nothing playing!") ], ephemeral: true });
             return;
         }
 
-        const player = CadenceLavalink.getInstance().getPlayerByGuildId(message.guildId);
+        const player = CadenceLavalink.getInstance().getPlayerByGuildId(interaction.guildId);
 
         if (!player) {
-            message.reply({ embeds: [ EmbedHelper.NOK("There's nothing playing!") ]});
+            interaction.reply({ embeds: [ EmbedHelper.NOK("There's nothing playing!") ], ephemeral: true });
             return;
         }
 
-        if (!message.member.voice?.channelId || message.member.voice.channelId != server.voiceChannelId) {
-            message.reply({ embeds: [ EmbedHelper.NOK("You must be connected to the same voice channel as " + Cadence.BotName + "!") ]});
+        if (!(interaction.member as GuildMember).voice?.channelId || (interaction.member as GuildMember).voice.channelId != server.voiceChannelId) {
+            interaction.reply({ embeds: [ EmbedHelper.NOK("You must be connected to the same voice channel as " + Cadence.BotName + "!") ], ephemeral: true });
             return;
         }
 
         if (server.isQueueEmpty()) {
-            message.reply({ embeds: [ EmbedHelper.NOK("There's nothing in the queue!") ]});
+            interaction.reply({ embeds: [ EmbedHelper.NOK("There's nothing in the queue!") ], ephemeral: true });
             return;
         }
 
-        if (args.length < 1) {
-            message.reply({ embeds: [ EmbedHelper.Info("Usage: " + CadenceDiscord.getInstance().getServerPrefix(message.guildId) + "goto [hh:mm:ss]") ]});
-            return;
-        }
-
-        const parts = args[0].split(":");
+        const timestamp = interaction.options.getString('timestamp', true);
+        const parts = timestamp.split(":");
 
         let totalSeek = 0;
         let seconds = 0;
@@ -75,15 +61,10 @@ class GotoCommand extends BaseCommand {
 
         totalSeek = (seconds + (minutes * 60) + (hours * 3600)) * 1_000;
 
-        if (totalSeek == 0) {
-            message.reply({ embeds: [ EmbedHelper.Info("Usage: " + CadenceDiscord.getInstance().getServerPrefix(message.guildId) + "goto [hh:mm:ss]") ]});
-            return;
-        }
-
         const song = server.getCurrentTrack();
 
         if (song.trackInfo.length <= totalSeek) {
-            message.reply({ embeds: [ EmbedHelper.NOK("The given time is larger than the song length") ]});
+            interaction.reply({ embeds: [ EmbedHelper.NOK("The given time is larger than the song length") ], ephemeral: true });
             return;
         }
 
@@ -93,8 +74,12 @@ class GotoCommand extends BaseCommand {
         };
 
         player.seekTo(totalSeek);
-        message.reply({ embeds: [ EmbedHelper.OK("⏳ Jumped to " + stringifySeconds(totalSeek / 1_000)) ]});
-    }
-}
+        interaction.reply({ embeds: [ EmbedHelper.OK("⌛️ Now playing at " +stringifySeconds(totalSeek / 1_000)) ]});
+    },
 
-export default new GotoCommand();
+    slashCommandBody: new SlashCommandBuilder()
+                        .setName("goto")
+                        .setDescription("Go to the given position in the song")      
+                        .addStringOption(o => o.setName("timestamp").setDescription("Format [hh:mm:ss], [mm:ss] or [ss]").setRequired(true))
+                        .toJSON()
+}

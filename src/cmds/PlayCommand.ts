@@ -1,6 +1,6 @@
-import { Message } from "discord.js";
+import { SlashCommandBuilder } from "@discordjs/builders";
+import { CommandInteraction, GuildMember, Message } from "discord.js";
 import BaseCommand from "../api/Cadence.BaseCommand";
-import CadenceDiscord from "../api/Cadence.Discord";
 import EmbedHelper from "../api/Cadence.Embed";
 import CadenceLavalink from "../api/Cadence.Lavalink";
 import CadenceMemory from "../api/Cadence.Memory";
@@ -8,51 +8,36 @@ import CadenceSpotify from "../api/Cadence.Spotify";
 import CadenceTrack from "../types/CadenceTrack.type";
 import { LavalinkResult } from "../types/TrackResult.type";
 
-class PlayCommand extends BaseCommand {
-    public name: string;
-    public description: string;
-    public aliases: string[];
-    public requireAdmin: boolean;
+export const Command: BaseCommand = {
+    name: "play",
+    description: "Play the given song as a link or keyworkds to search for. Accepts playlists!",
+    requireAdmin: false,
 
-    public first: boolean = false;
+    run: async (interaction: CommandInteraction): Promise<void> => {
+        let linkOrKeyword: string = interaction.options.getString('input', true);
 
-    constructor() {
-        super();
-
-        this.name = "play";
-        this.description = "Play the given song as a link or keyworkds to search for. Accepts playlists!"
-        this.aliases = ["p"];
-        this.requireAdmin = false;
-    }
-
-    public async run(message: Message, args: string[]): Promise<void> {
-        if (args.length <= 0) {
-            message.reply({ embeds: [ EmbedHelper.NOK("Please enter a valid link or keywords! Usage: " + CadenceDiscord.getInstance().getServerPrefix(message.guildId) + "play [link or keywords]") ]});
+        if (!(interaction.member as GuildMember).voice?.channelId) {
+            interaction.reply({ embeds: [ EmbedHelper.NOK("You must be connected to a voice channel!") ], ephemeral: true });
             return;
         }
 
-        let linkOrKeyword: string = args[0];
+        const oldServer = CadenceMemory.getInstance().getConnectedServer(interaction.guildId);
 
-        if (!message.member.voice?.channelId) {
-            message.reply({ embeds: [ EmbedHelper.NOK("You must be connected to a voice channel!") ]});
+        if (oldServer && oldServer.voiceChannelId != (interaction.member as GuildMember).voice.channelId) {
+            interaction.reply({ embeds: [ EmbedHelper.NOK("I'm already being used in another voice channel!") ], ephemeral: true });
             return;
         }
 
-        const oldServer = CadenceMemory.getInstance().getConnectedServer(message.guildId);
-
-        if (oldServer && oldServer.voiceChannelId != message.member.voice.channelId) {
-            message.reply({ embeds: [ EmbedHelper.NOK("I'm already being used in another voice channel!") ]});
-            return;
-        }
+        await interaction.deferReply();
 
         await CadenceLavalink.getInstance().joinChannel(
-            message.member.voice.channelId,
-            message.guildId,
-            message.channel,
-            message.guild.shardId
+            (interaction.member as GuildMember).voice.channelId,
+            interaction.guildId,
+            interaction.channel,
+            interaction.guild.shardId
         );
 
-        let server = CadenceMemory.getInstance().getConnectedServer(message.guildId);
+        let server = CadenceMemory.getInstance().getConnectedServer(interaction.guildId);
         
         let result: LavalinkResult = null;
         if (CadenceLavalink.getInstance().isValidUrl(linkOrKeyword)) {
@@ -62,38 +47,38 @@ class PlayCommand extends BaseCommand {
                 result = await CadenceSpotify.getInstance().resolveLinkIntoTracks(linkOrKeyword);
             }
         } else {
-            for (let i = 1; i < args.length; ++i) linkOrKeyword += " " + args[i];
             result = await CadenceLavalink.getInstance().resolveYoutubeIntoTracks(linkOrKeyword.trim());
         }
         
-        const player = CadenceLavalink.getInstance().getPlayerByGuildId(message.guildId);
+        const player = CadenceLavalink.getInstance().getPlayerByGuildId(interaction.guildId);
 
         if (result == null) {
-            message.reply({ embeds: [ EmbedHelper.NOK("We couldn't find anything with that link! (Private Spotify links do not work)") ]});
+            interaction.editReply({ embeds: [ EmbedHelper.NOK("We couldn't find anything with that link!") ] });
             return;
         }
         
         switch (result.loadType) {
             case "LOAD_FAILED":
             case "NO_MATCHES":
-                message.reply({ embeds: [ EmbedHelper.NOK("We couldn't find anything with that link!") ]});
+                interaction.reply({ embeds: [ EmbedHelper.NOK("We couldn't find anything with that link!") ], ephemeral: true });
                 break;
             case "SEARCH_RESULT":
             case "TRACK_LOADED":
                 const track = result.tracks[0];
-                const ct = new CadenceTrack(track.track, track.info, message.author.id);
+                const ct = new CadenceTrack(track.track, track.info, interaction.user.id);
                 server.addToQueue(ct);
 
                 if (!player.track) {
-                    await CadenceLavalink.getInstance().playNextSongInQueue(player);
+                    if (CadenceLavalink.getInstance().playNextSongInQueue(player)) {
+                        const m = await interaction.editReply({ embeds: [ EmbedHelper.np(ct, player.position) ], components: server._buildButtonComponents() }) as Message;
+                        server.setMessageAsMusicPlayer(m);
+                    }
                 } else {
-                    message.reply({ embeds: [ EmbedHelper.songBasic(track.info, message.author.id, "Added to Queue!") ]});
+                    interaction.editReply({ embeds: [ EmbedHelper.songBasic(track.info, interaction.user.id, "Added to Queue!") ]});
 
                     // if there was any current player controller
                     // we update buttons (next/back changed?)
-                    if (server.nowPlayingMessage?.message) {
-                        server.nowPlayingMessage.message?.edit({ components: server._buildButtonComponents() });
-                    }
+                    server.updatePlayerControllerButtonsIfAny();
                 }
 
                 // CadenceDb.getInstance().pushNewSong({
@@ -106,22 +91,28 @@ class PlayCommand extends BaseCommand {
                 break;
             case "PLAYLIST_LOADED":
                 for (let i = 0; i < result.tracks.length; ++i) {
-                    server.addToQueue(new CadenceTrack(result.tracks[i].track, result.tracks[i].info, message.author.id));
+                    server.addToQueue(new CadenceTrack(result.tracks[i].track, result.tracks[i].info, interaction.user.id));
                 }
 
                 if (!player.track) {
-                    await CadenceLavalink.getInstance().playNextSongInQueue(player);
+                    if (CadenceLavalink.getInstance().playNextSongInQueue(player)) {
+                        const m = await interaction.editReply({ embeds: [ EmbedHelper.np(ct, player.position) ], components: server._buildButtonComponents()}) as Message;
+                        server.setMessageAsMusicPlayer(m);
+                    }
                 } else {
                     // if there was any current player controller
                     // we update buttons (next/back changed?)
-                    if (server.nowPlayingMessage?.message) {
-                        server.nowPlayingMessage.message?.edit({ components: server._buildButtonComponents() });
-                    }
+                    server.updatePlayerControllerButtonsIfAny();
                 }
 
-                message.reply({ embeds: [ EmbedHelper.OK(`Added **${result.tracks.length}** songs to the queue!`) ]});
+                interaction.editReply({ embeds: [ EmbedHelper.OK(`Added **${result.tracks.length}** songs to the queue!`) ]});
+                break;            
         }
-    }
-}
+    },
 
-export default new PlayCommand();
+    slashCommandBody: new SlashCommandBuilder()
+                        .setName("play")
+                        .setDescription("Play the given song as a link or keyworkds to search for. Accepts playlists!")
+                        .addStringOption(o => o.setName("input").setDescription("Link or keywords").setRequired(true))
+                        .toJSON()
+}
