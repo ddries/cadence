@@ -9,6 +9,7 @@ export const Command: BaseCommand = {
     name: "help",
     description: "Display help",
     requireAdmin: false,
+    disabled: true,
 
     run: async (interaction: CommandInteraction): Promise<void> => {
         const musicCommands = ["play", "np", "pause", "resume", "queue", "shuffle", "jump", "remove", "forward", "rewind", "goto", "move", "swap"];
