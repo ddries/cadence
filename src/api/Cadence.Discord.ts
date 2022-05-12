@@ -23,8 +23,6 @@ export default class CadenceDiscord {
     private _commandsPath: string = "";
     private _commands: discord.Collection<string, BaseCommand> = null;
 
-    private _prefixes: Map<string, string> = null;
-
     public sendStatus(text: string): void {
         this._statusWebhook.send({ embeds: [ EmbedHelper.generic(text, EmbedColor.Debug) ]});
     }
@@ -39,12 +37,7 @@ export default class CadenceDiscord {
     }
 
     public getServerPrefix(guildId: string): string {
-        if (!this._prefixes.has(guildId)) return Cadence.DefaultPrefix;
-        else return this._prefixes.get(guildId);
-    }
-
-    public setServerPrefix(guildId: string, prefix: string): void {
-        this._prefixes.set(guildId, prefix);
+        return Cadence.DefaultPrefix;
     }
 
     public getAllCommands(): discord.Collection<string, BaseCommand> {
@@ -65,7 +58,6 @@ export default class CadenceDiscord {
         }
 
         await this._loadAllCommands();
-        await this._loadAllServers();
     }
 
     private async OnInteraction(i: discord.Interaction): Promise<void> {
@@ -93,17 +85,6 @@ export default class CadenceDiscord {
             server.player.setPaused(true);
             (new Promise(res => setTimeout(res, 1000))).then(() => server.player.setPaused(false));
             this.logger.log('updated voice channel id to (' + server.voiceChannelId + ')');
-        }
-    }
-
-    private async _loadAllServers(): Promise<void> {
-        // Prefixes
-        if (Cadence.IsMainInstance) {
-            const guilds: Array<IGuild> = await CadenceDb.getInstance().getAllServers();
-            for (const g of guilds) {
-                this.logger.log('loaded prefix ' + g.prefix + ' for guild (' + g.guildId + ')');
-                this._prefixes.set(g.guildId, g.prefix);
-            }
         }
     }
 
@@ -150,8 +131,6 @@ export default class CadenceDiscord {
 
         this._statusWebhook = new discord.WebhookClient({ url: Config.getInstance().getKeyOrDefault('StatusWebhook', '')});
         this._statsWebhook = new discord.WebhookClient({ url: Config.getInstance().getKeyOrDefault('StatsWebhook', '')});
-
-        this._prefixes = new Map<string, string>();
 
         this._commandsPath = path.join(Cadence.BaseDir, 'cmds');
 
