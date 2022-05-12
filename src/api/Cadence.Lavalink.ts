@@ -118,13 +118,18 @@ export default class CadenceLavalink {
         let p = this.getPlayerByGuildId(guildId);
 
         if (!p) {
-            p = await this._getIdealNode().joinChannel({
-                guildId: guildId,
-                channelId: channelId,
-                shardId: shardId,
-                deaf: selfDeaf,
-                mute: selfMute
-            });
+            try {
+                p = await this._getIdealNode().joinChannel({
+                    guildId: guildId,
+                    channelId: channelId,
+                    shardId: shardId,
+                    deaf: selfDeaf,
+                    mute: selfMute
+                });
+            } catch (e) {
+                this.logger.log('could not join channel ' + channelId + ' in guild ' + guildId);
+                return null;
+            }
 
             CadenceMemory.getInstance().setConnectedServer(guildId, channelId, channel, p);
             this._playersByGuildId.set(guildId, p);
@@ -161,6 +166,13 @@ export default class CadenceLavalink {
                 
                 const s = CadenceMemory.getInstance().getConnectedServer(p.connection.guildId);
                 if (!s) return;
+
+                let message = "I tried my best but I ran into severe problems trying to play the following track. Only God knows what really happened, we as mere mortals can only see the consequences...";
+                if (s.getCurrentTrack()) {
+                    message += "```" + s.getCurrentTrack().trackInfo.title + "```";
+                }
+
+                s.textChannel.send({ embeds: [ EmbedHelper.NOK(message) ]});
     
                 s.handleTrackEnded();
                 await CadenceLavalink.getInstance().playNextSongInQueue(p);

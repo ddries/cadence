@@ -30,12 +30,15 @@ export const Command: BaseCommand = {
 
         await interaction.deferReply();
 
-        await CadenceLavalink.getInstance().joinChannel(
+        if (!(await CadenceLavalink.getInstance().joinChannel(
             (interaction.member as GuildMember).voice.channelId,
             interaction.guildId,
             interaction.channel,
             interaction.guild.shardId
-        );
+        ))) {
+            interaction.reply({ embeds: [ EmbedHelper.NOK("I can't join that voice channel! Do I have enough permissions?") ], ephemeral: true });
+            return;
+        }
 
         let server = CadenceMemory.getInstance().getConnectedServer(interaction.guildId);
         
