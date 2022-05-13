@@ -102,12 +102,6 @@ export default class CadenceLavalink {
         }
 
         return this.playTrack(t, player.connection.guildId);
-        // if () {
-        //     // s.sendPlayerController();
-        //     return true;
-        // }
-
-        // return false;
     }
 
     public async joinChannel(channelId: string, guildId: string, channel: TextBasedChannel, shardId: number, selfDeaf: boolean = true, selfMute: boolean = false): Promise<ShoukakuPlayer> {
@@ -118,13 +112,18 @@ export default class CadenceLavalink {
         let p = this.getPlayerByGuildId(guildId);
 
         if (!p) {
-            p = await this._getIdealNode().joinChannel({
-                guildId: guildId,
-                channelId: channelId,
-                shardId: shardId,
-                deaf: selfDeaf,
-                mute: selfMute
-            });
+            try {
+                p = await this._getIdealNode().joinChannel({
+                    guildId: guildId,
+                    channelId: channelId,
+                    shardId: shardId,
+                    deaf: selfDeaf,
+                    mute: selfMute
+                });
+            } catch (e) {
+                this.logger.log('could not join channel ' + channelId + ' in guild ' + guildId);
+                return null;
+            }
 
             CadenceMemory.getInstance().setConnectedServer(guildId, channelId, channel, p);
             this._playersByGuildId.set(guildId, p);
@@ -139,16 +138,24 @@ export default class CadenceLavalink {
             });
     
             p.on('end', async (data: any) => {
-                this.logger.log('received end event in player (' + p.connection.guildId + ')');
+                this.logger.log('received end event in player (' + p.connection.guildId + ') ' + JSON.stringify(data));
 
-                if (data.reason != "STOPPED" && data.reason != "REPLACED") {
-                    this.logger.log('track ended in ' + data.guildId + ' playing next song in queue');
-    
-                    const s = CadenceMemory.getInstance().getConnectedServer(data.guildId);
-                    if (!s) return;
-    
-                    s.handleTrackEnded();
-                    await CadenceLavalink.getInstance().playNextSongInQueue(p);
+                const s = CadenceMemory.getInstance().getConnectedServer(data.guildId);
+                if (!s) return;
+
+                switch (data.reason) {
+                    case "STOPPED":
+                    case "REPLACED":
+                    case "LOAD_FAILED": // handled in p.on('exception')
+                        break;
+                    default:
+                        this.logger.log('track ended in ' + data.guildId + ' playing next song in queue');
+                        s.handleTrackEnded();
+                        if (CadenceLavalink.getInstance().playNextSongInQueue(p)) {
+                            const m = await (s.musicPlayer.message.channel as TextBasedChannel).send({ embeds: [ EmbedHelper.np(s.getCurrentTrack(), s.player.position) ], components: s._buildButtonComponents() });
+                            s.setMessageAsMusicPlayer(m);
+                        }
+                        break;
                 }
             });
     
@@ -161,9 +168,34 @@ export default class CadenceLavalink {
                 
                 const s = CadenceMemory.getInstance().getConnectedServer(p.connection.guildId);
                 if (!s) return;
+
+                let message = "I tried my best but I ran into severe problems trying to play the following track. Only God knows what really happened, we as mere mortals can only see the consequences...";
+                if (s.getCurrentTrack()) {
+                    message += "```" + s.getCurrentTrack().trackInfo.title + "```";
+                }
+
+                s.textChannel.send({ embeds: [ EmbedHelper.NOK(message) ]});
     
+                // we want to be sure we process the handleTrackEnded
+                // when music controller exists (avoid bugs)
+                // there has to be 100% a music controller if exception raises
+                const _isMusicControllerNull = () => { return !s.musicPlayer?.message || !s.musicPlayer?.collector; };
+                if (_isMusicControllerNull()) {
+                    const _a = (): Promise<void> => {
+                        return new Promise<void>(res => {
+                            if (!_isMusicControllerNull()) res();
+                            else {
+                                let _i = setInterval(() => {
+                                    const _res = () => { clearInterval(_i); _i = null; };
+                                    if (!_isMusicControllerNull()) { _res(); res(); }
+                                }, 10);
+                            }
+                        });
+                    }
+                    await _a();
+                }
                 s.handleTrackEnded();
-                await CadenceLavalink.getInstance().playNextSongInQueue(p);
+                if (s.getQueueLength() > 1) CadenceLavalink.getInstance().playNextSongInQueue(p);
             });
 
             p.on('closed', async r => {
