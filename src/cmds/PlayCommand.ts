@@ -36,7 +36,7 @@ export const Command: BaseCommand = {
             interaction.channel,
             interaction.guild.shardId
         ))) {
-            interaction.reply({ embeds: [ EmbedHelper.NOK("I can't join that voice channel! Do I have enough permissions?") ], ephemeral: true });
+            interaction.editReply({ embeds: [ EmbedHelper.NOK("I can't join that voice channel! Do I have enough permissions?") ] });
             return;
         }
 
