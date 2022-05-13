@@ -17,20 +17,23 @@ export default class EmbedHelper {
             .setDescription(`[${trackInfo.title}](${trackInfo.uri}), requested by <@${authorId}>`);
     }
 
-    public static np(track: CadenceTrack, position: number): MessageEmbed {
+    public static np(track: CadenceTrack, position: number, drawProgressBar: boolean = false): MessageEmbed {
         const totalCharacters: number = 18;
         const totalDuration: number = track.trackInfo.length;
         const currentPosition: number = position;
 
         let description: string = "";
-        const currentProgress: number = Math.ceil((totalCharacters * currentPosition) / totalDuration);
+        if (drawProgressBar) {
+            const currentProgress: number = Math.ceil((totalCharacters * currentPosition) / totalDuration);
 
-        for (let i = 0; i < currentProgress; ++i) description += '─';
-        description += "⚪";
-        for (let i = currentProgress; i < totalCharacters; ++i) description += "─";
+            for (let i = 0; i < currentProgress; ++i) description += '─';
+            description += "⚪";
+            for (let i = currentProgress; i < totalCharacters; ++i) description += "─";
+            description += "\n";
+        }
+
         let startAsText = this._msToString(currentPosition);
-
-        description += "\n⏳ " + (track.trackInfo.isStream ? '♾' : (startAsText + " — " + this._msToString(totalDuration)));
+        description += "⏳ " + (track.trackInfo.isStream ? '♾' : (startAsText + " — " + this._msToString(totalDuration)));
 
         return new MessageEmbed()
             .setTitle(track.trackInfo.title)
