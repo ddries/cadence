@@ -37,7 +37,7 @@ export const Command: BaseCommand = {
         }
 
         // interaction.reply({ embeds: [ EmbedHelper.np(song, player.position) ] });
-        const m = await interaction.reply({ embeds: [ EmbedHelper.np(song, player.position) ], components: server._buildButtonComponents(), fetchReply: true }) as Message;
+        const m = await interaction.reply({ embeds: [ EmbedHelper.np(song, player.position, true) ], components: server._buildButtonComponents(), fetchReply: true }) as Message;
         server.setMessageAsMusicPlayer(m);
         // interaction.reply({ embeds: [ EmbedHelper.Info("I've sent again the music player controller.") ], ephemeral: true });
         // server.sendPlayerController();

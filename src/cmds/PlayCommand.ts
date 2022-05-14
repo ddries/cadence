@@ -63,7 +63,7 @@ export const Command: BaseCommand = {
         switch (result.loadType) {
             case "LOAD_FAILED":
             case "NO_MATCHES":
-                interaction.reply({ embeds: [ EmbedHelper.NOK("We couldn't find anything with that link!") ], ephemeral: true });
+                interaction.editReply({ embeds: [ EmbedHelper.NOK("We couldn't find anything with that link!") ] });
                 break;
             case "SEARCH_RESULT":
             case "TRACK_LOADED":
