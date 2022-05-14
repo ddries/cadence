@@ -62,11 +62,12 @@ export default class CadenceSpotify {
 
     private async _getValidAuthToken(): Promise<string> {
         if (this._currentToken.length == 0) {
-            const r = await (await fetch(
+            // explicit any, too lazy
+            const r: any = await (await fetch(
                 "https://accounts.spotify.com/api/token",
                 {
                     method: "POST",
-                    body: ["grant_type=client_credentials"],
+                    body: JSON.stringify(["grant_type=client_credentials"]),
                     headers: {
                         "Authorization": "Basic " + Buffer.from(this._clientId + ":" + this._clientSecret).toString("base64"),
                         "Content-Type": "application/x-www-form-urlencoded"
