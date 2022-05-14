@@ -6,8 +6,6 @@ import Logger from "./Cadence.Logger";
 import fs from 'fs';
 import path from 'path';
 import EmbedHelper, { EmbedColor } from "./Cadence.Embed";
-import { IGuild } from "./models/GuildSchema";
-import CadenceDb from "./Cadence.Db";
 import CadenceMemory from "./Cadence.Memory";
 
 export default class CadenceDiscord {
@@ -63,14 +61,14 @@ export default class CadenceDiscord {
     private async OnInteraction(i: discord.Interaction): Promise<void> {
         if (i.user.bot) return; // ??
         if (!i.isCommand()) return;
-        if (i.channel.type == 'DM') return;
+        if (!i.inGuild()) return;
 
         let command = i.commandName.toLocaleLowerCase();
 
         try {
             this._commands.get(command)?.run(i);
         } catch (e) {
-            this.logger.log('could not execute command ' + command + ' in ' + this.resolveGuildNameAndId(i.guild) + ': ' + e)
+            this.logger.log('could not execute command ' + command + ' in ' + this.resolveGuildNameAndId(i.guild) + ': ' + e);
         }
     }
 
