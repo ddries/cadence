@@ -15,14 +15,14 @@ export const Command: BaseCommand = {
         const server = CadenceMemory.getInstance().getConnectedServer(interaction.guildId);
 
         if (!server) {
-            interaction.reply({ embeds: [ EmbedHelper.NOK("There's nothing playing!") ], ephemeral: true });
+            interaction.reply({ embeds: [ EmbedHelper.NOK("There's nothing playing :(") ], ephemeral: true });
             return;
         }
 
         const player = CadenceLavalink.getInstance().getPlayerByGuildId(interaction.guildId);
 
         if (!player) {
-            interaction.reply({ embeds: [ EmbedHelper.NOK("There's nothing playing!") ], ephemeral: true });
+            interaction.reply({ embeds: [ EmbedHelper.NOK("There's nothing playing :(") ], ephemeral: true });
             return;
         }
 
@@ -34,7 +34,7 @@ export const Command: BaseCommand = {
         const sec = interaction.options.getInteger('seconds', true) * 1_000;
         
         if (sec >= player.position) {
-            interaction.reply({ embeds: [ EmbedHelper.NOK("You can't rewind more than the song duration! Maximum " + Math.round(player.position / 1000) + " seconds.") ], ephemeral: true });
+            interaction.reply({ embeds: [ EmbedHelper.NOK("You can't rewind more than the song duration. Maximum " + Math.round(player.position / 1000) + " seconds.") ], ephemeral: true });
             return;
         }
 

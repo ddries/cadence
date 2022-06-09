@@ -15,12 +15,12 @@ export const Command: BaseCommand = {
         const server = CadenceMemory.getInstance().getConnectedServer(interaction.guildId);
 
         if (!server) {
-            interaction.reply({ embeds: [ EmbedHelper.NOK("There's nothing playing!") ], ephemeral: true });
+            interaction.reply({ embeds: [ EmbedHelper.NOK("There's nothing playing :(") ], ephemeral: true });
             return;
         }
 
         if (!CadenceLavalink.getInstance().getPlayerByGuildId(interaction.guildId)) {
-            interaction.reply({ embeds: [ EmbedHelper.NOK("There's nothing playing!") ], ephemeral: true });
+            interaction.reply({ embeds: [ EmbedHelper.NOK("There's nothing playing :(") ], ephemeral: true });
             return;
         }
 
@@ -30,7 +30,7 @@ export const Command: BaseCommand = {
         }
 
         if (server.isQueueEmpty()) {
-            interaction.reply({ embeds: [ EmbedHelper.NOK("There's nothing in the queue!") ], ephemeral: true });
+            interaction.reply({ embeds: [ EmbedHelper.NOK("There's nothing in the queue :(") ], ephemeral: true });
             return;
         }
 
