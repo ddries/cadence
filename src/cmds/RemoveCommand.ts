@@ -35,19 +35,21 @@ export const Command: BaseCommand = {
             return;
         }
 
-        const idx = interaction.options.getInteger('song', true);
+        let idx = interaction.options.getInteger('song', true);
 
         if (idx > server.getQueue().length) {
             interaction.reply({ embeds: [ EmbedHelper.NOK("Please enter a valid index!") ], ephemeral: true });
             return;
         }
 
+        idx--;
+
         const trackName = server.getSongAtIndex(idx)?.trackInfo.title;
 
-        server.removeFromQueueIdx(idx-1);
+        server.removeFromQueueIdx(idx);
         interaction.reply({ embeds: [ EmbedHelper.OK('🗑 Removed ' + trackName) ]});
 
-        if (idx - 1 == server.getCurrentQueueIndex()) {
+        if (idx == server.getCurrentQueueIndex()) {
             if (CadenceLavalink.getInstance().playNextSongInQueue(server.player)) {
                 const m = await (server.musicPlayer.message.channel as TextBasedChannel).send({ embeds: [ EmbedHelper.np(server.getCurrentTrack(), server.player.position) ], components: server._buildButtonComponents() });
                 server.setMessageAsMusicPlayer(m);

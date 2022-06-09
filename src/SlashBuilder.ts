@@ -17,7 +17,7 @@ import BaseCommand from './api/Cadence.BaseCommand';
 
 class SlashBuilder {
 
-    public static async run(isMainBranch: boolean): Promise<void> {
+    public static async run(): Promise<void> {
         const commandFiles = fs.readdirSync(path.join(__dirname, 'cmds')).filter(f => f.endsWith('.js'));
 
         let clientId: string = "";
@@ -93,6 +93,5 @@ class SlashBuilder {
 }
 
 (async () => {
-    const isMainBranch = process.argv.length > 3;
-    await SlashBuilder.run(isMainBranch);
+    await SlashBuilder.run();
 })();

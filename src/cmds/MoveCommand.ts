@@ -15,14 +15,14 @@ export const Command: BaseCommand = {
         const server = CadenceMemory.getInstance().getConnectedServer(interaction.guildId);
 
         if (!server) {
-            interaction.reply({ embeds: [ EmbedHelper.NOK("There's nothing playing!") ], ephemeral: true });
+            interaction.reply({ embeds: [ EmbedHelper.NOK("There's nothing playing :(") ], ephemeral: true });
             return;
         }
 
         const player = CadenceLavalink.getInstance().getPlayerByGuildId(interaction.guildId);
 
         if (!player) {
-            interaction.reply({ embeds: [ EmbedHelper.NOK("There's nothing playing!") ], ephemeral: true });
+            interaction.reply({ embeds: [ EmbedHelper.NOK("There's nothing playing :(") ], ephemeral: true });
             return;
         }
 
@@ -32,7 +32,7 @@ export const Command: BaseCommand = {
         }
 
         if (server.isQueueEmpty()) {
-            interaction.reply({ embeds: [ EmbedHelper.NOK("There's nothing in the queue!") ], ephemeral: true });
+            interaction.reply({ embeds: [ EmbedHelper.NOK("There's nothing in the queue :(") ], ephemeral: true });
             return;
         }
 
@@ -45,7 +45,7 @@ export const Command: BaseCommand = {
         //     idxTo--;
         
         if (!server.checkIndex(idxFrom) || (!isNaN(idxTo) && idxTo != null && !server.checkIndex(idxTo))) {
-            interaction.reply({ embeds: [ EmbedHelper.NOK("Please enter a valid index!") ], ephemeral: true });
+            interaction.reply({ embeds: [ EmbedHelper.NOK("Please enter a valid index") ], ephemeral: true });
             return;
         }
 

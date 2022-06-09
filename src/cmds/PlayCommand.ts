@@ -56,14 +56,14 @@ export const Command: BaseCommand = {
         const player = CadenceLavalink.getInstance().getPlayerByGuildId(interaction.guildId);
 
         if (result == null) {
-            interaction.editReply({ embeds: [ EmbedHelper.NOK("We couldn't find anything with that link!") ] });
+            interaction.editReply({ embeds: [ EmbedHelper.NOK("I couldn't find anything with that link :(") ] });
             return;
         }
         
         switch (result.loadType) {
             case "LOAD_FAILED":
             case "NO_MATCHES":
-                interaction.editReply({ embeds: [ EmbedHelper.NOK("We couldn't find anything with that link!") ] });
+                interaction.editReply({ embeds: [ EmbedHelper.NOK("I couldn't find anything with that link :(") ] });
                 break;
             case "SEARCH_RESULT":
             case "TRACK_LOADED":
@@ -77,7 +77,7 @@ export const Command: BaseCommand = {
                         server.setMessageAsMusicPlayer(m);
                     }
                 } else {
-                    interaction.editReply({ embeds: [ EmbedHelper.songBasic(track.info, interaction.user.id, "Added to Queue!") ]});
+                    interaction.editReply({ embeds: [ EmbedHelper.songBasic(track.info, interaction.user.id, "Added to Queue") ]});
 
                     // if there was any current player controller
                     // we update buttons (next/back changed?)
@@ -108,7 +108,7 @@ export const Command: BaseCommand = {
                     server.updatePlayerControllerButtonsIfAny();
                 }
 
-                interaction.editReply({ embeds: [ EmbedHelper.OK(`Added **${result.tracks.length}** songs to the queue!`) ]});
+                interaction.editReply({ embeds: [ EmbedHelper.OK(`Added **${result.tracks.length}** songs to the queue`) ]});
                 break;            
         }
     },
