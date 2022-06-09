@@ -108,7 +108,7 @@ export const Command: BaseCommand = {
                     server.updatePlayerControllerButtonsIfAny();
                 }
 
-                interaction.editReply({ embeds: [ EmbedHelper.OK(`Added **${result.tracks.length}** songs to the queue`) ]});
+                server.textChannel.send({ embeds: [ EmbedHelper.OK(`Added **${result.tracks.length}** songs to the queue`) ]})
                 break;            
         }
     },
