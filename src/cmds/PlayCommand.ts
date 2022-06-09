@@ -99,7 +99,7 @@ export const Command: BaseCommand = {
 
                 if (!player.track) {
                     if (CadenceLavalink.getInstance().playNextSongInQueue(player)) {
-                        const m = await interaction.editReply({ embeds: [ EmbedHelper.np(ct, player.position) ], components: server._buildButtonComponents()}) as Message;
+                        const m = await interaction.editReply({ embeds: [ EmbedHelper.np(server.getCurrentTrack(), player.position) ], components: server._buildButtonComponents()}) as Message;
                         server.setMessageAsMusicPlayer(m);
                     }
                 } else {
