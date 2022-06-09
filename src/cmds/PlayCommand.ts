@@ -97,10 +97,13 @@ export const Command: BaseCommand = {
                     server.addToQueue(new CadenceTrack(result.tracks[i].track, result.tracks[i].info, interaction.user.id));
                 }
 
+                let nowPlaying = false;
+
                 if (!player.track) {
                     if (CadenceLavalink.getInstance().playNextSongInQueue(player)) {
                         const m = await interaction.editReply({ embeds: [ EmbedHelper.np(server.getCurrentTrack(), player.position) ], components: server._buildButtonComponents()}) as Message;
                         server.setMessageAsMusicPlayer(m);
+                        nowPlaying = true;
                     }
                 } else {
                     // if there was any current player controller
@@ -108,7 +111,11 @@ export const Command: BaseCommand = {
                     server.updatePlayerControllerButtonsIfAny();
                 }
 
-                server.textChannel.send({ embeds: [ EmbedHelper.OK(`Added **${result.tracks.length}** songs to the queue`) ]})
+                if (!nowPlaying) {
+                    interaction.editReply({ embeds: [ EmbedHelper.OK(`Added **${result.tracks.length}** songs to the queue`) ]})
+                } else {
+                    server.textChannel.send({ embeds: [ EmbedHelper.OK(`Added **${result.tracks.length}** songs to the queue`) ]})
+                }
                 break;            
         }
     },
