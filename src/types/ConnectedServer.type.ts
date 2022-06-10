@@ -99,7 +99,7 @@ export default class ConnectedServer {
                     if (this.getQueueLength() > 1 && this.loop != LoopType.TRACK) {
                         this.handleTrackEnded();
 
-                        if (CadenceLavalink.getInstance().playNextSongInQueue(this.player)) {
+                        if (await CadenceLavalink.getInstance().playNextSongInQueue(this.player)) {
                             // const m = await interaction.editReply({ embeds: [ EmbedHelper.np(this.getCurrentTrack(), this.player.position) ]}) as Message;
                             const m = await (this.musicPlayer.message.channel as TextBasedChannel).send({ embeds: [ EmbedHelper.np(this.getCurrentTrack(), this.player.position) ], components: this._buildButtonComponents() });
                             this.setMessageAsMusicPlayer(m);
@@ -114,7 +114,7 @@ export default class ConnectedServer {
 
                         const song = this.jumpToSong(this.getCurrentQueueIndex() - 1);
 
-                        if (CadenceLavalink.getInstance().playTrack(song, this.player.connection.guildId)) {
+                        if (await CadenceLavalink.getInstance().playTrack(song, this.player.connection.guildId)) {
                             // const m = await interaction.editReply({ embeds: [ EmbedHelper.np(song, this.player.position) ]}) as Message;
                             const m = await (this.musicPlayer.message.channel as TextBasedChannel).send({ embeds: [ EmbedHelper.np(this.getCurrentTrack(), this.player.position) ], components: this._buildButtonComponents() });
                             this.setMessageAsMusicPlayer(m);
@@ -477,11 +477,7 @@ export default class ConnectedServer {
         }
     }
 
-    public moveSong(idxFrom: number, idxTo: number = -1): void {
-        if (idxTo == -1) {
-            idxTo = this._queueIdx + 1;
-        }
-
+    public moveSong(idxFrom: number, idxTo: number): void {
         const temp = this._queue[idxFrom];
 
         if (idxFrom < idxTo) {

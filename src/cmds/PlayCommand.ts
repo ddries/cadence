@@ -6,7 +6,7 @@ import CadenceLavalink from "../api/Cadence.Lavalink";
 import CadenceMemory from "../api/Cadence.Memory";
 import CadenceSpotify from "../api/Cadence.Spotify";
 import CadenceTrack from "../types/CadenceTrack.type";
-import { LavalinkResult } from "../types/TrackResult.type";
+import { LavalinkResult, SpotifyPlaylistResult } from "../types/TrackResult.type";
 
 export const Command: BaseCommand = {
     name: "play",
@@ -42,12 +42,16 @@ export const Command: BaseCommand = {
 
         let server = CadenceMemory.getInstance().getConnectedServer(interaction.guildId);
         
-        let result: LavalinkResult = null;
+        let result: LavalinkResult | SpotifyPlaylistResult = null;
         if (CadenceLavalink.getInstance().isValidUrl(linkOrKeyword)) {
             if (linkOrKeyword.includes("youtube") || linkOrKeyword.includes("you")) {
                 result = await CadenceLavalink.getInstance().resolveLinkIntoTracks(linkOrKeyword);
             } else {
-                result = await CadenceSpotify.getInstance().resolveLinkIntoTracks(linkOrKeyword);
+                if (linkOrKeyword.includes("playlist")) {
+                    result = await CadenceSpotify.getInstance().resolveLinkIntoSpotifyPlaylist(linkOrKeyword);
+                } else {
+                    result = await CadenceSpotify.getInstance().resolveLinkIntoTracks(linkOrKeyword);
+                }
             }
         } else {
             result = await CadenceLavalink.getInstance().resolveYoutubeIntoTracks(linkOrKeyword.trim());
@@ -59,7 +63,7 @@ export const Command: BaseCommand = {
             interaction.editReply({ embeds: [ EmbedHelper.NOK("I couldn't find anything with that link :(") ] });
             return;
         }
-        
+
         switch (result.loadType) {
             case "LOAD_FAILED":
             case "NO_MATCHES":
@@ -72,7 +76,7 @@ export const Command: BaseCommand = {
                 server.addToQueue(ct);
 
                 if (!player.track) {
-                    if (CadenceLavalink.getInstance().playNextSongInQueue(player)) {
+                    if (await CadenceLavalink.getInstance().playNextSongInQueue(player)) {
                         const m = await interaction.editReply({ embeds: [ EmbedHelper.np(ct, player.position) ], components: server._buildButtonComponents() }) as Message;
                         server.setMessageAsMusicPlayer(m);
                     }
@@ -83,13 +87,6 @@ export const Command: BaseCommand = {
                     // we update buttons (next/back changed?)
                     server.updatePlayerControllerButtonsIfAny();
                 }
-
-                // CadenceDb.getInstance().pushNewSong({
-                //     guildId: message.guildId,
-                //     requestedById: message.author.id,
-                //     dateUnix: (Date.now() / 1000).toString(),
-                //     songUrl: ct.trackInfo.uri
-                // });
                 
                 break;
             case "PLAYLIST_LOADED":
@@ -100,7 +97,7 @@ export const Command: BaseCommand = {
                 let nowPlaying = false;
 
                 if (!player.track) {
-                    if (CadenceLavalink.getInstance().playNextSongInQueue(player)) {
+                    if (await CadenceLavalink.getInstance().playNextSongInQueue(player)) {
                         const m = await interaction.editReply({ embeds: [ EmbedHelper.np(server.getCurrentTrack(), player.position) ], components: server._buildButtonComponents()}) as Message;
                         server.setMessageAsMusicPlayer(m);
                         nowPlaying = true;
@@ -116,7 +113,36 @@ export const Command: BaseCommand = {
                 } else {
                     server.textChannel.send({ embeds: [ EmbedHelper.OK(`Added **${result.tracks.length}** songs to the queue`) ]})
                 }
-                break;            
+                break;
+                
+            case "SPOTIFY_LOAD":
+                for (let i = 0; i < result.content.length; ++i) {
+                    const spotifyCt = new CadenceTrack("", { author: result.content[i].author, identifier: result.content[i].id, title: result.content[i].title, uri: result.content[i].uri, length: result.content[i].length, position: 0, isSeekable: true, isStream: false }, interaction.user.id);
+                    spotifyCt.isSpotify = true;
+
+                    server.addToQueue(spotifyCt);
+                }
+
+                let _nowPlaying = false;
+
+                if (!player.track) {
+                    if (await CadenceLavalink.getInstance().playNextSongInQueue(player)) {
+                        const m = await interaction.editReply({ embeds: [ EmbedHelper.np(server.getCurrentTrack(), player.position) ], components: server._buildButtonComponents()}) as Message;
+                        server.setMessageAsMusicPlayer(m);
+                        _nowPlaying = true;
+                    }
+                } else {
+                    // if there was any current player controller
+                    // we update buttons (next/back changed?)
+                    server.updatePlayerControllerButtonsIfAny();
+                }
+
+                if (!_nowPlaying) {
+                    interaction.editReply({ embeds: [ EmbedHelper.OK(`Added **${result.content.length}** songs to the queue`) ]})
+                } else {
+                    server.textChannel.send({ embeds: [ EmbedHelper.OK(`Added **${result.content.length}** songs to the queue`) ]})
+                }
+                break;
         }
     },
 

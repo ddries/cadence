@@ -1,5 +1,4 @@
 import Config from './api/Cadence.Config';
-import CadenceDb from './api/Cadence.Db';
 import CadenceDiscord from './api/Cadence.Discord';
 import CadenceLavalink from './api/Cadence.Lavalink';
 import Logger from './api/Cadence.Logger';
@@ -75,7 +74,6 @@ export default class Cadence {
         console.log();console.log();
 
         await CadenceMemory.getInstance().init();
-        // await CadenceDb.getInstance().init();
         
         // await CadenceWebsockets.getInstance().init();
 

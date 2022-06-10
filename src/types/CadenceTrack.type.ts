@@ -7,6 +7,8 @@ export default class CadenceTrack {
     public beingPlayed: boolean = false;
     public looped: boolean = false;
 
+    public isSpotify: boolean = false;
+
     constructor(base64: string, track: LavalinkResultTrackInfo, requestedById: string) {
         this.base64 = base64;
         this.trackInfo = track;

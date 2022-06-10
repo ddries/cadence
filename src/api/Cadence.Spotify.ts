@@ -36,6 +36,64 @@ export default class CadenceSpotify {
         return CadenceLavalink.getInstance().resolveYoutubeIntoTracks(trackName);
     }
 
+    public async resolveLinkIntoSpotifyPlaylist(link: string): Promise<TrackResult.SpotifyPlaylistResult> {
+        this.logger.log('requested to resolve album ' + link);
+
+        const albumId = this._getPlaylistIdFromLink(link);
+
+        if (!albumId) {
+            return null;
+        }
+
+        const result = await this._spotifyRequest('/v1/playlists/' + albumId);
+        if (!result) {
+            return null;
+        }
+
+        const total = result.tracks.total;
+        if (total < 1000) {
+            const _fetchSpotifySongs = async (offset: number): Promise<Array<any>> => {
+                try {
+                    const _r = await this._spotifyRequest('/v1/playlists/' + albumId + "/tracks?offset=" + offset);
+                    return _r.items;
+                } catch (e) {}
+                return null;
+            };
+            for (let i = 1; i < Math.ceil(total / 100); i++) {
+                const offsetResult = await _fetchSpotifySongs(100 * i);
+                if (offsetResult) result.tracks.items.push(...offsetResult);
+            }
+        }
+
+        if (!result.tracks) {
+            return null;
+        }
+
+        const spotifyResult: TrackResult.SpotifyPlaylistResult = {
+            loadType: 'SPOTIFY_LOAD',
+            content: []
+        };
+
+        for (let i = 0; i < result.tracks.items.length; i++) {
+            const track = result.tracks.items[i].track;
+            if (!track) {
+                continue;
+            }
+
+            const spotityTrack: TrackResult.SpotifyPlaylistTrack = {
+                author: track.artists[0].name,
+                id: track.id,
+                length: track.duration_ms,
+                title: track.name,
+                uri: track.uri
+            };
+
+            spotifyResult.content.push(spotityTrack);
+        }
+
+        return spotifyResult;
+    }
+
     private _getTrackIdFromLink(link: string): string {
         const a = link.split("track/");
         if (a.length == 2) {
@@ -47,9 +105,18 @@ export default class CadenceSpotify {
         return "";
     }
 
+    private _getPlaylistIdFromLink(link: string): string {
+        const a = link.split("playlist/");
+        if (a.length === 2) {
+            const b = a[1];
+            return b.split("?")[0].split("&")[0];
+        }
+        return "";
+    }
+
     private async _spotifyRequest(query: string): Promise<any> {
         const uri = "https://api.spotify.com" + query;
-        this.logger.log("querying " + uri)
+        this.logger.log("querying " + uri);
         return await (await fetch(
             uri,
             {
@@ -61,13 +128,13 @@ export default class CadenceSpotify {
     }
 
     private async _getValidAuthToken(): Promise<string> {
-        if (this._currentToken.length == 0) {
+        if (!this._currentToken) {
             // explicit any, too lazy
             const r: any = await (await fetch(
                 "https://accounts.spotify.com/api/token",
                 {
                     method: "POST",
-                    body: JSON.stringify(["grant_type=client_credentials"]),
+                    body: "grant_type=client_credentials",
                     headers: {
                         "Authorization": "Basic " + Buffer.from(this._clientId + ":" + this._clientSecret).toString("base64"),
                         "Content-Type": "application/x-www-form-urlencoded"
@@ -90,6 +157,8 @@ export default class CadenceSpotify {
     public async init(): Promise<void> {
         this._clientId = Config.getInstance().getKeyOrDefault('SpotifyClientId', '');
         this._clientSecret = Config.getInstance().getKeyOrDefault('SpotifyClientSecret', '');
+
+        this._currentToken = "";
     }
 
     public static getInstance(): CadenceSpotify {

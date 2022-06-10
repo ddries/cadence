@@ -50,7 +50,7 @@ export const Command: BaseCommand = {
         interaction.reply({ embeds: [ EmbedHelper.OK('🗑 Removed ' + trackName) ]});
 
         if (idx == server.getCurrentQueueIndex()) {
-            if (CadenceLavalink.getInstance().playNextSongInQueue(server.player)) {
+            if (await CadenceLavalink.getInstance().playNextSongInQueue(server.player)) {
                 const m = await (server.musicPlayer.message.channel as TextBasedChannel).send({ embeds: [ EmbedHelper.np(server.getCurrentTrack(), server.player.position) ], components: server._buildButtonComponents() });
                 server.setMessageAsMusicPlayer(m);
             }
