@@ -46,6 +46,8 @@ export default class CadenceLavalink {
                         this.logger.log('spotify track ' + track.trackInfo.identifier + ' resolved to ' + track.base64);
                         res();
                     }
+                } else {
+                    res();
                 }
             });
         };
