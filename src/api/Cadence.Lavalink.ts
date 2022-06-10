@@ -23,7 +23,7 @@ export default class CadenceLavalink {
 
     private _playersByGuildId: Map<string, ShoukakuPlayer> = new Map<string, ShoukakuPlayer>();
 
-    public playTrack(track: CadenceTrack, guildId: string): boolean {
+    public async playTrack(track: CadenceTrack, guildId: string): Promise<boolean> {
         if (!CadenceMemory.getInstance().isServerConnected(guildId)) return false;
 
         const player = this.getPlayerByGuildId(guildId);
@@ -31,6 +31,29 @@ export default class CadenceLavalink {
 
         if (!!player.track) {
             player.stopTrack();
+        }
+
+        const _resolveIfSpotify = (): Promise<void> => {
+            return new Promise<void>(async res => {
+                if (track.isSpotify) {
+                    this.logger.log('requested to resolve spotify track ' + track.trackInfo.identifier + ' in ' + guildId);
+                    const result = await this.resolveYoutubeIntoTracks(track.trackInfo.title);
+                    
+                    if (result.loadType == 'SEARCH_RESULT') {
+                        track.trackInfo = result.tracks[0].info;
+                        track.base64 = result.tracks[0].track;
+
+                        this.logger.log('spotify track ' + track.trackInfo.identifier + ' resolved to ' + track.base64);
+                        res();
+                    }
+                }
+            });
+        };
+
+        try {
+            await _resolveIfSpotify();
+        } catch(e) {
+            return false;
         }
 
         this.logger.log('requested to play track ' + track.base64 + ' in ' + guildId);
@@ -89,19 +112,21 @@ export default class CadenceLavalink {
         return trackInfo;
     }
 
-    public playNextSongInQueue(player: ShoukakuPlayer): boolean {
-        const s = CadenceMemory.getInstance().getConnectedServer(player.connection.guildId);
-        if (!s) return false;
-
-        const t = s.getNextSong();
-        if (!t) {
-            if (s.getQueue().length <= 0) {
-                player.stopTrack();
+    public playNextSongInQueue(player: ShoukakuPlayer): Promise<boolean> {
+        return new Promise<boolean>(async res => {
+            const s = CadenceMemory.getInstance().getConnectedServer(player.connection.guildId);
+            if (!s) res(false);
+    
+            const t = s.getNextSong();
+            if (!t) {
+                if (s.getQueue().length <= 0) {
+                    player.stopTrack();
+                }
+                res(false);
             }
-            return false;
-        }
-
-        return this.playTrack(t, player.connection.guildId);
+    
+            res(await this.playTrack(t, player.connection.guildId));
+        });
     }
 
     public async joinChannel(channelId: string, guildId: string, channel: TextBasedChannel, shardId: number, selfDeaf: boolean = true, selfMute: boolean = false): Promise<ShoukakuPlayer> {
@@ -151,7 +176,7 @@ export default class CadenceLavalink {
                     default:
                         this.logger.log('track ended in ' + data.guildId + ' playing next song in queue');
                         s.handleTrackEnded();
-                        if (CadenceLavalink.getInstance().playNextSongInQueue(p)) {
+                        if (await CadenceLavalink.getInstance().playNextSongInQueue(p)) {
                             const m = await (s.musicPlayer.message.channel as TextBasedChannel).send({ embeds: [ EmbedHelper.np(s.getCurrentTrack(), s.player.position) ], components: s._buildButtonComponents() });
                             s.setMessageAsMusicPlayer(m);
                         }

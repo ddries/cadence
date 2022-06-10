@@ -24,3 +24,16 @@ export type LavalinkResult = {
     loadType: "LOAD_FAILED" | "PLAYLIST_LOADED" | "TRACK_LOADED" | "NO_MATCHES" | "SEARCH_RESULT",
     tracks: LavalinkResultTrack[]
 };
+
+export type SpotifyPlaylistTrack = {
+    id: string,
+    title: string,
+    length: number,
+    author: string,
+    uri: string
+};
+
+export type SpotifyPlaylistResult = {
+    content: Array<SpotifyPlaylistTrack>,
+    loadType: 'SPOTIFY_LOAD'
+}
