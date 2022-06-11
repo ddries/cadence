@@ -33,7 +33,13 @@ export default class CadenceSpotify {
         }
 
         const trackName: string = result.name;
-        return CadenceLavalink.getInstance().resolveYoutubeIntoTracks(trackName);
+        let lavalinkResult = await CadenceLavalink.getInstance().resolveYoutubeIntoTracks(trackName);
+
+        if (lavalinkResult.loadType == 'SEARCH_RESULT') {
+            lavalinkResult.tracks[0].info.title = trackName;
+        }
+        
+        return lavalinkResult;
     }
 
     public async resolveLinkIntoSpotifyPlaylist(link: string): Promise<TrackResult.SpotifyPlaylistResult> {
