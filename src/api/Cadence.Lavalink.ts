@@ -40,7 +40,9 @@ export default class CadenceLavalink {
                     const result = await this.resolveYoutubeIntoTracks(track.trackInfo.title);
                     
                     if (result.loadType == 'SEARCH_RESULT') {
+                        const original = track.trackInfo;
                         track.trackInfo = result.tracks[0].info;
+                        track.trackInfo.title = original.title;
                         track.base64 = result.tracks[0].track;
 
                         this.logger.log('spotify track ' + track.trackInfo.identifier + ' resolved to ' + track.base64);
