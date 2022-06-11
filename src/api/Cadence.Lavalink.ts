@@ -119,7 +119,10 @@ export default class CadenceLavalink {
     public playNextSongInQueue(player: ShoukakuPlayer): Promise<boolean> {
         return new Promise<boolean>(async res => {
             const s = CadenceMemory.getInstance().getConnectedServer(player.connection.guildId);
-            if (!s) res(false);
+            if (!s) {
+                res(false);
+                return;
+            }
     
             const t = s.getNextSong();
             if (!t) {
