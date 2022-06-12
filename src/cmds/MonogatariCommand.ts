@@ -41,21 +41,8 @@ export const Command: BaseCommand = {
         }
 
         let server = CadenceMemory.getInstance().getConnectedServer(interaction.guildId);
-        
-        let result: LavalinkResult | SpotifyPlaylistResult = null;
-        if (CadenceLavalink.getInstance().isValidUrl(linkOrKeyword)) {
-            if (linkOrKeyword.includes("youtube") || linkOrKeyword.includes("you")) {
-                result = await CadenceLavalink.getInstance().resolveLinkIntoTracks(linkOrKeyword);
-            } else {
-                if (linkOrKeyword.includes("playlist")) {
-                    result = await CadenceSpotify.getInstance().resolveLinkIntoSpotifyPlaylist(linkOrKeyword);
-                } else {
-                    result = await CadenceSpotify.getInstance().resolveLinkIntoTracks(linkOrKeyword);
-                }
-            }
-        } else {
-            result = await CadenceLavalink.getInstance().resolveYoutubeIntoTracks(linkOrKeyword.trim());
-        }
+
+        let result: LavalinkResult = await CadenceLavalink.getInstance().resolveLinkIntoTracks(linkOrKeyword);
         
         const player = CadenceLavalink.getInstance().getPlayerByGuildId(interaction.guildId);
 
@@ -68,26 +55,6 @@ export const Command: BaseCommand = {
             case "LOAD_FAILED":
             case "NO_MATCHES":
                 interaction.editReply({ embeds: [ EmbedHelper.NOK("I couldn't find anything with that link :(") ] });
-                break;
-            case "SEARCH_RESULT":
-            case "TRACK_LOADED":
-                const track = result.tracks[0];
-                const ct = new CadenceTrack(track.track, track.info, interaction.user.id);
-                server.addToQueue(ct);
-
-                if (!player.track) {
-                    if (await CadenceLavalink.getInstance().playNextSongInQueue(player)) {
-                        const m = await interaction.editReply({ embeds: [ EmbedHelper.np(ct, player.position) ], components: server._buildButtonComponents() }) as Message;
-                        server.setMessageAsMusicPlayer(m);
-                    }
-                } else {
-                    interaction.editReply({ embeds: [ EmbedHelper.songBasic(track.info, interaction.user.id, "Added to Queue") ]});
-
-                    // if there was any current player controller
-                    // we update buttons (next/back changed?)
-                    server.updatePlayerControllerButtonsIfAny();
-                }
-                
                 break;
             case "PLAYLIST_LOADED":
                 for (let i = 0; i < result.tracks.length; ++i) {
@@ -114,35 +81,6 @@ export const Command: BaseCommand = {
                     interaction.editReply({ embeds: [ EmbedHelper.OK(`Added **${result.tracks.length}** songs to the queue`) ]})
                 } else {
                     server.textChannel.send({ embeds: [ EmbedHelper.OK(`Added **${result.tracks.length}** songs to the queue`) ]})
-                }
-                break;
-                
-            case "SPOTIFY_LOAD":
-                for (let i = 0; i < result.content.length; ++i) {
-                    const spotifyCt = new CadenceTrack("", { author: result.content[i].author, identifier: result.content[i].id, title: result.content[i].title, uri: result.content[i].uri, length: result.content[i].length, position: 0, isSeekable: true, isStream: false }, interaction.user.id);
-                    spotifyCt.isSpotify = true;
-
-                    server.addToQueue(spotifyCt);
-                }
-
-                let _nowPlaying = false;
-
-                if (!player.track) {
-                    if (await CadenceLavalink.getInstance().playNextSongInQueue(player)) {
-                        const m = await interaction.editReply({ embeds: [ EmbedHelper.np(server.getCurrentTrack(), player.position) ], components: server._buildButtonComponents()}) as Message;
-                        server.setMessageAsMusicPlayer(m);
-                        _nowPlaying = true;
-                    }
-                } else {
-                    // if there was any current player controller
-                    // we update buttons (next/back changed?)
-                    server.updatePlayerControllerButtonsIfAny();
-                }
-
-                if (!_nowPlaying) {
-                    interaction.editReply({ embeds: [ EmbedHelper.OK(`Added **${result.content.length}** songs to the queue`) ]})
-                } else {
-                    server.textChannel.send({ embeds: [ EmbedHelper.OK(`Added **${result.content.length}** songs to the queue`) ]})
                 }
                 break;
         }
