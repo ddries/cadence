@@ -231,7 +231,12 @@ export default class CadenceLavalink {
                     await _a();
                 }
                 s.handleTrackEnded();
-                if (s.getQueueLength() > 1) CadenceLavalink.getInstance().playNextSongInQueue(p);
+                if (s.getQueueLength() > 1) {
+                    if (await CadenceLavalink.getInstance().playNextSongInQueue(p)) {
+                        const m = await (s.musicPlayer.message.channel as TextBasedChannel).send({ embeds: [ EmbedHelper.np(s.getCurrentTrack(), s.player.position) ], components: s._buildButtonComponents() });
+                        s.setMessageAsMusicPlayer(m);
+                    }
+                }
             });
 
             p.on('closed', async r => {
