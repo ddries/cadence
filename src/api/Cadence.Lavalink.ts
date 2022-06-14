@@ -62,6 +62,9 @@ export default class CadenceLavalink {
 
         this.logger.log('requested to play track ' + track.base64 + ' in ' + guildId);
         
+        if (Cadence.IsMainInstance)
+            CadenceDiscord.getInstance().sendStatus('requested to play track ' + track.trackInfo.title + ' in ' + guildId);
+        
         const result = player.playTrack(track.base64);
 
         if (result) {
@@ -193,6 +196,7 @@ export default class CadenceLavalink {
     
             p.on('resumed', () => {
                 this.logger.log('received resumed event in player (' + p.connection.guildId + ')');
+                p.setPaused(false); // ??
             });
 
             p.on('exception', async (data: any) => {
@@ -246,9 +250,7 @@ export default class CadenceLavalink {
                             // if it resolves, the connection was resumed
                             // then we resume the track that was being played
                             p.resume({
-                                // noReplace: false,
                                 startTime: currentPosition,
-                                // pause: false
                             });
 
                             this.logger.log('resumed successfully disconnected session on (' + s.guildId + ')');

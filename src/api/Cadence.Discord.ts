@@ -46,7 +46,7 @@ export default class CadenceDiscord {
         this.logger.log('successfully connected to discord as ' + this.Client.user.tag);
         this.Client.user.setActivity({
             type: "LISTENING",
-            name: Cadence.DefaultPrefix + 'help'
+            name: Cadence.DefaultPrefix
         });
         
         if (this.Client.user.username != Cadence.BotName && Cadence.BotName.length > 0) {
