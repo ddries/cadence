@@ -255,6 +255,8 @@ export default class CadenceLavalink {
                             // if it resolves, the connection was resumed
                             // then we resume the track that was being played
                             p.resume({
+                                noReplace: false,
+                                pause: false,
                                 startTime: currentPosition,
                             });
 
