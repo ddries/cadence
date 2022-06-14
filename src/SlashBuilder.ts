@@ -22,6 +22,7 @@ class SlashBuilder {
 
         let clientId: string = "";
         let guildId: string = "";
+        let removeAll: boolean = false;
 
         if (process.argv.length > 2)
             clientId = process.argv[2];
@@ -29,15 +30,18 @@ class SlashBuilder {
         if (process.argv.length > 3)
             guildId = process.argv[3];
 
+        if (process.argv.length > 4)
+            if (process.argv[4] == 'true') removeAll = true;
+
         if (!clientId) {
             console.error("error!\tno client id provided");
             process.exit(1);
         }
 
         if (!guildId) {
-            console.log("info\tuploading to production (globally)");
+            console.log("info\tnamespacing to production (globally)");
         } else {
-            console.log("info\tuploading for guild (testing) " + guildId);
+            console.log("info\tnamespacing to guild (testing) " + guildId);
         }
 
         const rawConfig: string = fs.readFileSync(path.join(__dirname, 'cadence.json'), 'utf-8');
@@ -61,6 +65,39 @@ class SlashBuilder {
             process.exit(1);
         }
 
+        const rest = new REST({ version: '9' }).setToken(token);
+
+        if (removeAll) {
+            const uploadedCommands: Array<{ name: string, id: string }> = [];
+
+            if (guildId) {
+                const _result = (await rest.get(
+                    Routes.applicationGuildCommands(clientId, guildId)
+                ) as Array<any>);
+                for (const _c of _result) {  uploadedCommands.push({ name: _c.name, id: _c.id }); }
+            } else {
+                const _result = (await rest.get(
+                    Routes.applicationCommands(clientId)
+                ) as Array<any>);
+                for (const _c of _result) {  uploadedCommands.push({ name: _c.name, id: _c.id }); }
+            }
+    
+            for (const c of uploadedCommands) {
+                console.log('info\tremoving ' + c.name + ' (' + c.id + ')');
+                if (guildId) {
+                    await rest.delete(
+                        Routes.applicationGuildCommand(clientId, guildId, c.id)
+                    );
+                } else {
+                    await rest.delete(
+                        Routes.applicationCommand(clientId, c.id)
+                    );
+                }
+            }
+
+            return;
+        }
+
         const commands: BaseCommand[] = [];
         for (const f of commandFiles) {
             const c: BaseCommand = (await import(path.join(__dirname, 'cmds', f)))['Command'];
@@ -69,8 +106,6 @@ class SlashBuilder {
             commands.push(c.slashCommandBody);
             console.log('info\tfetched command ' + c.name);
         }
-
-        const rest = new REST({ version: '9' }).setToken(token);
 
         try {
             if (guildId) {

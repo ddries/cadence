@@ -62,6 +62,9 @@ export default class CadenceLavalink {
 
         this.logger.log('requested to play track ' + track.base64 + ' in ' + guildId);
         
+        if (Cadence.IsMainInstance)
+            CadenceDiscord.getInstance().sendStatus('requested to play track ' + track.trackInfo.title + ' in ' + guildId);
+        
         const result = player.playTrack(track.base64);
 
         if (result) {
@@ -193,6 +196,7 @@ export default class CadenceLavalink {
     
             p.on('resumed', () => {
                 this.logger.log('received resumed event in player (' + p.connection.guildId + ')');
+                p.setPaused(false); // ??
             });
 
             p.on('exception', async (data: any) => {
@@ -227,7 +231,12 @@ export default class CadenceLavalink {
                     await _a();
                 }
                 s.handleTrackEnded();
-                if (s.getQueueLength() > 1) CadenceLavalink.getInstance().playNextSongInQueue(p);
+                if (s.getQueueLength() > 1) {
+                    if (await CadenceLavalink.getInstance().playNextSongInQueue(p)) {
+                        const m = await (s.musicPlayer.message.channel as TextBasedChannel).send({ embeds: [ EmbedHelper.np(s.getCurrentTrack(), s.player.position) ], components: s._buildButtonComponents() });
+                        s.setMessageAsMusicPlayer(m);
+                    }
+                }
             });
 
             p.on('closed', async r => {
@@ -246,9 +255,7 @@ export default class CadenceLavalink {
                             // if it resolves, the connection was resumed
                             // then we resume the track that was being played
                             p.resume({
-                                // noReplace: false,
                                 startTime: currentPosition,
-                                // pause: false
                             });
 
                             this.logger.log('resumed successfully disconnected session on (' + s.guildId + ')');
