@@ -472,7 +472,12 @@ export default class ConnectedServer {
             case LoopType.QUEUE:
             default:
                 this._queueIdx = idx;
-                this._queueCount = this._queue.length - idx;
+
+                // if we dont have shuffle enabled
+                // we move forward in the queue
+                if (!this.shuffle)
+                    this._queueCount = this._queue.length - idx;
+
                 return this._queue[this._queueIdx];
         }
     }
