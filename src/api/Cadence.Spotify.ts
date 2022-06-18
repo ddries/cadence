@@ -24,6 +24,7 @@ export default class CadenceSpotify {
         }
 
         const result = await this._spotifyRequest("/v1/tracks/" + trackId);
+
         if (!result)  {
             return null;
         }
@@ -52,23 +53,31 @@ export default class CadenceSpotify {
         }
 
         const result = await this._spotifyRequest('/v1/playlists/' + albumId);
+
         if (!result) {
             return null;
         }
 
-        const total = result.tracks.total;
-        if (total < 1000) {
-            const _fetchSpotifySongs = async (offset: number): Promise<Array<any>> => {
-                try {
-                    const _r = await this._spotifyRequest('/v1/playlists/' + albumId + "/tracks?offset=" + offset);
-                    return _r.items;
-                } catch (e) {}
-                return null;
-            };
-            for (let i = 1; i < Math.ceil(total / 100); i++) {
-                const offsetResult = await _fetchSpotifySongs(100 * i);
-                if (offsetResult) result.tracks.items.push(...offsetResult);
-            }
+        if (!result.tracks) {
+            return null;
+        }
+
+        let total = result.tracks.total;
+
+        if (total > 1000) {
+            total = 1000;
+        }
+
+        const _fetchSpotifySongs = async (offset: number): Promise<Array<any>> => {
+            try {
+                const _r = await this._spotifyRequest('/v1/playlists/' + albumId + "/tracks?offset=" + offset);
+                return _r.items;
+            } catch (e) {}
+            return null;
+        };
+        for (let i = 1; i < Math.ceil(total / 100); i++) {
+            const offsetResult = await _fetchSpotifySongs(100 * i);
+            if (offsetResult) result.tracks.items.push(...offsetResult);
         }
 
         if (!result.tracks) {
@@ -77,6 +86,7 @@ export default class CadenceSpotify {
 
         const spotifyResult: TrackResult.SpotifyPlaylistResult = {
             loadType: 'SPOTIFY_LOAD',
+            affectedByLimit: result.tracks.total > total,
             content: []
         };
 

@@ -35,5 +35,6 @@ export type SpotifyPlaylistTrack = {
 
 export type SpotifyPlaylistResult = {
     content: Array<SpotifyPlaylistTrack>,
+    affectedByLimit: boolean,
     loadType: 'SPOTIFY_LOAD'
 }
