@@ -94,24 +94,17 @@ export const Command: BaseCommand = {
                     server.addToQueue(new CadenceTrack(result.tracks[i].track, result.tracks[i].info, interaction.user.id));
                 }
 
-                let nowPlaying = false;
+                interaction.editReply({ embeds: [ EmbedHelper.OK(`Added **${result.tracks.length}** songs to the queue`) ]})
 
                 if (!player.track) {
                     if (await CadenceLavalink.getInstance().playNextSongInQueue(player)) {
-                        const m = await interaction.editReply({ embeds: [ EmbedHelper.np(server.getCurrentTrack(), player.position) ], components: server._buildButtonComponents()}) as Message;
+                        const m = await server.textChannel.send({ embeds: [ EmbedHelper.np(server.getCurrentTrack(), player.position) ], components: server._buildButtonComponents() }) as Message;
                         server.setMessageAsMusicPlayer(m);
-                        nowPlaying = true;
                     }
                 } else {
                     // if there was any current player controller
                     // we update buttons (next/back changed?)
                     server.updatePlayerControllerButtonsIfAny();
-                }
-
-                if (!nowPlaying) {
-                    interaction.editReply({ embeds: [ EmbedHelper.OK(`Added **${result.tracks.length}** songs to the queue`) ]})
-                } else {
-                    server.textChannel.send({ embeds: [ EmbedHelper.OK(`Added **${result.tracks.length}** songs to the queue`) ]})
                 }
                 break;
                 
@@ -119,17 +112,15 @@ export const Command: BaseCommand = {
                 for (let i = 0; i < result.content.length; ++i) {
                     const spotifyCt = new CadenceTrack("", { author: result.content[i].author, identifier: result.content[i].id, title: result.content[i].title, uri: result.content[i].uri, length: result.content[i].length, position: 0, isSeekable: true, isStream: false }, interaction.user.id);
                     spotifyCt.isSpotify = true;
-
                     server.addToQueue(spotifyCt);
                 }
 
-                let _nowPlaying = false;
+                interaction.editReply({ embeds: [ EmbedHelper.OK(`Added **${result.content.length}** songs to the queue`) ]});
 
                 if (!player.track) {
                     if (await CadenceLavalink.getInstance().playNextSongInQueue(player)) {
-                        const m = await interaction.editReply({ embeds: [ EmbedHelper.np(server.getCurrentTrack(), player.position) ], components: server._buildButtonComponents()}) as Message;
+                        const m = await server.textChannel.send({ embeds: [ EmbedHelper.np(server.getCurrentTrack(), player.position) ], components: server._buildButtonComponents()}) as Message;
                         server.setMessageAsMusicPlayer(m);
-                        _nowPlaying = true;
                     }
                 } else {
                     // if there was any current player controller
@@ -137,10 +128,8 @@ export const Command: BaseCommand = {
                     server.updatePlayerControllerButtonsIfAny();
                 }
 
-                if (!_nowPlaying) {
-                    interaction.editReply({ embeds: [ EmbedHelper.OK(`Added **${result.content.length}** songs to the queue`) ]})
-                } else {
-                    server.textChannel.send({ embeds: [ EmbedHelper.OK(`Added **${result.content.length}** songs to the queue`) ]})
+                if (result.affectedByLimit) {
+                    server.textChannel.send({ embeds: [ EmbedHelper.Info("Since your playlist is larger than the maximum allowed, only the first 1000 tracks have been added.") ]});
                 }
                 break;
         }
