@@ -12,7 +12,7 @@ export default class EmbedHelper {
     public static songBasic(trackInfo: LavalinkResultTrackInfo, authorId: string, title: string): MessageEmbed {
         return new MessageEmbed()
             .setTitle(title)
-            .setThumbnail("https://img.youtube.com/vi/" + trackInfo.identifier + "/0.jpg")
+            .setThumbnail("https://img.youtube.com/vi/" + trackInfo.identifier + "/maxresdefault.jpg")
             .setColor(EmbedColor.OK)
             .setDescription(`[${trackInfo.title}](${trackInfo.uri}), requested by <@${authorId}>`);
     }
@@ -39,7 +39,7 @@ export default class EmbedHelper {
             .setTitle(track.trackInfo.title)
             .setColor(EmbedColor.Info)
             .setURL(track.trackInfo.uri)
-            .setThumbnail("https://img.youtube.com/vi/" + track.trackInfo.identifier + "/0.jpg")
+            .setThumbnail("https://img.youtube.com/vi/" + track.trackInfo.identifier + "/maxresdefault.jpg")
             .setDescription(description);
     }
 
