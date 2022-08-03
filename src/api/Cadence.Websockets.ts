@@ -1,114 +1,55 @@
-import WebSocket, { RawData, WebSocketServer } from "ws";
+import WebSocket from "ws";
+import Cadence from "../Cadence";
+import { SelfGetVoiceConnPayload, SelfGetVoiceConnPayloadResponse } from "../types/ws/payloads";
 import Config from "./Cadence.Config";
+import CadenceDiscord from "./Cadence.Discord";
 import Logger from "./Cadence.Logger";
+
+type WsPacket<T> = {
+    i: string,
+    x: string,
+    r: string;
+    o: string;
+    p: T;
+}
 
 export default class CadenceWebsockets {
 
     private static instance: CadenceWebsockets = null;
     private logger: Logger = null;
 
-    private protocolVersion: string = "1.0";
+    public static wsUser: string = "user:0";
 
-    private host: string = "";
-    private path: string = "";
-    private port: number = 0;
+    private uri: string = "";
     private auth: string = "";
 
-    private wss: WebSocketServer = null;
+    private ws: WebSocket = null;
 
-    // guild id -> ws connection
-    private connections: Map<string, WsConnection> = null;
-
-    public addConnection(guildId: string, ws: WsConnection): void {
-        if (this.connections.has(guildId)) return;
-        this.connections.set(guildId, ws);
-    }
-
-    public getConnection(guildId: string): WsConnection {
-        if (!this.connections.has(guildId)) return null;
-        return this.connections.get(guildId);
-    }
-
-    public removeConnection(guildId: string): void {
-        if (!this.connections.has(guildId)) return;
-        this.connections.delete(guildId);
-    }
-
-    public hasConnection(guildId: string): boolean {
-        return this.getConnection(guildId) != null;
-    }
-
-    public getProto(): string {
-        return this.protocolVersion;
-    }
-
-    public handleMessage(data: RawData, isBinary: boolean): void {
-        if (isBinary) {
-            console.log(data);
-        }
+    public send<T>(packet: WsPacket<T>): void {
+        this.ws.send(JSON.stringify(packet));
     }
 
     private constructor() {
         this.logger = new Logger('cadence-ws');
 
-        this.path = Config.getInstance().getKeyOrDefault('WsPath', '');
-        this.host = Config.getInstance().getKeyOrDefault('WsHost', '');
-        this.port = Config.getInstance().getKeyOrDefault('WsPort', 0);
+        this.uri = Config.getInstance().getKeyOrDefault('WsUri', '');
         this.auth = Config.getInstance().getKeyOrDefault('WsPass', '');
-
-        this.connections = new Map<string, WsConnection>();
     }
 
     public async init(): Promise<void> {
-        this.wss = new WebSocketServer({
-            host: this.host,
-            port: this.port,
-            path: this.path,
-            clientTracking: false,
-        }, () => {
-            this.logger.log('ws server started');
+        this.ws = new WebSocket(this.uri + "?token=" + this.auth);
+
+        this.ws.on('open', () => {
+            this.logger.log('connected to websocket server');
         });
 
-        this.wss.on('connection', (ws, request) => {
-            // const auth: string = request.headers['Authorization'] as string;
-            
-            // if (auth != this.auth) {
-            //     ws.close();
-            //     return;
-            // }
-
-            // const guildId: string = request.headers['Guild-Id'] as string;
-            const guildId: string = "asd";
-
-            if (!guildId) {
-                ws.close();
-                return;
+        this.ws.on('message', rawData => {
+            const data: WsPacket<any> = JSON.parse(rawData.toString());
+            switch (data.i) {
+                case 'self:get_voice_conn':
+                    WsHandler.selfGetVoiceConn(data);
+                    break;
             }
-
-            // if (this.hasConnection(guildId)) {
-            //     console.log("2");
-            //     // console.log(this.getConnection(guildId));
-            //     ws.close();
-            //     return;
-            // }
-
-            const conn = new WsConnection(ws,
-                {
-                    "Address": request.socket.address()
-                }
-            );
-
-            this.addConnection(guildId, conn);
-            const m = WsHelper.HelloMessage();
-
-            // conn.rawSocket.send(m, {
-            //     binary: true,
-            // });
-            console.log('sending');
-            console.log(m);
-            conn.rawSocket.send(m);
-
-            conn.rawSocket.on("message", this.handleMessage.bind(this));
         });
     }
 
@@ -119,37 +60,67 @@ export default class CadenceWebsockets {
 
         return this.instance;
     }
-
 }
 
-// ********************************************************
-//  All Websocket messages are defined here encoded to binary for optimization
-// ********************************************************
+class WsHandler {
+    private static logger: Logger = new Logger('cadence-ws-handler');
 
-export class WsHelper {
+    public static selfGetVoiceConn(packet: WsPacket<SelfGetVoiceConnPayload>): void {
+        const userId = packet.o.split(":")[1]; // since it's self
+        const guildId = packet.p.guildId;
 
-    public static HelloMessage(): ArrayBuffer {
-        const b = new Uint8Array(3);
-        b[0] = 0xF;
-        const v = (): { major: number, minor: number } => {
-            const v = CadenceWebsockets.getInstance().getProto();
-            const major = parseInt(v.split('.')[0], 10);
-            const minor = parseInt(v.split('.')[1], 10);
-            return { major, minor };
-        }
-        b[1] = v().major;
-        b[2] = v().minor;
-        return b;
-    }
+        if (!userId || !guildId) return;
 
-}
+        CadenceDiscord.getInstance().Client.guilds.fetch(guildId).then(guild => {
+            guild.members.fetch(userId).then(member => {
+                let payload: SelfGetVoiceConnPayloadResponse = {
+                    id: "",
+                    name: "",
+                    listeners : 0
+                };
 
-export class WsConnection {
-    public rawSocket: WebSocket = null;
-    public metadata: { [key: string]: any };
-    
-    public constructor(socket: WebSocket, metadata: { [key: string]: any }) {
-        this.rawSocket = socket;
-        this.metadata = metadata;
+                if (member.voice.channelId) {
+                    payload.id = member.voice.channelId;
+                    payload.name = member.voice.channel.name;
+                    payload.listeners = member.voice.channel.members.size;
+                }
+
+                CadenceWebsockets.getInstance().send({
+                    i: 'self:get_voice_conn',
+                    x: packet.r,
+                    o: CadenceWebsockets.wsUser,
+                    r: "",
+                    p: payload
+                });
+            }).catch(e => {
+                this.logger.log('self_get_voice_conn: could not fetch member (' + userId + ') ' + e);
+                CadenceWebsockets.getInstance().send({
+                    i: 'self:get_voice_conn',
+                    x: packet.r,
+                    o: CadenceWebsockets.wsUser,
+                    r: "",
+                    p: {
+                        error: {
+                            code: 0,
+                            message: 'I don\'t have permissions to access this server',
+                        }
+                    }
+                });
+            });
+        }).catch(e => {
+            this.logger.log('self_get_voice_conn: could not fetch guild (' + guildId + ') ' + e);
+            CadenceWebsockets.getInstance().send({
+                i: 'self:get_voice_conn',
+                x: packet.r,
+                o: CadenceWebsockets.wsUser,
+                r: "",
+                p: {
+                    error: {
+                        code: 0,
+                        message: 'I don\'t have permissions to access this server',
+                    }
+                }
+            });
+        })
     }
 }

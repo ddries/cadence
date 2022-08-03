@@ -159,6 +159,7 @@ export default class CadenceSpotify {
             )).json();
 
             this._currentToken = r.access_token;
+            console.log(this._currentToken);
             setTimeout(() => {
                 this._currentToken = "";
             }, r.expires_in);
