@@ -187,8 +187,10 @@ export default class CadenceLavalink {
                         this.logger.log('track ended in ' + data.guildId + ' playing next song in queue');
                         s.handleTrackEnded();
                         if (await CadenceLavalink.getInstance().playNextSongInQueue(p)) {
-                            const m = await (s.musicPlayer.message.channel as TextBasedChannel).send({ embeds: [ EmbedHelper.np(s.getCurrentTrack(), s.player.position) ], components: s._buildButtonComponents() });
-                            s.setMessageAsMusicPlayer(m);
+                            if (s.musicPlayer.message) {
+                                const m = await (s.musicPlayer.message.channel as TextBasedChannel).send({ embeds: [ EmbedHelper.np(s.getCurrentTrack(), s.player.position) ], components: s._buildButtonComponents() });
+                                s.setMessageAsMusicPlayer(m);
+                            }
                         }
                         break;
                 }
@@ -210,7 +212,7 @@ export default class CadenceLavalink {
                     message += "```" + s.getCurrentTrack().trackInfo.title + "```";
                 }
 
-                s.textChannel.send({ embeds: [ EmbedHelper.NOK(message) ]});
+                s.textChannel?.send({ embeds: [ EmbedHelper.NOK(message) ]});
     
                 // we want to be sure we process the handleTrackEnded
                 // when music controller exists (avoid bugs)
@@ -233,8 +235,10 @@ export default class CadenceLavalink {
                 s.handleTrackEnded();
                 if (s.getQueueLength() > 1) {
                     if (await CadenceLavalink.getInstance().playNextSongInQueue(p)) {
-                        const m = await (s.musicPlayer.message.channel as TextBasedChannel).send({ embeds: [ EmbedHelper.np(s.getCurrentTrack(), s.player.position) ], components: s._buildButtonComponents() });
-                        s.setMessageAsMusicPlayer(m);
+                        if (s.musicPlayer.message) {
+                            const m = await (s.musicPlayer.message.channel as TextBasedChannel).send({ embeds: [ EmbedHelper.np(s.getCurrentTrack(), s.player.position) ], components: s._buildButtonComponents() });
+                            s.setMessageAsMusicPlayer(m);
+                        }
                     }
                 }
             });

@@ -80,7 +80,7 @@ export const Command: BaseCommand = {
                 if (!nowPlaying) {
                     interaction.editReply({ embeds: [ EmbedHelper.OK(`Added **${result.tracks.length}** songs to the queue`) ]})
                 } else {
-                    server.textChannel.send({ embeds: [ EmbedHelper.OK(`Added **${result.tracks.length}** songs to the queue`) ]})
+                    server.textChannel?.send({ embeds: [ EmbedHelper.OK(`Added **${result.tracks.length}** songs to the queue`) ]})
                 }
                 break;
         }

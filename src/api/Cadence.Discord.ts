@@ -7,6 +7,7 @@ import fs from 'fs';
 import path from 'path';
 import EmbedHelper, { EmbedColor } from "./Cadence.Embed";
 import CadenceMemory from "./Cadence.Memory";
+import CadenceWebsockets from "./Cadence.Websockets";
 
 export default class CadenceDiscord {
 
@@ -73,6 +74,25 @@ export default class CadenceDiscord {
     }
 
     private async OnVoiceUpdate(oldState: discord.VoiceState, newState: discord.VoiceState): Promise<void> {
+        CadenceWebsockets.getInstance().send({
+            i: 'voice_update',
+            o: CadenceWebsockets.wsUser,
+            x: "user:" + newState.member.id,
+            r: "",
+            p: {
+                guild: {
+                    id: newState.guild?.id ? newState.guild.id : "",
+                    name: newState.guild?.name ? newState.guild.name : "",
+                    icon: newState.guild?.icon ? newState.guild.icon : ""
+                },
+                voice: {
+                    id: newState.channelId ? newState.channelId : "",
+                    name: newState.channel?.name ? newState.channel.name : "",
+                    listeners: newState.channel?.members.size ? newState.channel?.members.size : 0
+                }
+            }
+        });
+
         if (oldState.member.id != this.Client.user.id) return;
 
         const server = CadenceMemory.getInstance().getConnectedServer(oldState.guild.id);

@@ -360,7 +360,7 @@ export default class ConnectedServer {
         if (memberCount <= 0 || (memberCount == 1 && voiceChannel.members.first()?.id == CadenceDiscord.getInstance().Client.user.id)) {
             CadenceLavalink.getInstance().leaveChannel(this.guildId);
 
-            this.textChannel.send({ embeds: [ EmbedHelper.Info("I left the voice channel, I was playing music alone :(") ]});
+            this.textChannel?.send({ embeds: [ EmbedHelper.Info("I left the voice channel, I was playing music alone :(") ]});
 
             clearInterval(this._aloneInterval);
             this._aloneInterval = null;
@@ -390,7 +390,7 @@ export default class ConnectedServer {
 
         if (shouldCheckLeaveCondition && this.loop == LoopType.NONE && this._queueCount <= 0) {
             if (this._queue.length > 1)
-                this.textChannel.send({ embeds: [ EmbedHelper.Info('The queue has ended!\nTo enable auto-restart and 24/7, use `' + CadenceDiscord.getInstance().getServerPrefix(this.guildId) + 'loop queue`.') ]});
+                this.textChannel?.send({ embeds: [ EmbedHelper.Info('The queue has ended!\nTo enable auto-restart and 24/7, use `' + CadenceDiscord.getInstance().getServerPrefix(this.guildId) + 'loop queue`.') ]});
 
             this.clearQueue();
             CadenceLavalink.getInstance().leaveChannel(this.guildId);

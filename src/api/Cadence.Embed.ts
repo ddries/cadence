@@ -9,12 +9,12 @@ export default class EmbedHelper {
         return this._simple(text, color, title).setFooter({ text: Cadence.BotName }).setTimestamp(Date.now());
     }
 
-    public static songBasic(trackInfo: LavalinkResultTrackInfo, authorId: string, title: string): MessageEmbed {
+    public static songBasic(trackInfo: LavalinkResultTrackInfo, authorId: string, title: string, throughWebPlayer: boolean = false): MessageEmbed {
         return new MessageEmbed()
             .setTitle(title)
             .setThumbnail("https://img.youtube.com/vi/" + trackInfo.identifier + "/maxresdefault.jpg")
             .setColor(EmbedColor.OK)
-            .setDescription(`[${trackInfo.title}](${trackInfo.uri}), requested by <@${authorId}>`);
+            .setDescription(`[${trackInfo.title}](${trackInfo.uri}), requested by <@${authorId}>${throughWebPlayer ? '\nSent through the [web music player](https://cad.driescode.dev/player)' : ''}`);
     }
 
     public static np(track: CadenceTrack, position: number, drawProgressBar: boolean = false): MessageEmbed {

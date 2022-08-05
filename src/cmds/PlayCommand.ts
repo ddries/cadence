@@ -98,8 +98,10 @@ export const Command: BaseCommand = {
 
                 if (!player.track) {
                     if (await CadenceLavalink.getInstance().playNextSongInQueue(player)) {
-                        const m = await server.textChannel.send({ embeds: [ EmbedHelper.np(server.getCurrentTrack(), player.position) ], components: server._buildButtonComponents() }) as Message;
-                        server.setMessageAsMusicPlayer(m);
+                        if (server.textChannel) {
+                            const m = await server.textChannel.send({ embeds: [ EmbedHelper.np(server.getCurrentTrack(), player.position) ], components: server._buildButtonComponents() }) as Message;
+                            server.setMessageAsMusicPlayer(m);
+                        }
                     }
                 } else {
                     // if there was any current player controller
@@ -119,8 +121,10 @@ export const Command: BaseCommand = {
 
                 if (!player.track) {
                     if (await CadenceLavalink.getInstance().playNextSongInQueue(player)) {
-                        const m = await server.textChannel.send({ embeds: [ EmbedHelper.np(server.getCurrentTrack(), player.position) ], components: server._buildButtonComponents()}) as Message;
-                        server.setMessageAsMusicPlayer(m);
+                        if (server.textChannel) {
+                            const m = await server.textChannel.send({ embeds: [ EmbedHelper.np(server.getCurrentTrack(), player.position) ], components: server._buildButtonComponents()}) as Message;
+                            server.setMessageAsMusicPlayer(m);
+                        }
                     }
                 } else {
                     // if there was any current player controller
@@ -129,7 +133,7 @@ export const Command: BaseCommand = {
                 }
 
                 if (result.affectedByLimit) {
-                    server.textChannel.send({ embeds: [ EmbedHelper.Info("Since your playlist is larger than the maximum allowed, only the first 1000 tracks have been added.") ]});
+                    server.textChannel?.send({ embeds: [ EmbedHelper.Info("Since your playlist is larger than the maximum allowed, only the first 1000 tracks have been added.") ]});
                 }
                 break;
         }
