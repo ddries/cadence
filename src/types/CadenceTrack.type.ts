@@ -14,4 +14,14 @@ export default class CadenceTrack {
         this.trackInfo = track;
         this.requestedById = requestedById;
     }
+
+    public toJSON() {
+        return {
+            base64: this.base64,
+            requestedById: this.requestedById,
+            trackInfo: JSON.stringify(this.trackInfo),
+            beingPlayed: this.beingPlayed,
+            looped: this.looped
+        }
+    }
 }

@@ -2,7 +2,7 @@ import { Guild, Message } from "discord.js";
 import WebSocket from "ws";
 import Cadence from "../Cadence";
 import CadenceTrack from "../types/CadenceTrack.type";
-import { RequestTrackPayload, RequestTrackPayloadResponse, SelfGetVoiceConnPayload, SelfGetVoiceConnPayloadResponse } from "../types/ws/payloads";
+import { RequestTrackPayload, RequestTrackPayloadResponse, SelfGetVoiceConnPayload, SelfGetVoiceConnPayloadResponse, SyncDashboardPayload, SyncDashboardPayloadResponse } from "../types/ws/payloads";
 import Config from "./Cadence.Config";
 import CadenceDiscord from "./Cadence.Discord";
 import EmbedHelper from "./Cadence.Embed";
@@ -71,6 +71,10 @@ export default class CadenceWebsockets {
                     break;
                 case 'request_track':
                     WsHandler.RequestTrack(data);
+                    break;
+                case 'sync_dashboard_initial':
+                case 'sync_dashboard':
+                    WsHandler.SyncDashboard(data);
                     break;
             }
         });
@@ -242,5 +246,25 @@ class WsHandler {
 
         CadenceWebsockets.getInstance().replyTo<RequestTrackPayload, RequestTrackPayloadResponse>(packet, {});
         return;
+    }
+
+    public static async SyncDashboard(packet: WsPacket<SyncDashboardPayload>): Promise<void> {
+        const userId = packet.o.split(":")[1];
+        const guildId = packet.p.guildId;
+        
+        const server = CadenceMemory.getInstance().getConnectedServer(guildId);
+
+        if (!server) {
+            CadenceWebsockets.getInstance().replyTo<SyncDashboardPayload, SyncDashboardPayloadResponse>(packet, {
+                currentTrack: null,
+                queue: []
+            });
+            return;
+        }
+
+        CadenceWebsockets.getInstance().replyTo<SyncDashboardPayload, SyncDashboardPayloadResponse>(packet, {
+            currentTrack: server.getCurrentTrack(),
+            queue: server.getQueue()
+        });
     }
 }
