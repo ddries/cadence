@@ -70,28 +70,35 @@ export default class CadenceDiscord {
             this._commands.get(command)?.run(i);
         } catch (e) {
             this.logger.log('could not execute command ' + command + ' in ' + this.resolveGuildNameAndId(i.guild) + ': ' + e);
+        } finally {
+            const server = CadenceMemory.getInstance().getConnectedServer(i.guildId);
+            if (server && !server.textChannel) {
+                server.textChannel = i.channel;
+            }
         }
     }
 
     private async OnVoiceUpdate(oldState: discord.VoiceState, newState: discord.VoiceState): Promise<void> {
-        CadenceWebsockets.getInstance().send({
-            i: 'voice_update',
-            o: CadenceWebsockets.wsUser,
-            x: "user:" + newState.member.id,
-            r: "",
-            p: {
-                guild: {
-                    id: newState.guild?.id ? newState.guild.id : "",
-                    name: newState.guild?.name ? newState.guild.name : "",
-                    icon: newState.guild?.icon ? newState.guild.icon : ""
-                },
-                voice: {
-                    id: newState.channelId ? newState.channelId : "",
-                    name: newState.channel?.name ? newState.channel.name : "",
-                    listeners: newState.channel?.members.size ? newState.channel?.members.size : 0
+        if (newState.member.id != this.Client.user.id && newState.channelId != oldState.channelId) {
+            CadenceWebsockets.getInstance().send({
+                i: 'voice_update',
+                o: CadenceWebsockets.wsUser,
+                x: "user:" + newState.member.id,
+                r: "",
+                p: {
+                    guild: {
+                        id: newState.guild?.id ? newState.guild.id : "",
+                        name: newState.guild?.name ? newState.guild.name : "",
+                        icon: newState.guild?.icon ? newState.guild.icon : ""
+                    },
+                    voice: {
+                        id: newState.channelId ? newState.channelId : "",
+                        name: newState.channel?.name ? newState.channel.name : "",
+                        listeners: newState.channel?.members.size ? newState.channel?.members.size : 0
+                    }
                 }
-            }
-        });
+            });
+        }
 
         if (oldState.member.id != this.Client.user.id) return;
 

@@ -44,7 +44,7 @@ export const Command: BaseCommand = {
 
         idx--;
 
-        const trackName = server.getSongAtIndex(idx)?.trackInfo.title;
+        const trackName = server.getSongAtIndex(idx)?.info.title;
 
         server.removeFromQueueIdx(idx);
         interaction.reply({ embeds: [ EmbedHelper.OK('🗑 Removed ' + trackName) ]});

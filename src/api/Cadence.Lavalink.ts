@@ -36,16 +36,16 @@ export default class CadenceLavalink {
         const _resolveIfSpotify = (): Promise<void> => {
             return new Promise<void>(async res => {
                 if (track.isSpotify) {
-                    this.logger.log('requested to resolve spotify track ' + track.trackInfo.identifier + ' in ' + guildId);
-                    const result = await this.resolveYoutubeIntoTracks(track.trackInfo.title);
+                    this.logger.log('requested to resolve spotify track ' + track.info.identifier + ' in ' + guildId);
+                    const result = await this.resolveYoutubeIntoTracks(track.info.title);
                     
                     if (result.loadType == 'SEARCH_RESULT') {
-                        const original = track.trackInfo;
-                        track.trackInfo = result.tracks[0].info;
-                        track.trackInfo.title = original.title;
-                        track.base64 = result.tracks[0].track;
+                        const original = track.info;
+                        track.info = result.tracks[0].info;
+                        track.info.title = original.title;
+                        track.track = result.tracks[0].track;
 
-                        this.logger.log('spotify track ' + track.trackInfo.identifier + ' resolved to ' + track.base64);
+                        this.logger.log('spotify track ' + track.info.identifier + ' resolved to ' + track.track);
                         res();
                     }
                 } else {
@@ -60,12 +60,12 @@ export default class CadenceLavalink {
             return false;
         }
 
-        this.logger.log('requested to play track ' + track.base64 + ' in ' + guildId);
+        this.logger.log('requested to play track ' + track.track + ' in ' + guildId);
         
         if (Cadence.IsMainInstance)
-            CadenceDiscord.getInstance().sendStatus('requested to play track ' + track.trackInfo.title + ' in ' + guildId);
+            CadenceDiscord.getInstance().sendStatus('requested to play track ' + track.info.title + ' in ' + guildId);
         
-        const result = player.playTrack(track.base64);
+        const result = player.playTrack(track.track);
 
         if (result) {
             track.beingPlayed = true;
@@ -209,7 +209,7 @@ export default class CadenceLavalink {
 
                 let message = "I tried my best but I ran into severe problems trying to play the following track. Only God knows what really happened, we as mere mortals can only see the consequences...";
                 if (s.getCurrentTrack()) {
-                    message += "```" + s.getCurrentTrack().trackInfo.title + "```";
+                    message += "```" + s.getCurrentTrack().info.title + "```";
                 }
 
                 s.textChannel?.send({ embeds: [ EmbedHelper.NOK(message) ]});

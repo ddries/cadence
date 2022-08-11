@@ -66,7 +66,7 @@ export const Command: BaseCommand = {
         if (!track) {
             interaction.reply({ embeds: [ EmbedHelper.OK("Song moved.") ]});
         } else {
-            interaction.reply({ embeds: [ EmbedHelper.OK(track.trackInfo.title + " moved to #" + (idxTo + 1)) ]});
+            interaction.reply({ embeds: [ EmbedHelper.OK(track.info.title + " moved to #" + (idxTo + 1)) ]});
         }
     },
 

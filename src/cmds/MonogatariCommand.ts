@@ -58,7 +58,15 @@ export const Command: BaseCommand = {
                 break;
             case "PLAYLIST_LOADED":
                 for (let i = 0; i < result.tracks.length; ++i) {
-                    server.addToQueue(new CadenceTrack(result.tracks[i].track, result.tracks[i].info, interaction.user.id));
+                    server.addToQueue({
+                        track: result.tracks[i].track,
+                        info: result.tracks[i].info,
+                        addedBy: { id: interaction.user.id, name: interaction.user.username },
+            
+                        beingPlayed: false,
+                        isSpotify: false,
+                        looped: false
+                    });
                 }
 
                 server.shuffleQueue();

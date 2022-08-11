@@ -1,8 +1,8 @@
-import { Guild, Message } from "discord.js";
+import { Message } from "discord.js";
 import WebSocket from "ws";
-import Cadence from "../Cadence";
 import CadenceTrack from "../types/CadenceTrack.type";
-import { RequestTrackPayload, RequestTrackPayloadResponse, SelfGetVoiceConnPayload, SelfGetVoiceConnPayloadResponse, SyncDashboardPayload, SyncDashboardPayloadResponse } from "../types/ws/payloads";
+import { WsErrorCodes } from "../types/WsErrors";
+import { ErrorPacket, PlayerUpdatePayload, RequestPausePayload, RequestPausePayloadResponse, RequestTrackPayload, SelfGetVoiceConnPayload, SelfGetVoiceConnPayloadResponse } from "../types/WsPayloads";
 import Config from "./Cadence.Config";
 import CadenceDiscord from "./Cadence.Discord";
 import EmbedHelper from "./Cadence.Embed";
@@ -13,8 +13,8 @@ import CadenceMemory from "./Cadence.Memory";
 type WsPacket<T> = {
     i: string,
     x: string,
-    r: string;
-    o: string;
+    r?: string;
+    o?: string;
     p: T;
 }
 
@@ -53,31 +53,40 @@ export default class CadenceWebsockets {
     }
 
     public async init(): Promise<void> {
-        this.ws = new WebSocket(this.uri + "?token=" + this.auth);
+        try {
+            this.ws = new WebSocket(this.uri + "?token=" + this.auth);
 
-        this.ws.on('open', () => {
-            this.logger.log('connected to websocket server');
-        });
+            this.ws.on('error', error => {
+                this.logger.log('error ' + error);
+            });
 
-        this.ws.on('message', rawData => {
-            const data: WsPacket<any> = JSON.parse(rawData.toString());
-            this.logger.log('rx ' + JSON.stringify(data));
-            // xxx:xxx:xxx...:name
-            // rpc:xxx:xxx:xxx...:name:numericId
-            let realPacketId = WsHandler.isRpc(data.i) ? data.i.split(":").slice(-2)[0] : data.i.split(":").slice(-1)[0];
-            switch (realPacketId) {
-                case 'get_voice_conn':
-                    WsHandler.GetVoiceConn(data);
-                    break;
-                case 'request_track':
-                    WsHandler.RequestTrack(data);
-                    break;
-                case 'sync_dashboard_initial':
-                case 'sync_dashboard':
-                    WsHandler.SyncDashboard(data);
-                    break;
-            }
-        });
+            this.ws.on('open', () => {
+                this.logger.log('connected to websocket server');
+            });
+    
+            this.ws.on('message', rawData => {
+                const data: WsPacket<any> = JSON.parse(rawData.toString());
+                this.logger.log('rx ' + JSON.stringify(data));
+    
+                // xxx:xxx:xxx...:name
+                // rpc:xxx:xxx:xxx...:name:numericId
+                let realPacketId = WsHandler.isRpc(data.i) ? data.i.split(":").slice(-2)[0] : data.i.split(":").slice(-1)[0];
+    
+                switch (realPacketId) {
+                    case 'get_voice_conn':
+                        WsHandler.GetVoiceConn(data);
+                        break;
+                    case 'request_track':
+                        WsHandler.RequestTrack(data);
+                        break;
+                    case 'request_pause':
+                        WsHandler.RequestPause(data);
+                        break;
+                }
+            });
+        } catch (e) {
+            this.logger.log('could not connect to websocket server ' + e);
+        }
     }
 
     public static getInstance(): CadenceWebsockets {
@@ -105,51 +114,33 @@ class WsHandler {
         CadenceDiscord.getInstance().Client.guilds.fetch(guildId).then(guild => {
             guild.members.fetch(userId).then(member => {
                 let payload: SelfGetVoiceConnPayloadResponse = {
-                    id: "",
-                    name: "",
-                    listeners : 0
+                    guildId: "",
+                    voiceChannelId: "",
+                    voiceChannelName: "",
                 };
 
                 if (member.voice.channelId) {
-                    payload.id = member.voice.channelId;
-                    payload.name = member.voice.channel.name;
-                    payload.listeners = member.voice.channel.members.size;
+                    payload.voiceChannelId = member.voice.channelId;
+                    payload.voiceChannelName = member.voice.channel.name;
+                    payload.guildId = guildId;
                 }
 
-                CadenceWebsockets.getInstance().send({
-                    i: packet.i,
-                    x: packet.r,
-                    o: CadenceWebsockets.wsUser,
-                    r: "",
-                    p: payload
-                });
+                CadenceWebsockets.getInstance().replyTo(packet, payload);
             }).catch(e => {
                 this.logger.log('get_voice_conn: could not fetch member (' + userId + ') ' + e);
-                CadenceWebsockets.getInstance().send({
-                    i: packet.i,
-                    x: packet.r,
-                    o: CadenceWebsockets.wsUser,
-                    r: "",
-                    p: {
-                        error: {
-                            code: 0,
-                            message: 'I don\'t have permissions to access this server',
-                        }
+                CadenceWebsockets.getInstance().replyTo(packet, {
+                    error: {
+                        code: 0,
+                        message: 'I don\'t have permissions to access this server'
                     }
                 });
             });
         }).catch(e => {
             this.logger.log('get_voice_conn: could not fetch guild (' + guildId + ') ' + e);
-            CadenceWebsockets.getInstance().send({
-                i: packet.i,
-                x: packet.r,
-                o: CadenceWebsockets.wsUser,
-                r: "",
-                p: {
-                    error: {
-                        code: 0,
-                        message: 'I don\'t have permissions to access this server',
-                    }
+            CadenceWebsockets.getInstance().replyTo(packet, {
+                error: {
+                    code: 0,
+                    message: 'I don\'t have permissions to access this server'
                 }
             });
         })
@@ -157,6 +148,7 @@ class WsHandler {
 
     public static async RequestTrack(packet: WsPacket<RequestTrackPayload>): Promise<void> {
         const userId = packet.o.split(":")[1];
+
         const guildId = packet.p.guildId;
         const voiceChannelId = packet.p.voiceChannelId;
 
@@ -164,12 +156,22 @@ class WsHandler {
         let guild = await CadenceDiscord.getInstance().Client.guilds.fetch(guildId);
 
         if (!guild) {
-            CadenceWebsockets.getInstance().replyTo<RequestTrackPayload, RequestTrackPayloadResponse>(packet, {
-                error: {
-                    code: 0,
-                    message: "Invalid server"
+            CadenceWebsockets.getInstance().send<ErrorPacket>({
+                i: 'error',
+                x: packet.o,
+                p: {
+                    error: {
+                        code: WsErrorCodes.ERROR_ON_TRACK_REQUEST,
+                        message: "Invalid server"
+                    }
                 }
             });
+            // CadenceWebsockets.getInstance().replyTo<RequestTrackPayload, ErrorPacket>(packet, {
+            //     error: {
+            //         code: 0,
+            //         message: "Invalid server"
+            //     }
+            // });
             return;
         }
 
@@ -177,10 +179,14 @@ class WsHandler {
         const member = await guild.members.fetch(userId);
 
         if (!member) {
-            CadenceWebsockets.getInstance().replyTo<RequestTrackPayload, RequestTrackPayloadResponse>(packet, {
-                error: {
-                    code: 0,
-                    message: "Invalid server"
+            CadenceWebsockets.getInstance().send<ErrorPacket>({
+                i: 'error',
+                x: packet.o,
+                p: {
+                    error: {
+                        code: WsErrorCodes.ERROR_ON_TRACK_REQUEST,
+                        message: "Invalid server"
+                    }
                 }
             });
             return;
@@ -189,20 +195,28 @@ class WsHandler {
         let server = CadenceMemory.getInstance().getConnectedServer(guild.id);
 
         if (member.voice.channelId != voiceChannelId) {
-            CadenceWebsockets.getInstance().replyTo<RequestTrackPayload, RequestTrackPayloadResponse>(packet, {
-                error: {
-                    code: 0,
-                    message: "Invalid server"
+            CadenceWebsockets.getInstance().send<ErrorPacket>({
+                i: 'error',
+                x: packet.o,
+                p: {
+                    error: {
+                        code: WsErrorCodes.ERROR_ON_TRACK_REQUEST,
+                        message: "Invalid server"
+                    }
                 }
             });
             return;
         }
 
         if (server && server.voiceChannelId != member.voice.channelId) {
-            CadenceWebsockets.getInstance().replyTo<RequestTrackPayload, RequestTrackPayloadResponse>(packet, {
-                error: {
-                    code: 1,
-                    message: "I'm already being used in another voice channel"
+            CadenceWebsockets.getInstance().send<ErrorPacket>({
+                i: 'error',
+                x: packet.o,
+                p: {
+                    error: {
+                        code: WsErrorCodes.ERROR_ON_TRACK_REQUEST,
+                        message: "I'm already being used in another voice channel"
+                    }
                 }
             });
             return;
@@ -214,10 +228,14 @@ class WsHandler {
             null,
             guild.shardId
         ))) {
-            CadenceWebsockets.getInstance().replyTo<RequestTrackPayload, RequestTrackPayloadResponse>(packet, {
-                error: {
-                    code: 1,
-                    message: "I can't join the voice channel, do I have enough permissions?"
+            CadenceWebsockets.getInstance().send<ErrorPacket>({
+                i: 'error',
+                x: packet.o,
+                p: {
+                    error: {
+                        code: WsErrorCodes.ERROR_ON_TRACK_REQUEST,
+                        message: "I can't join the voice channel, do I have enough permissions?"
+                    }
                 }
             });
             return;
@@ -226,7 +244,16 @@ class WsHandler {
         server = CadenceMemory.getInstance().getConnectedServer(guildId);
         const player = CadenceLavalink.getInstance().getPlayerByGuildId(guildId);
 
-        const ct = new CadenceTrack(packet.p.item.base64, packet.p.item, userId);
+        const ct: CadenceTrack = {
+            track: packet.p.track.track,
+            info: packet.p.track.info,
+            addedBy: { id: userId, name: member.user.username },
+
+            beingPlayed: false,
+            isSpotify: false,
+            looped: false
+        };
+
         server.addToQueue(ct);
 
         if (!player.track) {
@@ -237,34 +264,41 @@ class WsHandler {
                 }
             }
         } else {
-            server.textChannel?.send({ embeds: [ EmbedHelper.songBasic(packet.p.item, userId, "Added to Queue", true) ]});
+            server.textChannel?.send({ embeds: [ EmbedHelper.songBasic(packet.p.track.info, userId, "Added to Queue", true) ]});
 
             // if there was any current player controller
             // we update buttons (next/back changed?)
             server.updatePlayerControllerButtonsIfAny();
         }
-
-        CadenceWebsockets.getInstance().replyTo<RequestTrackPayload, RequestTrackPayloadResponse>(packet, {});
-        return;
     }
 
-    public static async SyncDashboard(packet: WsPacket<SyncDashboardPayload>): Promise<void> {
-        const userId = packet.o.split(":")[1];
+    public static async RequestPause(packet: WsPacket<RequestPausePayload>): Promise<void> {
         const guildId = packet.p.guildId;
-        
         const server = CadenceMemory.getInstance().getConnectedServer(guildId);
 
         if (!server) {
-            CadenceWebsockets.getInstance().replyTo<SyncDashboardPayload, SyncDashboardPayloadResponse>(packet, {
-                currentTrack: null,
-                queue: []
+            CadenceWebsockets.getInstance().send<ErrorPacket>({
+                i: 'error',
+                x: packet.o,
+                p: {
+                    error: {
+                        code: WsErrorCodes.ERROR_ON_REQUEST_PAUSE,
+                        message: "Invalid server"
+                    }
+                }
             });
             return;
         }
 
-        CadenceWebsockets.getInstance().replyTo<SyncDashboardPayload, SyncDashboardPayloadResponse>(packet, {
-            currentTrack: server.getCurrentTrack(),
-            queue: server.getQueue()
+        server.player.setPaused(!server.player.paused);
+
+        CadenceWebsockets.getInstance().send<PlayerUpdatePayload>({
+            i: 'player_update',
+            x: 'channel:' + server.voiceChannelId,
+            p: {
+                pause: server.player.paused
+            }
         });
+        server.updatePlayerControllerButtonsIfAny();
     }
 }

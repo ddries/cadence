@@ -7,6 +7,7 @@ import CadenceSpotify from './api/Cadence.Spotify';
 import path from 'path';
 import fs from 'fs';
 import CadenceWebsockets from './api/Cadence.Websockets';
+import CadenceRedis from './api/Cadence.Redis';
 
 export default class Cadence {
 
@@ -74,8 +75,8 @@ export default class Cadence {
         console.log();console.log();
 
         await CadenceMemory.getInstance().init();
-        
         await CadenceWebsockets.getInstance().init();
+        await CadenceRedis.getInstance().init();
 
         this.logger.log('starting discord module cadence ' + Cadence.Version + ", debug " + Cadence.Debug.toString());
         await CadenceDiscord.getInstance().init();
