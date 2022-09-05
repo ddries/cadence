@@ -22,6 +22,8 @@ type PlayerUpdatePayload = Partial<{ pause: boolean, shuffle: boolean, loop: Loo
 type RequestPausePayload = { guildId: string };
 type RequestPausePayloadResponse = { pause: boolean };
 
+type PlayerStopPayload = {};
+
 export type {
     ErrorPacket,
     
@@ -36,4 +38,6 @@ export type {
 
     RequestPausePayload,
     RequestPausePayloadResponse,
+
+    PlayerStopPayload,
 }

@@ -8,7 +8,7 @@ import CadenceWebsockets from "../api/Cadence.Websockets";
 import Cadence from "../Cadence";
 import CadenceTrack from "./CadenceTrack.type";
 import { RedisPlayer, RedisQueue } from "./RedisPlayer";
-import { AddTrackPayload, TrackStartPayload } from "./WsPayloads";
+import { AddTrackPayload, PlayerStopPayload, TrackStartPayload } from "./WsPayloads";
 
 export enum LoopType {
     NONE = 0,
@@ -340,6 +340,12 @@ export default class ConnectedServer {
             this.musicPlayer.collector?.stop();
         }
 
+        CadenceWebsockets.getInstance().send<PlayerStopPayload>({
+            i: 'player_stop',
+            x: 'channel:' + this.voiceChannelId,
+            p: {}
+        });
+        
         CadenceRedis.getInstance().del('player_state:' + this.guildId);
         CadenceRedis.getInstance().del('player_state:queue:' + this.guildId);
     }
