@@ -31,6 +31,8 @@ export default class CadenceWebsockets {
     private ws: WebSocket = null;
 
     public send<T>(packet: WsPacket<T>): void {
+        if (!this.ws) return;
+        
         this.logger.log('tx ' + JSON.stringify(packet));
         this.ws.send(JSON.stringify(packet));
     }
