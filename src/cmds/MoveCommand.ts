@@ -46,19 +46,25 @@ export const Command: BaseCommand = {
 
         idxFrom--;
 
+        // cannot move current song
+        // xd
+        if (idxFrom == server.getCurrentQueueIndex()) {
+            interaction.reply({ embeds: [ EmbedHelper.NOK("I'm not smart enough to move the current track :(") ], ephemeral: true });
+            return;
+        }
+
         // if the user does not give any position
         // then it is moved to the very next position
         if (idxTo == null) {
-            // cannot move current song to next position
-            // xd
-            if (idxFrom == server.getCurrentQueueIndex()) {
-                interaction.reply({ embeds: [ EmbedHelper.NOK("Please provide a valid target position for the current track") ], ephemeral: true });
+            idxTo = server.getCurrentQueueIndex() + 1;
+        } else {
+            idxTo--;
+
+            if (idxTo == server.getCurrentQueueIndex()) {
+                interaction.reply({ embeds: [ EmbedHelper.NOK("I'm not smart enough to move the current track :(\nAre you trying to replace the current song? Move to the next position in queue and skip!") ], ephemeral: true });
                 return;
             }
-            idxTo = server.getCurrentQueueIndex() + 1;
         }
-
-        idxTo--;
 
         server.moveSong(idxFrom, idxTo);
         const track = server.getSongAtIndex(idxTo);
@@ -66,7 +72,7 @@ export const Command: BaseCommand = {
         if (!track) {
             interaction.reply({ embeds: [ EmbedHelper.OK("Song moved.") ]});
         } else {
-            interaction.reply({ embeds: [ EmbedHelper.OK(track.trackInfo.title + " moved to #" + (idxTo + 1)) ]});
+            interaction.reply({ embeds: [ EmbedHelper.OK(track.info.title + " moved to #" + (idxTo + 1)) ]});
         }
     },
 

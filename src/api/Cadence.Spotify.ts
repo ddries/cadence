@@ -34,7 +34,7 @@ export default class CadenceSpotify {
         }
 
         const trackName: string = result.name;
-        let lavalinkResult = await CadenceLavalink.getInstance().resolveYoutubeIntoTracks(trackName);
+        let lavalinkResult = await CadenceLavalink.getInstance().resolveYoutubeIntoTracks(trackName + " " + result.artists[0].name);
 
         if (lavalinkResult.loadType == 'SEARCH_RESULT') {
             lavalinkResult.tracks[0].info.title = trackName;
@@ -159,6 +159,7 @@ export default class CadenceSpotify {
             )).json();
 
             this._currentToken = r.access_token;
+            console.log(this._currentToken);
             setTimeout(() => {
                 this._currentToken = "";
             }, r.expires_in);

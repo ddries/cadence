@@ -7,6 +7,7 @@ import fs from 'fs';
 import path from 'path';
 import EmbedHelper, { EmbedColor } from "./Cadence.Embed";
 import CadenceMemory from "./Cadence.Memory";
+import CadenceWebsockets from "./Cadence.Websockets";
 
 export default class CadenceDiscord {
 
@@ -32,10 +33,6 @@ export default class CadenceDiscord {
 
     public resolveGuildNameAndId(guild: discord.Guild): string {
         return guild.name + ' (' + guild.id + ')';
-    }
-
-    public getServerPrefix(guildId: string): string {
-        return Cadence.DefaultPrefix;
     }
 
     public getAllCommands(): discord.Collection<string, BaseCommand> {
@@ -69,10 +66,36 @@ export default class CadenceDiscord {
             this._commands.get(command)?.run(i);
         } catch (e) {
             this.logger.log('could not execute command ' + command + ' in ' + this.resolveGuildNameAndId(i.guild) + ': ' + e);
+        } finally {
+            const server = CadenceMemory.getInstance().getConnectedServer(i.guildId);
+            if (server && !server.textChannel) {
+                server.textChannel = i.channel;
+            }
         }
     }
 
     private async OnVoiceUpdate(oldState: discord.VoiceState, newState: discord.VoiceState): Promise<void> {
+        if (newState.member.id != this.Client.user.id && newState.channelId != oldState.channelId) {
+            CadenceWebsockets.getInstance().send({
+                i: 'voice_update',
+                o: CadenceWebsockets.wsUser,
+                x: "user:" + newState.member.id,
+                r: "",
+                p: {
+                    guild: {
+                        id: newState.guild?.id ? newState.guild.id : "",
+                        name: newState.guild?.name ? newState.guild.name : "",
+                        icon: newState.guild?.icon ? newState.guild.icon : ""
+                    },
+                    voice: {
+                        id: newState.channelId ? newState.channelId : "",
+                        name: newState.channel?.name ? newState.channel.name : "",
+                        listeners: newState.channel?.members.size ? newState.channel?.members.size : 0
+                    }
+                }
+            });
+        }
+
         if (oldState.member.id != this.Client.user.id) return;
 
         const server = CadenceMemory.getInstance().getConnectedServer(oldState.guild.id);

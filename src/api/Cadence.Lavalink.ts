@@ -1,4 +1,4 @@
-import { Client, MessageEmbed, TextBasedChannel, TextChannel, Message } from 'discord.js';
+import { TextBasedChannel } from 'discord.js';
 import Config from './Cadence.Config';
 import CadenceDiscord from './Cadence.Discord';
 import Logger from './Cadence.Logger';
@@ -8,7 +8,6 @@ import { URL } from 'url';
 import * as TrackResult from '../types/TrackResult.type';
 import { LavalinkResultTrackInfo } from '../types/TrackResult.type';
 import EmbedHelper, { EmbedColor } from './Cadence.Embed';
-import { LoopType } from '../types/ConnectedServer.type';
 import CadenceTrack from '../types/CadenceTrack.type';
 import { Libraries, Shoukaku, ShoukakuPlayer, ShoukakuSocket } from 'shoukaku';
 import Cadence from '../Cadence';
@@ -36,16 +35,16 @@ export default class CadenceLavalink {
         const _resolveIfSpotify = (): Promise<void> => {
             return new Promise<void>(async res => {
                 if (track.isSpotify) {
-                    this.logger.log('requested to resolve spotify track ' + track.trackInfo.identifier + ' in ' + guildId);
-                    const result = await this.resolveYoutubeIntoTracks(track.trackInfo.title);
+                    this.logger.log('requested to resolve spotify track ' + track.info.identifier + ' in ' + guildId);
+                    const result = await this.resolveYoutubeIntoTracks(track.info.title);
                     
                     if (result.loadType == 'SEARCH_RESULT') {
-                        const original = track.trackInfo;
-                        track.trackInfo = result.tracks[0].info;
-                        track.trackInfo.title = original.title;
-                        track.base64 = result.tracks[0].track;
+                        const original = track.info;
+                        track.info = result.tracks[0].info;
+                        track.info.title = original.title;
+                        track.track = result.tracks[0].track;
 
-                        this.logger.log('spotify track ' + track.trackInfo.identifier + ' resolved to ' + track.base64);
+                        this.logger.log('spotify track ' + track.info.identifier + ' resolved to ' + track.track);
                         res();
                     }
                 } else {
@@ -60,12 +59,12 @@ export default class CadenceLavalink {
             return false;
         }
 
-        this.logger.log('requested to play track ' + track.base64 + ' in ' + guildId);
+        this.logger.log('requested to play track ' + track.track + ' in ' + guildId);
         
         if (Cadence.IsMainInstance)
-            CadenceDiscord.getInstance().sendStatus('requested to play track ' + track.trackInfo.title + ' in ' + guildId);
+            CadenceDiscord.getInstance().sendStatus('requested to play track ' + track.info.title + ' in ' + guildId);
         
-        const result = player.playTrack(track.base64);
+        const result = player.playTrack(track.track);
 
         if (result) {
             track.beingPlayed = true;
@@ -187,8 +186,10 @@ export default class CadenceLavalink {
                         this.logger.log('track ended in ' + data.guildId + ' playing next song in queue');
                         s.handleTrackEnded();
                         if (await CadenceLavalink.getInstance().playNextSongInQueue(p)) {
-                            const m = await (s.musicPlayer.message.channel as TextBasedChannel).send({ embeds: [ EmbedHelper.np(s.getCurrentTrack(), s.player.position) ], components: s._buildButtonComponents() });
-                            s.setMessageAsMusicPlayer(m);
+                            if (s.musicPlayer.message) {
+                                const m = await (s.musicPlayer.message.channel as TextBasedChannel).send({ embeds: [ EmbedHelper.np(s.getCurrentTrack(), s.player.position) ], components: s._buildButtonComponents() });
+                                s.setMessageAsMusicPlayer(m);
+                            }
                         }
                         break;
                 }
@@ -207,10 +208,10 @@ export default class CadenceLavalink {
 
                 let message = "I tried my best but I ran into severe problems trying to play the following track. Only God knows what really happened, we as mere mortals can only see the consequences...";
                 if (s.getCurrentTrack()) {
-                    message += "```" + s.getCurrentTrack().trackInfo.title + "```";
+                    message += "```" + s.getCurrentTrack().info.title + "```";
                 }
 
-                s.textChannel.send({ embeds: [ EmbedHelper.NOK(message) ]});
+                s.textChannel?.send({ embeds: [ EmbedHelper.NOK(message) ]});
     
                 // we want to be sure we process the handleTrackEnded
                 // when music controller exists (avoid bugs)
@@ -233,8 +234,10 @@ export default class CadenceLavalink {
                 s.handleTrackEnded();
                 if (s.getQueueLength() > 1) {
                     if (await CadenceLavalink.getInstance().playNextSongInQueue(p)) {
-                        const m = await (s.musicPlayer.message.channel as TextBasedChannel).send({ embeds: [ EmbedHelper.np(s.getCurrentTrack(), s.player.position) ], components: s._buildButtonComponents() });
-                        s.setMessageAsMusicPlayer(m);
+                        if (s.musicPlayer.message) {
+                            const m = await (s.musicPlayer.message.channel as TextBasedChannel).send({ embeds: [ EmbedHelper.np(s.getCurrentTrack(), s.player.position) ], components: s._buildButtonComponents() });
+                            s.setMessageAsMusicPlayer(m);
+                        }
                     }
                 }
             });

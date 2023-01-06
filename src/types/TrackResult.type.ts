@@ -19,6 +19,18 @@ export type LavalinkResultTrack = {
     track: string
 };
 
+export type RawLavalinkTrackResult = {
+    identifier: string,
+    isSeekable: boolean,
+    author: string,
+    length: number,
+    isStream: boolean,
+    position: number,
+    title: string,
+    uri: string
+    base64: string,
+};
+
 export type LavalinkResult = {
     playlistInfo: LavalinkResultPlaylistInfo,
     loadType: "LOAD_FAILED" | "PLAYLIST_LOADED" | "TRACK_LOADED" | "NO_MATCHES" | "SEARCH_RESULT",

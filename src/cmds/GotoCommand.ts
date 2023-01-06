@@ -58,7 +58,7 @@ export const Command: BaseCommand = {
 
         const song = server.getCurrentTrack();
 
-        if (song.trackInfo.length <= totalSeek) {
+        if (song.info.length <= totalSeek) {
             interaction.reply({ embeds: [ EmbedHelper.NOK("The given time is larger than the song length") ], ephemeral: true });
             return;
         }
@@ -69,7 +69,7 @@ export const Command: BaseCommand = {
         };
 
         player.seekTo(totalSeek);
-        interaction.reply({ embeds: [ EmbedHelper.OK("⌛️ Now playing at " +stringifySeconds(totalSeek / 1_000)) ]});
+        interaction.reply({ embeds: [ EmbedHelper.OK("⌛️ Now playing at " + stringifySeconds(totalSeek / 1_000)) ]});
     },
 
     slashCommandBody: new SlashCommandBuilder()

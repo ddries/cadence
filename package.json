@@ -17,6 +17,7 @@
     "discord.js": "13.6.0",
     "mongoose": "^6.2.0",
     "node-fetch": "^2.6.7",
+    "redis": "^4.2.0",
     "shoukaku": "^2.1.4",
     "typescript": "^4.5.5",
     "ws": "^8.5.0"

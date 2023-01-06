@@ -33,7 +33,7 @@ export const Command: BaseCommand = {
 
         const sec = interaction.options.getInteger('seconds', true) * 1_000;
         const song = server.getCurrentTrack();
-        const remaining = (song.trackInfo.length - player.position);
+        const remaining = (song.info.length - player.position);
         
         if (sec >= remaining) {
             interaction.reply({ embeds: [ EmbedHelper.NOK("You can't forward more than the remaining time. Maximum " + Math.round(remaining) + " seconds.") ], ephemeral: true });

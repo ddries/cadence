@@ -3,13 +3,17 @@ import { ShoukakuPlayer } from "shoukaku";
 import CadenceDiscord from "../api/Cadence.Discord";
 import EmbedHelper from "../api/Cadence.Embed";
 import CadenceLavalink from "../api/Cadence.Lavalink";
+import CadenceRedis from "../api/Cadence.Redis";
+import CadenceWebsockets from "../api/Cadence.Websockets";
 import Cadence from "../Cadence";
 import CadenceTrack from "./CadenceTrack.type";
+import { RedisPlayer, RedisQueue } from "./RedisPlayer";
+import { AddTrackPayload, PlayerStopPayload, TrackStartPayload } from "./WsPayloads";
 
 export enum LoopType {
-    NONE,
-    TRACK,
-    QUEUE
+    NONE = 0,
+    TRACK = 1,
+    QUEUE = 2
 };
 
 export default class ConnectedServer {
@@ -43,6 +47,21 @@ export default class ConnectedServer {
         this.musicPlayer = { message: null, collector: null };
 
         this._aloneInterval = setInterval(this._onAloneTimer.bind(this), 600_000); // 10 min
+
+        let redisState: RedisPlayer = {
+            pause: 0,
+            shuffle: 0,
+            loop: 0,
+        };
+
+        let redisQueue: RedisQueue = {
+            count: 0,
+            index: -1,
+            items: []
+        };
+        
+        CadenceRedis.getInstance().hSet('player_state:' + guildId, redisState);
+        CadenceRedis.getInstance().hSet('player_state:queue:' + guildId, { ...redisQueue, items: JSON.stringify(redisQueue.items) });
     }
 
     public async setMessageAsMusicPlayer(message: Message, removeLastMessage: boolean = true, updateComponents: boolean = false): Promise<void> {
@@ -76,6 +95,8 @@ export default class ConnectedServer {
                 case 'resume-pause':
                     this.player.setPaused(!this.player.paused);
                     this.updatePlayerControllerButtonsIfAny();
+                    
+                    CadenceRedis.getInstance().hSet('player_state:' + this.guildId, { pause: this.player.paused });
                     break;
                 case 'loop':
                     // no loop > loop track > loop queue > no loop ...
@@ -92,6 +113,8 @@ export default class ConnectedServer {
                         this.loopQueue(false);
                     }
                     this.updatePlayerControllerButtonsIfAny();
+
+                    CadenceRedis.getInstance().hSet('player_state:' + this.guildId, { loop: this.loop });
                     break;
                 case 'next':
                     // if queue loop is enabled
@@ -115,12 +138,9 @@ export default class ConnectedServer {
                         const song = this.jumpToSong(this.getCurrentQueueIndex() - 1);
 
                         if (await CadenceLavalink.getInstance().playTrack(song, this.player.connection.guildId)) {
-                            // const m = await interaction.editReply({ embeds: [ EmbedHelper.np(song, this.player.position) ]}) as Message;
                             const m = await (this.musicPlayer.message.channel as TextBasedChannel).send({ embeds: [ EmbedHelper.np(this.getCurrentTrack(), this.player.position) ], components: this._buildButtonComponents() });
                             this.setMessageAsMusicPlayer(m);
                         }
-                        // new song, send again
-                        // this.sendPlayerController();
                     }
                     break;
                 case 'stop':
@@ -137,107 +157,6 @@ export default class ConnectedServer {
             this.musicPlayer.message?.edit({ components: [] });
         });
     }
-
-    // public async sendPlayerController(removeLastMessage: boolean = true): Promise<void> {
-    //     const song = this.getCurrentTrack();
-    //     let reply;
-
-    //     // if the previous message is the last one
-    //     // we can simply edit the embed
-    //     // otherwise we (delete?) the previous message and send the new one
-    //     if (this.nowPlayingMessage.message && this.textChannel.lastMessageId == this.nowPlayingMessage.message.id) {
-    //         this.nowPlayingMessage.message.edit({ embeds: [ EmbedHelper.np(song, this.player.position) ], components: this._buildButtonComponents() });
-    //         this.nowPlayingMessage.collector?.stop('timeout');
-
-    //         reply = this.nowPlayingMessage.message;
-    //     } else if (this.nowPlayingMessage.message && this.textChannel.lastMessageId != this.nowPlayingMessage.message.id) {
-    //         if (!removeLastMessage) {
-    //             this.nowPlayingMessage.message.edit({ components: [] });
-    //         } else {
-    //             this.nowPlayingMessage.message?.delete();
-    //         }
-    //         this.nowPlayingMessage.collector?.stop('timeout');
-    //     }
-
-    //     if (!reply) {
-    //         reply = await this.textChannel.send({ embeds: [ EmbedHelper.np(song, this.player.position) ], components: this._buildButtonComponents() });
-    //     }
-
-    //     const col = reply.createMessageComponentCollector({
-    //         // time: song.trackInfo.length - this.player.position + 250
-    //     });
-        
-    //     this.nowPlayingMessage.message = reply;
-    //     this.nowPlayingMessage.collector = col;
-
-    //     col.on('collect', async (interaction: ButtonInteraction) => {
-    //         if ((interaction.member as GuildMember).voice?.channelId != this.voiceChannelId) {
-    //             interaction.reply({ embeds: [ EmbedHelper.NOK("You have to be connected in the same voice channel as " + Cadence.BotName + "!") ], ephemeral: true });
-    //             return;
-    //         }
-
-    //         // since we defer the update
-    //         // we can do nothing at all
-    //         await interaction.deferUpdate();
-
-    //         switch (interaction.customId) {
-    //             case 'resume-pause':
-    //                 this.player.setPaused(!this.player.paused);
-    //                 this.updatePlayerControllerButtonsIfAny();
-    //                 break;
-    //             case 'loop':
-    //                 // no loop > loop track > loop queue > no loop ...
-    //                 if (this.loop == LoopType.NONE) {
-    //                     this.loop = LoopType.TRACK;
-    //                     this.getCurrentTrack().looped = true;
-    //                 } else if (this.loop == LoopType.TRACK) {
-    //                     this.loop = LoopType.QUEUE;
-    //                     this.getCurrentTrack().looped = false;
-    //                     this.loopQueue(true);
-    //                 } else {
-    //                     this.loop = LoopType.NONE;
-    //                     this.getCurrentTrack().looped = false;
-    //                     this.loopQueue(false);
-    //                 }
-    //                 this.updatePlayerControllerButtonsIfAny();
-    //                 break;
-    //             case 'next':
-    //                 // if queue loop is enabled
-    //                 // they can do whatever they want
-    //                 if (this.loop == LoopType.QUEUE || (this.getQueueLength() > 1 && this.loop != LoopType.TRACK)) {
-    //                     this.handleTrackEnded();
-    //                     CadenceLavalink.getInstance().playNextSongInQueue(this.player);
-    //                 }
-    //                 break;
-    //             case 'back':
-    //                 // if queue loop is enabled
-    //                 // they can do whatever they want
-    //                 if (this.loop == LoopType.QUEUE || (this.getCurrentQueueIndex() > 0  && this.loop != LoopType.TRACK)) {
-    //                     this.handleTrackEnded(false);
-
-    //                     const song = this.jumpToSong(this.getCurrentQueueIndex() - 1);
-
-    //                     CadenceLavalink.getInstance().playTrack(song, this.player.connection.guildId);
-    //                     // new song, send again
-    //                     this.sendPlayerController();
-    //                 }
-    //                 break;
-    //             case 'stop':
-    //                 CadenceLavalink.getInstance().leaveChannel(this.guildId);
-    //                 break;
-    //         }
-    //     });
-
-    //     col.on('end', (interaction, reason: string) => {
-    //         if (reason == 'timeout') {
-    //             return;
-    //         }
-
-    //         if (reply) {
-    //             reply.edit({ components: [] });
-    //         }
-    //     });
-    // }
 
     public updatePlayerControllerButtonsIfAny(): void {
         if (this.musicPlayer?.message) {
@@ -360,7 +279,7 @@ export default class ConnectedServer {
         if (memberCount <= 0 || (memberCount == 1 && voiceChannel.members.first()?.id == CadenceDiscord.getInstance().Client.user.id)) {
             CadenceLavalink.getInstance().leaveChannel(this.guildId);
 
-            this.textChannel.send({ embeds: [ EmbedHelper.Info("I left the voice channel, I was playing music alone :(") ]});
+            this.textChannel?.send({ embeds: [ EmbedHelper.Info("I left the voice channel, I was playing music alone :(") ]});
 
             clearInterval(this._aloneInterval);
             this._aloneInterval = null;
@@ -376,7 +295,7 @@ export default class ConnectedServer {
         return this._queueIdx < 0 ? 0 : this._queueIdx;
     }
 
-    public async handleTrackEnded(shouldCheckLeaveCondition: boolean = true): Promise<void> {
+    public handleTrackEnded(shouldCheckLeaveCondition: boolean = true): void {
         const t = this.getCurrentTrack();
         if (!t) return;
 
@@ -390,7 +309,7 @@ export default class ConnectedServer {
 
         if (shouldCheckLeaveCondition && this.loop == LoopType.NONE && this._queueCount <= 0) {
             if (this._queue.length > 1)
-                this.textChannel.send({ embeds: [ EmbedHelper.Info('The queue has ended!\nTo enable auto-restart and 24/7, use `' + CadenceDiscord.getInstance().getServerPrefix(this.guildId) + 'loop queue`.') ]});
+                this.textChannel?.send({ embeds: [ EmbedHelper.Info('The queue has ended!\nTo enable auto-restart and 24/7, use `/loop queue or player buttons.') ]});
 
             this.clearQueue();
             CadenceLavalink.getInstance().leaveChannel(this.guildId);
@@ -398,7 +317,13 @@ export default class ConnectedServer {
     }
 
     public async handleTrackStart(): Promise<void> {
-
+        CadenceWebsockets.getInstance().send<TrackStartPayload>({
+            i: 'track_start',
+            x: 'channel:' + this.voiceChannelId,
+            p: {
+                trackIndex: this._queueIdx
+            }
+        });
     }
 
     public async handleDisconnect(): Promise<void> {
@@ -411,6 +336,15 @@ export default class ConnectedServer {
             this.musicPlayer.message?.edit({ components: [] });
             this.musicPlayer.collector?.stop();
         }
+
+        CadenceWebsockets.getInstance().send<PlayerStopPayload>({
+            i: 'player_stop',
+            x: 'channel:' + this.voiceChannelId,
+            p: {}
+        });
+        
+        CadenceRedis.getInstance().del('player_state:' + this.guildId);
+        CadenceRedis.getInstance().del('player_state:queue:' + this.guildId);
     }
 
     public loopQueue(status: boolean): void {
@@ -419,6 +353,8 @@ export default class ConnectedServer {
         } else {
             this.loop = LoopType.NONE;
         }
+
+        CadenceRedis.getInstance().hSet('player_state:' + this.guildId, { loop: this.loop });
     }
 
     public getSongAtIndex(index: number): CadenceTrack {
@@ -430,6 +366,15 @@ export default class ConnectedServer {
     public addToQueue(track: CadenceTrack): void {
         this._queue.push(track);
         this._queueCount++;
+
+        CadenceRedis.getInstance().hSet('player_state:queue:' + this.guildId, { count: this._queueCount, items: JSON.stringify(this._queue) });
+        CadenceWebsockets.getInstance().send<AddTrackPayload>({
+            i: 'track_add',
+            x: 'channel:' + this.voiceChannelId,
+            p: {
+                track
+            }
+        });
     }
 
     public removeFromQueue(track: CadenceTrack): void {
@@ -442,8 +387,12 @@ export default class ConnectedServer {
         this._queueCount--;
 
         // if the removed idx is before current index we should update current
-        if (idx < this._queueIdx)
+        if (idx < this._queueIdx) {
             this._queueIdx--;
+            CadenceRedis.getInstance().hSet('player_state:queue:' + this.guildId, { index: this._queueIdx });
+        }
+
+        CadenceRedis.getInstance().hSet('player_state:queue:' + this.guildId, { count: this._queueCount });
     }
 
     public getNextSong(): CadenceTrack {
@@ -461,6 +410,7 @@ export default class ConnectedServer {
             if (this._queueIdx >= this._queue.length) this._queueIdx = 0;
         }
 
+        CadenceRedis.getInstance().hSet('player_state:queue:' + this.guildId, { index: this._queueIdx });
         return this._queue[this._queueIdx];
     }
 
@@ -469,15 +419,20 @@ export default class ConnectedServer {
             case LoopType.TRACK:
                 this.loop = LoopType.NONE;
                 this.getCurrentTrack().looped = false;
+
+                CadenceRedis.getInstance().hSet('player_state:' + this.guildId, { loop: this.loop });
             case LoopType.QUEUE:
             default:
                 this._queueIdx = idx;
 
                 // if we dont have shuffle enabled
                 // we move forward in the queue
-                if (!this.shuffle)
+                if (!this.shuffle) {
                     this._queueCount = this._queue.length - idx;
+                    CadenceRedis.getInstance().hSet('player_state:queue:' + this.guildId, { count: this._queueCount });
+                }
 
+                CadenceRedis.getInstance().hSet('player_state:queue:' + this.guildId, { index: this._queueIdx });
                 return this._queue[this._queueIdx];
         }
     }
@@ -495,19 +450,17 @@ export default class ConnectedServer {
             }
         }
 
-        if (idxFrom == this._queueIdx) {
-            this._queueIdx = idxTo;
-        } else if (idxTo == this._queueIdx) {
-            this._queueIdx = idxFrom;
-        }
-
         this._queue[idxTo] = temp;
+
+        CadenceRedis.getInstance().hSet('player_state:queue:' + this.guildId, { index: this._queueIdx , items: JSON.stringify(this._queue) });
     }
 
     public swapSong(idxFrom: number, idxTo: number): void {
         const temp = this._queue[idxFrom];
         this._queue[idxFrom] = this._queue[idxTo];
         this._queue[idxTo] = temp;
+
+        CadenceRedis.getInstance().hSet('player_state:queue:' + this.guildId, { items: JSON.stringify(this._queue) });
     }
 
     public toggleNightcore(): void {
@@ -542,12 +495,15 @@ export default class ConnectedServer {
 
     public shuffleQueue(): void {
         this.shuffle = !this.shuffle;
+        CadenceRedis.getInstance().hSet('player_state:' + this.guildId, { shuffle: this.shuffle });
     }
 
     public clearQueue(): void {
         this._queueIdx = -1;
         this._queue.length = 0;
         this._queueCount = this._queue.length;
+
+        CadenceRedis.getInstance().hSet('player_state:queue:' + this.guildId, { index: -1, count: 0, items: JSON.stringify([]) });
     }
 
     // end-user index (it's real queue index + 1)
