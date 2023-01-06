@@ -1,4 +1,4 @@
-import { Client, MessageEmbed, TextBasedChannel, TextChannel, Message } from 'discord.js';
+import { TextBasedChannel } from 'discord.js';
 import Config from './Cadence.Config';
 import CadenceDiscord from './Cadence.Discord';
 import Logger from './Cadence.Logger';
@@ -8,7 +8,6 @@ import { URL } from 'url';
 import * as TrackResult from '../types/TrackResult.type';
 import { LavalinkResultTrackInfo } from '../types/TrackResult.type';
 import EmbedHelper, { EmbedColor } from './Cadence.Embed';
-import { LoopType } from '../types/ConnectedServer.type';
 import CadenceTrack from '../types/CadenceTrack.type';
 import { Libraries, Shoukaku, ShoukakuPlayer, ShoukakuSocket } from 'shoukaku';
 import Cadence from '../Cadence';

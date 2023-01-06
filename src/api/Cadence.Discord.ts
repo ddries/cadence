@@ -35,10 +35,6 @@ export default class CadenceDiscord {
         return guild.name + ' (' + guild.id + ')';
     }
 
-    public getServerPrefix(guildId: string): string {
-        return Cadence.DefaultPrefix;
-    }
-
     public getAllCommands(): discord.Collection<string, BaseCommand> {
         return this._commands;
     }

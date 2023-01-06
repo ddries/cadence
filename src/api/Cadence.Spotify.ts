@@ -34,7 +34,7 @@ export default class CadenceSpotify {
         }
 
         const trackName: string = result.name;
-        let lavalinkResult = await CadenceLavalink.getInstance().resolveYoutubeIntoTracks(trackName);
+        let lavalinkResult = await CadenceLavalink.getInstance().resolveYoutubeIntoTracks(trackName + " " + result.artists[0].name);
 
         if (lavalinkResult.loadType == 'SEARCH_RESULT') {
             lavalinkResult.tracks[0].info.title = trackName;

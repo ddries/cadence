@@ -40,7 +40,7 @@ export const Command: BaseCommand = {
         let idx = interaction.options.getInteger('song', true);
 
         if (isNaN(idx)) {
-            interaction.reply({ embeds: [ EmbedHelper.NOK("Please enter the song index. Usage: " + CadenceDiscord.getInstance().getServerPrefix(interaction.guildId) + "jump [index].") ], ephemeral: true });
+            interaction.reply({ embeds: [ EmbedHelper.NOK("Please enter the song index. Usage: /jump [index].") ], ephemeral: true });
             return;
         }
 
@@ -66,20 +66,6 @@ export const Command: BaseCommand = {
 
         const message = await interaction.reply({ embeds: [ EmbedHelper.np(song, server.player.position) ], components: server._buildButtonComponents(), fetchReply: true }) as Message;
         server.setMessageAsMusicPlayer(message);
-        // server.sendPlayerController();
-        // if (!Cadence.NowPlayingEnabled)
-        //     return;
-
-        // const lastMessage = server.textChannel.lastMessage;
-        // let m: Message = null;
-
-        // if (lastMessage.id != server.nowPlayingMessage?.id) {
-        //     m = await server.textChannel.send({ embeds: [ EmbedHelper.songBasic(song.trackInfo, song.requestedById, "Now Playing!") ]});
-        // } else {
-        //     m = await lastMessage.edit({ embeds: [ EmbedHelper.songBasic(song.trackInfo, song.requestedById, "Now Playing!") ]});
-        // }
-
-        // server.nowPlayingMessage = m;
     },
 
     slashCommandBody: new SlashCommandBuilder()

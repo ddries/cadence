@@ -69,7 +69,7 @@ export const Command: BaseCommand = {
         };
 
         player.seekTo(totalSeek);
-        interaction.reply({ embeds: [ EmbedHelper.OK("⌛️ Now playing at " +stringifySeconds(totalSeek / 1_000)) ]});
+        interaction.reply({ embeds: [ EmbedHelper.OK("⌛️ Now playing at " + stringifySeconds(totalSeek / 1_000)) ]});
     },
 
     slashCommandBody: new SlashCommandBuilder()

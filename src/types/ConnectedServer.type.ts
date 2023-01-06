@@ -138,12 +138,9 @@ export default class ConnectedServer {
                         const song = this.jumpToSong(this.getCurrentQueueIndex() - 1);
 
                         if (await CadenceLavalink.getInstance().playTrack(song, this.player.connection.guildId)) {
-                            // const m = await interaction.editReply({ embeds: [ EmbedHelper.np(song, this.player.position) ]}) as Message;
                             const m = await (this.musicPlayer.message.channel as TextBasedChannel).send({ embeds: [ EmbedHelper.np(this.getCurrentTrack(), this.player.position) ], components: this._buildButtonComponents() });
                             this.setMessageAsMusicPlayer(m);
                         }
-                        // new song, send again
-                        // this.sendPlayerController();
                     }
                     break;
                 case 'stop':
@@ -298,7 +295,7 @@ export default class ConnectedServer {
         return this._queueIdx < 0 ? 0 : this._queueIdx;
     }
 
-    public async handleTrackEnded(shouldCheckLeaveCondition: boolean = true): Promise<void> {
+    public handleTrackEnded(shouldCheckLeaveCondition: boolean = true): void {
         const t = this.getCurrentTrack();
         if (!t) return;
 
@@ -312,7 +309,7 @@ export default class ConnectedServer {
 
         if (shouldCheckLeaveCondition && this.loop == LoopType.NONE && this._queueCount <= 0) {
             if (this._queue.length > 1)
-                this.textChannel?.send({ embeds: [ EmbedHelper.Info('The queue has ended!\nTo enable auto-restart and 24/7, use `' + CadenceDiscord.getInstance().getServerPrefix(this.guildId) + 'loop queue`.') ]});
+                this.textChannel?.send({ embeds: [ EmbedHelper.Info('The queue has ended!\nTo enable auto-restart and 24/7, use `/loop queue or player buttons.') ]});
 
             this.clearQueue();
             CadenceLavalink.getInstance().leaveChannel(this.guildId);
@@ -451,12 +448,6 @@ export default class ConnectedServer {
             for (let i = idxFrom; i > idxTo; i--) {
                 this._queue[i] = this._queue[i - 1];
             }
-        }
-
-        if (idxFrom == this._queueIdx) {
-            this._queueIdx = idxTo;
-        } else if (idxTo == this._queueIdx) {
-            this._queueIdx = idxFrom;
         }
 
         this._queue[idxTo] = temp;

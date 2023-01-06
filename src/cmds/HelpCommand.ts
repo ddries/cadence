@@ -60,7 +60,7 @@ export const Command: BaseCommand = {
     
                 let aliasString = "";
     
-                desc += "`" + CadenceDiscord.getInstance().getServerPrefix(interaction.guildId) + cmd.name + "`: ";
+                desc += "`/" + cmd.name + "`: ";
                 if (aliasString.length > 0)
                     desc += aliasString + " ";
                     
