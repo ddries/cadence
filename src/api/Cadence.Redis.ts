@@ -27,7 +27,7 @@ export default class CadenceRedis {
     }
 
     public hSet(key: string, value: { [key: string]: any }): void {
-        if (!this.client) null;
+        if (!this.client) return;
         value = this.redisify(value);
         this.client.hSet(key, value);
     }
