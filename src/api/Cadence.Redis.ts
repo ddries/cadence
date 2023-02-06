@@ -84,6 +84,8 @@ export default class CadenceRedis {
     }
 
     public async init(): Promise<void> {
+        if (!this.address || !this.auth || !this.database) return;
+
         const port = parseInt(this.address.split(":")[1]);
         const host = this.address.split(":")[0];
 
