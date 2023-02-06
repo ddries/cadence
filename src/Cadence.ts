@@ -76,7 +76,7 @@ export default class Cadence {
 
         await CadenceMemory.getInstance().init();
         // await CadenceWebsockets.getInstance().init();
-        await CadenceRedis.getInstance().init();
+        // await CadenceRedis.getInstance().init();
 
         this.logger.log('starting discord module cadence ' + Cadence.Version + ", debug " + Cadence.Debug.toString());
         await CadenceDiscord.getInstance().init();
