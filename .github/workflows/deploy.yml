@@ -20,7 +20,7 @@ jobs:
       - run: npm i typescript -g
 
       - run: echo "compiling code"
-      - run: sh compile.sh
+      - run: npm run build
 
       - run: chmod +x docker-entry.sh
 
