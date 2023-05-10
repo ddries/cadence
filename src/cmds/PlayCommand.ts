@@ -38,11 +38,12 @@ export const Command: BaseCommand = {
         ))) {
             interaction.editReply({ embeds: [ EmbedHelper.NOK("I can't join that voice channel! Do I have enough permissions?") ] });
             return;
-        } else {
-            server.guildName = interaction.guild.name;
         }
 
         server = CadenceMemory.getInstance().getConnectedServer(interaction.guildId);
+
+        if (!server.guildName)
+            server.guildName = interaction.guild.name;
         
         let result: LavalinkResult | SpotifyPlaylistResult = null;
         if (CadenceLavalink.getInstance().isValidUrl(linkOrKeyword)) {
