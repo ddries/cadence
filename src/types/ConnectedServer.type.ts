@@ -20,6 +20,8 @@ export default class ConnectedServer {
     public player: ShoukakuPlayer;
 
     public guildId: string;
+    public guildName: string;
+
     public voiceChannelId: string;
     public textChannelId: string;
     public textChannel: TextBasedChannel;
@@ -245,6 +247,7 @@ export default class ConnectedServer {
     public getClone(): ConnectedServer {
         const c = new ConnectedServer(null, this.voiceChannelId, this.textChannel, this.guildId);
 
+        c.guildName = this.guildName;
         c.textChannelId = this.textChannelId;
         c.nowPlayingMessage = this.nowPlayingMessage;
 
@@ -324,6 +327,9 @@ export default class ConnectedServer {
                 trackIndex: this._queueIdx
             }
         });
+
+        if (Cadence.IsMainInstance)
+            CadenceDiscord.getInstance().sendStatus("Started playing " + this.getCurrentTrack().info.title + " in " + this.guildName + " (" + this.guildId + ")")
     }
 
     public async handleDisconnect(): Promise<void> {

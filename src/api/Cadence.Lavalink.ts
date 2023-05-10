@@ -61,9 +61,6 @@ export default class CadenceLavalink {
 
         this.logger.log('requested to play track ' + track.track + ' in ' + guildId);
         
-        if (Cadence.IsMainInstance)
-            CadenceDiscord.getInstance().sendStatus('requested to play track ' + track.info.title + ' in ' + guildId);
-        
         const result = player.playTrack(track.track);
 
         if (result) {
