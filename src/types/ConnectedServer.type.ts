@@ -39,7 +39,7 @@ export default class ConnectedServer {
     private _queueIdx: number = -1;
     private _queueCount: number = 0;
 
-    private _aloneInterval: NodeJS.Timer = null;
+    private _aloneInterval: NodeJS.Timeout = null;
 
     constructor(player: ShoukakuPlayer, voiceChannelId: string, channel: TextBasedChannel, guildId: string) {
         this.player = player;
