@@ -1,5 +1,5 @@
 import { SlashCommandBuilder } from "@discordjs/builders";
-import { CommandInteraction, GuildMember, Message } from "discord.js";
+import { CommandInteraction, ContextMenuInteraction, GuildMember, Message } from "discord.js";
 import BaseCommand from "../api/Cadence.BaseCommand";
 import EmbedHelper from "../api/Cadence.Embed";
 import CadenceLavalink from "../api/Cadence.Lavalink";
@@ -7,14 +7,41 @@ import CadenceMemory from "../api/Cadence.Memory";
 import CadenceSpotify from "../api/Cadence.Spotify";
 import CadenceTrack from "../types/CadenceTrack.type";
 import { LavalinkResult, SpotifyPlaylistResult } from "../types/TrackResult.type";
+import CadenceDiscord from "../api/Cadence.Discord";
 
 export const Command: BaseCommand = {
     name: "play",
     description: "Play the given song as a link or keyworkds to search for. Accepts playlists!",
     requireAdmin: false,
 
-    run: async (interaction: CommandInteraction): Promise<void> => {
-        let linkOrKeyword: string = interaction.options.getString('input', true);
+    run: async (interaction: CommandInteraction | ContextMenuInteraction): Promise<void> => {
+        let linkOrKeyword: string = "";
+
+        if (interaction.isCommand()) {
+            linkOrKeyword = interaction.options.getString('input', true);
+        } else if (interaction.isMessageContextMenu()) {
+            const message = interaction.targetMessage;
+
+            // Play from another Cadence message
+            if (message.author.id == CadenceDiscord.getInstance().Client.user.id
+                && message.embeds.length > 0 && message.embeds[0].url) {
+                linkOrKeyword = message.embeds[0].url;
+            } else { // Otherwise, try to get url from message
+                if (message.embeds.length <= 0) {
+                    const url = message.content.match(/(https?:\/\/[^ ]*)/);
+                    if (url && url.length > 0) {
+                        linkOrKeyword = url[0];
+                    }
+                } else {
+                    for (const e of message.embeds) {
+                        if (e.url) {
+                            linkOrKeyword = e.url;
+                            break;
+                        }
+                    }
+                }
+            }
+        }
 
         if (!(interaction.member as GuildMember).voice?.channelId) {
             interaction.reply({ embeds: [ EmbedHelper.NOK("You must be connected to a voice channel!") ], ephemeral: true });

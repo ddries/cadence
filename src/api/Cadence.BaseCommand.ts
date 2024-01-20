@@ -1,4 +1,4 @@
-import discord, { CommandInteraction } from 'discord.js';
+import discord, { CommandInteraction, ContextMenuInteraction } from 'discord.js';
 
 export default interface BaseCommand {
     name: string;
@@ -7,6 +7,6 @@ export default interface BaseCommand {
     requireAdmin: boolean;
     disabled?: boolean;
 
-    run(interaction: CommandInteraction): void;
+    run(interaction: CommandInteraction | ContextMenuInteraction): void;
     slashCommandBody: any;
 }

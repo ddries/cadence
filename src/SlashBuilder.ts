@@ -1,5 +1,6 @@
 import { REST } from '@discordjs/rest';
-import { Routes } from 'discord-api-types/v9';
+import { Routes, ApplicationCommandType  } from 'discord-api-types/v9';
+import { ContextMenuCommandBuilder  } from '@discordjs/builders';
 import fs from 'fs';
 import path from 'path';
 import BaseCommand from './api/Cadence.BaseCommand';
@@ -67,56 +68,68 @@ class SlashBuilder {
 
         const rest = new REST({ version: '9' }).setToken(token);
 
-        if (removeAll) {
-            const uploadedCommands: Array<{ name: string, id: string }> = [];
+        // if (removeAll) {
+        //     const uploadedCommands: Array<{ name: string, id: string }> = [];
 
-            if (guildId) {
-                const _result = (await rest.get(
-                    Routes.applicationGuildCommands(clientId, guildId)
-                ) as Array<any>);
-                for (const _c of _result) {  uploadedCommands.push({ name: _c.name, id: _c.id }); }
-            } else {
-                const _result = (await rest.get(
-                    Routes.applicationCommands(clientId)
-                ) as Array<any>);
-                for (const _c of _result) {  uploadedCommands.push({ name: _c.name, id: _c.id }); }
-            }
+        //     if (guildId) {
+        //         const _result = (await rest.get(
+        //             Routes.applicationGuildCommands(clientId, guildId)
+        //         ) as Array<any>);
+        //         for (const _c of _result) {  uploadedCommands.push({ name: _c.name, id: _c.id }); }
+        //     } else {
+        //         const _result = (await rest.get(
+        //             Routes.applicationCommands(clientId)
+        //         ) as Array<any>);
+        //         for (const _c of _result) {  uploadedCommands.push({ name: _c.name, id: _c.id }); }
+        //     }
     
-            for (const c of uploadedCommands) {
-                console.log('info\tremoving ' + c.name + ' (' + c.id + ')');
-                if (guildId) {
-                    await rest.delete(
-                        Routes.applicationGuildCommand(clientId, guildId, c.id)
-                    );
-                } else {
-                    await rest.delete(
-                        Routes.applicationCommand(clientId, c.id)
-                    );
-                }
-            }
+        //     for (const c of uploadedCommands) {
+        //         console.log('info\tremoving ' + c.name + ' (' + c.id + ')');
+        //         if (guildId) {
+        //             await rest.delete(
+        //                 Routes.applicationGuildCommand(clientId, guildId, c.id)
+        //             );
+        //         } else {
+        //             await rest.delete(
+        //                 Routes.applicationCommand(clientId, c.id)
+        //             );
+        //         }
+        //     }
 
-            return;
-        }
+        //     return;
+        // }
 
-        const commands: BaseCommand[] = [];
-        for (const f of commandFiles) {
-            const c: BaseCommand = (await import(path.join(__dirname, 'cmds', f)))['Command'];
-            if (!c) continue;
-            if (c.disabled) continue;
-            commands.push(c.slashCommandBody);
-            console.log('info\tfetched command ' + c.name);
-        }
+        // const commands: BaseCommand[] = [];
+        // for (const f of commandFiles) {
+        //     const c: BaseCommand = (await import(path.join(__dirname, 'cmds', f)))['Command'];
+        //     if (!c) continue;
+        //     if (c.disabled) continue;
+        //     commands.push(c.slashCommandBody);
+        //     console.log('info\tfetched command ' + c.name);
+        // }
+
+        const data = new ContextMenuCommandBuilder()
+            .setName("Play")
+            .setType(3);
 
         try {
             if (guildId) {
+                // await rest.put(
+                //     Routes.applicationGuildCommands(clientId, guildId),
+                //     { body: commands }
+                // );
                 await rest.put(
                     Routes.applicationGuildCommands(clientId, guildId),
-                    { body: commands }
+                    { body: [ data.toJSON() ] }
                 );
             } else {
+                // await rest.put(
+                //     Routes.applicationCommands(clientId),
+                //     { body: commands }
+                // );
                 await rest.put(
                     Routes.applicationCommands(clientId),
-                    { body: commands }
+                    { body: [ data.toJSON() ] }
                 );
             }
 
